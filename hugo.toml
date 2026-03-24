@@ -29,7 +29,7 @@ theme = "blowfish"
 
 # --- TU IDENTIDAD (AUTOR) ---
 [author]
-    name = "Bard Laudian"        # Pon aquí tu nombre real o alias
+    name = "BardLaudian"        # Pon aquí tu nombre real o alias
     image = "img/perfil.jpg"     # Tu foto en assets/img/perfil.jpg
     headline = "Junior Pentester en formación | Aspirante a CPTS"
     bio = "Apasionado del Hacking Ético basado en A Coruña. Documentando mi proceso de certificación CPTS y mis peleas con máquinas de Hack The Box."
