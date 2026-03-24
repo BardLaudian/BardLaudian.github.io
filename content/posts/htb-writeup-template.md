@@ -6,6 +6,8 @@ description: "Resolución detallada de la máquina [Nombre] de Hack The Box."
 tags: ["HackTheBox", "Windows", "Active Directory", "Medium"]
 categories: ["Writeups"]
 series: ["HackTheBox CPTS"]
+feature: "https://www.hackthebox.com/images/htb_logo/HTB%20Logo.png"
+thumbnail: "https://www.hackthebox.com/images/htb_logo/HTB%20Logo.png"
 ---
 
 {{< lead >}}

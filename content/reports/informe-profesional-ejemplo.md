@@ -5,6 +5,7 @@ draft: false
 description: "Un ejemplo de informe profesional de Pentesting detallando hallazgos técnicos y resúmenes ejecutivos."
 tags: ["Pentesting", "Reporte", "Red Externa", "SysReptor"]
 categories: ["Informes Profesionales"]
+feature: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Document_icon.svg/512px-Document_icon.svg.png"
 ---
 
 {{< lead >}}

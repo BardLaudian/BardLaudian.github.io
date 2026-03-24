@@ -24,7 +24,7 @@ Mi enfoque es claro:
 Dedicación a tiempo completo a la obtención del CPTS. Especialización en análisis de Malware, Triage Informático y resolución de laboratorios avanzados en Hack The Box.
 {{< /timelineItem >}}
 
-{{< timelineItem icon="robot" header="Ingeniería Robótica" subheader="Universidade de Santiago de Compostela (USC)" badge="Grado" >}}
+{{< timelineItem icon="robot" header="Ingeniería Robótica" subheader="Universidade de Santiago de Compostela (USC)" badge="Grado Universitario" >}}
 Capacidad analítica en entornos complejos, sistemas de control, y programación avanzada en **Python** y **C++**.
 {{< /timelineItem >}}
 

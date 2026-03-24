@@ -14,6 +14,9 @@ theme = "blowfish"
     showReadingTime = true       # Mostrar tiempo de lectura
     showBreadcrumbs = true       # Mostrar migas de pan
     showTaxonomies = true        # Mostrar tags y categorías
+    
+    # Textura al fondo oscuro
+    backgroundPattern = "topol"  # Patrón topográfico (cyberpunk)
 
 # --- CONFIGURACIÓN DE LA PORTADA (HOMEPAGE) ---
 [params.homepage]
