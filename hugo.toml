@@ -1,6 +1,6 @@
-baseURL = "https://tuusuario.github.io/"
+baseURL = "https://bardlaudian.github.io/"
 languageCode = "es-es"
-title = "TuNombre | Pentesting & CPTS"
+title = "Laudian | Pentesting & CPTS"
 theme = "blowfish"
 
 [params]
