@@ -4,21 +4,26 @@
     <canvas id="node-canvas" class="absolute inset-0 w-full h-full z-0 opacity-50"></canvas>
     
     <!-- Contenedor Minimalista Central -->
-    <div class="z-10 flex flex-col items-center text-center p-8 bg-neutral-900/60 backdrop-blur-md rounded-3xl border border-neutral-800 shadow-[0_0_40px_rgba(0,0,0,0.5)]">
+    <div class="z-10 flex flex-col items-center text-center p-8 bg-neutral-900/60 backdrop-blur-md rounded-3xl border border-neutral-800 shadow-[0_0_40px_rgba(0,0,0,0.5)] mt-12 md:mt-24 mb-12">
         
         {{ with .Site.Params.hero.image }}
-            <img src="{{ . | relURL }}" alt="Profile Picture" class="w-32 h-32 md:w-40 md:h-40 rounded-full border-2 border-primary-500 shadow-[0_0_20px_rgba(159,238,0,0.3)] mb-6 object-cover glow-animation">
+            {{ $img := resources.Get . }}
+            {{ if $img }}
+                <img src="{{ $img.RelPermalink }}" alt="Profile Picture" class="w-32 h-32 md:w-40 md:h-40 rounded-full border-2 border-primary-500 shadow-[0_0_20px_rgba(159,238,0,0.3)] mb-8 object-cover glow-animation">
+            {{ else }}
+                <img src="{{ . | relURL }}" alt="Profile Picture" class="w-32 h-32 md:w-40 md:h-40 rounded-full border-2 border-primary-500 shadow-[0_0_20px_rgba(159,238,0,0.3)] mb-8 object-cover glow-animation">
+            {{ end }}
         {{ end }}
         
-        <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold text-neutral-100 mb-2 tracking-tight">
+        <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold text-neutral-100 mb-4 tracking-tight">
             {{ .Site.Params.hero.title }}
         </h1>
         
-        <h2 class="text-lg md:text-xl text-primary-400 font-mono mb-8 opacity-90">
+        <h2 class="text-lg md:text-xl text-primary-400 font-mono mb-10 opacity-90">
             > {{ .Site.Params.hero.subtitle }} <span class="animate-pulse">_</span>
         </h2>
         
-        <div class="flex flex-wrap justify-center gap-4 mt-2">
+        <div class="flex flex-wrap justify-center gap-6 mt-4">
             <a href="/posts/" class="px-8 py-3 rounded-full bg-primary-600/10 text-primary-500 border border-primary-500/50 hover:bg-primary-500 hover:text-neutral-900 hover:border-primary-500 transition-all duration-300 font-semibold shadow-[0_0_10px_rgba(159,238,0,0.1)]">
                 Writeups
             </a>
