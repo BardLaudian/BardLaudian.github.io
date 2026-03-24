@@ -11,6 +11,9 @@ theme = "blowfish"
     showSunMoon = true           # Botón para cambiar entre modo claro/oscuro
     showScrollToTop = true       # Flecha para volver arriba
     enableSearch = true          # Buscador interno (muy útil para tus notas)
+    showReadingTime = true       # Mostrar tiempo de lectura
+    showBreadcrumbs = true       # Mostrar migas de pan
+    showTaxonomies = true        # Mostrar tags y categorías
 
 # --- CONFIGURACIÓN DE LA PORTADA (HOMEPAGE) ---
 [params.homepage]
