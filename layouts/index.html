@@ -1,0 +1,132 @@
+{{ define "main" }}
+<div class="relative flex flex-col items-center justify-center min-h-[75vh] w-full overflow-hidden">
+    <!-- Canvas animado de Nodos/Partículas -->
+    <canvas id="node-canvas" class="absolute inset-0 w-full h-full z-0 opacity-50"></canvas>
+    
+    <!-- Contenedor Minimalista Central -->
+    <div class="z-10 flex flex-col items-center text-center p-8 bg-neutral-900/60 backdrop-blur-md rounded-3xl border border-neutral-800 shadow-[0_0_40px_rgba(0,0,0,0.5)]">
+        
+        {{ with .Site.Author.image }}
+            <img src="{{ . | relURL }}" alt="Profile Picture" class="w-32 h-32 md:w-40 md:h-40 rounded-full border-2 border-primary-500 shadow-[0_0_20px_rgba(159,238,0,0.3)] mb-6 object-cover glow-animation">
+        {{ end }}
+        
+        <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold text-neutral-100 mb-2 tracking-tight">
+            {{ .Site.Author.name }}
+        </h1>
+        
+        <h2 class="text-lg md:text-xl text-primary-400 font-mono mb-8 opacity-90">
+            > {{ .Site.Author.headline }} <span class="animate-pulse">_</span>
+        </h2>
+        
+        <div class="flex flex-wrap justify-center gap-4 mt-2">
+            <a href="/posts/" class="px-8 py-3 rounded-full bg-primary-600/10 text-primary-500 border border-primary-500/50 hover:bg-primary-500 hover:text-neutral-900 hover:border-primary-500 transition-all duration-300 font-semibold shadow-[0_0_10px_rgba(159,238,0,0.1)]">
+                Writeups
+            </a>
+            <a href="/reports/" class="px-8 py-3 rounded-full bg-neutral-800/80 text-neutral-300 border border-neutral-700 hover:border-neutral-500 hover:text-white transition-all duration-300 font-semibold">
+                Informes Profesionales
+            </a>
+        </div>
+        
+        <div class="mt-6">
+            <a href="/about/" class="text-sm text-neutral-400 hover:text-primary-400 transition-colors underline decoration-neutral-700 underline-offset-4 hover:decoration-primary-500">
+                Saber más sobre mí
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+@keyframes glow {
+    0% { box-shadow: 0 0 15px rgba(159,238,0,0.2); }
+    50% { box-shadow: 0 0 30px rgba(159,238,0,0.5); }
+    100% { box-shadow: 0 0 15px rgba(159,238,0,0.2); }
+}
+.glow-animation {
+    animation: glow 4s infinite ease-in-out;
+}
+</style>
+
+<script>
+// Animación de red de nodos minimalista
+document.addEventListener("DOMContentLoaded", function() {
+    const canvas = document.getElementById('node-canvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    
+    let width, height;
+    let particles = [];
+    const connectionDistance = 150;
+    
+    function resize() {
+        width = canvas.parentElement.clientWidth;
+        height = canvas.parentElement.clientHeight;
+        canvas.width = width;
+        canvas.height = height;
+    }
+    
+    window.addEventListener('resize', resize);
+    resize();
+    
+    class Particle {
+        constructor() {
+            this.x = Math.random() * width;
+            this.y = Math.random() * height;
+            // Velocidades muy lentas y fluidas
+            this.vx = (Math.random() - 0.5) * 0.6;
+            this.vy = (Math.random() - 0.5) * 0.6;
+            this.radius = Math.random() * 1.5 + 0.5;
+        }
+    
+        update() {
+            this.x += this.vx;
+            this.y += this.vy;
+    
+            if (this.x < 0 || this.x > width) this.vx *= -1;
+            if (this.y < 0 || this.y > height) this.vy *= -1;
+        }
+    
+        draw() {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(159, 238, 0, 0.7)'; // Color del tema (primary-500)
+            ctx.fill();
+        }
+    }
+    
+    // Adaptar cantidad de nodos según la pantalla
+    const particleCount = width < 768 ? 35 : 75;
+    for (let i = 0; i < particleCount; i++) {
+        particles.push(new Particle());
+    }
+    
+    function animate() {
+        ctx.clearRect(0, 0, width, height);
+        
+        for (let i = 0; i < particles.length; i++) {
+            particles[i].update();
+            particles[i].draw();
+            
+            for (let j = i + 1; j < particles.length; j++) {
+                const dx = particles[i].x - particles[j].x;
+                const dy = particles[i].y - particles[j].y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < connectionDistance) {
+                    ctx.beginPath();
+                    ctx.moveTo(particles[i].x, particles[i].y);
+                    ctx.lineTo(particles[j].x, particles[j].y);
+                    // Opacidad basada en la distancia para un desvanecimiento suave
+                    const opacity = 1 - (distance / connectionDistance);
+                    ctx.strokeStyle = `rgba(159, 238, 0, ${opacity * 0.35})`;
+                    ctx.lineWidth = 0.8;
+                    ctx.stroke();
+                }
+            }
+        }
+        requestAnimationFrame(animate);
+    }
+    
+    animate();
+});
+</script>
+{{ end }}

@@ -15,9 +15,6 @@ theme = "blowfish"
     showBreadcrumbs = true       # Mostrar migas de pan
     showTaxonomies = true        # Mostrar tags y categorías
     
-    # Textura al fondo oscuro
-    backgroundPattern = "topol"  # Patrón topográfico (cyberpunk)
-
 # --- CONFIGURACIÓN DE LA PORTADA (HOMEPAGE) ---
 [params.homepage]
     layout = "profile"        # Estilo perfil profesional
