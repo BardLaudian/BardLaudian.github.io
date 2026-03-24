@@ -1,6 +1,8 @@
 ---
 title: "Sobre Mí"
 description: "Pablo Seoane Temprano | De la Ingeniería de Sistemas a la Ciberseguridad"
+date: 2026-03-24
+showDate: false
 layout: "about"
 ---
 

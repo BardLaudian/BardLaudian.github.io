@@ -6,7 +6,7 @@ theme = "blowfish"
 
 # --- PARÁMETROS DEL TEMA (EL "LOOK") ---
 [params]
-    colorScheme = "terminal"     # El toque hacker (letras verdes/azules sobre fondo negro)
+    colorScheme = "ocean"         # Fondo negro profundo – máxima legibilidad
     defaultAppearance = "dark"   # Modo oscuro por defecto
     showSunMoon = true           # Botón para cambiar entre modo claro/oscuro
     showScrollToTop = true       # Flecha para volver arriba
@@ -22,6 +22,11 @@ theme = "blowfish"
     showRecentItems = 3       # Solo los 3 últimos para que no sature
     showContact = true        # Iconos de contacto visibles
     cardView = true           # Los posts se verán como tarjetas modernas
+
+# Vistas de listado de artículos
+[params.list]
+    groupByYear = true
+    cardView = true           # Tarjetas en vez de lista plana
 
 [params.hero]
     # Esto es lo que sale en grande al entrar

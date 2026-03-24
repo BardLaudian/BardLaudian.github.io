@@ -1,0 +1,28 @@
+# ── Hugo: carpeta de build local ────────────────────────────
+public/
+resources/_gen/
+
+# ── Hugo server: caché y archivos temporales ─────────────────
+.hugo_build.lock
+.cache/
+
+# ── Node / npm (si usas PostCSS o herramientas JS) ──────────
+node_modules/
+package-lock.json
+
+# ── Sistemas operativos ──────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Editores ─────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ── Variables de entorno y secretos ─────────────────────────
+.env
+.env.local
+*.secret

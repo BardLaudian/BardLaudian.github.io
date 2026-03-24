@@ -1,73 +1,446 @@
-/* variables globales */
-:root {
-  /* Fuente premium */
-  --font-inter: 'Inter', sans-serif;
-  --font-fira: 'Fira Code', monospace;
-  font-family: var(--font-inter);
+/* ============================================================
+   BARD LAUDIAN – SISTEMA DE DISEÑO: BLACK & GREEN
+   Paleta:
+     Fondo base:        #090c10
+     Superficie carta:  #111820
+     Borde sutil:       rgba(159,238,0,0.12)
+     Verde primario:    #9FEE00
+     Verde dim:         rgba(159,238,0,0.55)
+     Verde fondo:       rgba(159,238,0,0.06)
+     Texto principal:   #e2e8f0
+     Texto secundario:  #94a3b8
+     Texto dim:         #475569
+   ============================================================ */
+
+/* ── FUENTES ─────────────────────────────────────────────── */
+:root { font-family: 'Inter', system-ui, sans-serif; }
+body  { font-family: 'Inter', system-ui, sans-serif; }
+code, pre, kbd, samp { font-family: 'Fira Code', 'Courier New', monospace !important; }
+
+/* ── FONDO NEGRO PROFUNDO EN TODA LA PÁGINA ──────────────── */
+html, body { background-color: #090c10 !important; }
+main, #main-content, .noscroll { background-color: #090c10 !important; }
+header, footer { background-color: #090c10 !important; }
+
+/* Clases Tailwind generadas por Blowfish */
+.bg-neutral-800, .bg-neutral-900,
+.dark\:bg-neutral-800, .dark\:bg-neutral-900 {
+  background-color: #090c10 !important;
 }
 
+/* ── PALETA VERDE – VARIABLES DEL TEMA ───────────────────── */
 .dark {
-  /* Fondo más profundo, estilo IDE premium */
-  --color-neutral-900: #0d1117;
-  --color-neutral-800: #161b22;
-  --color-neutral-700: #21262d;
-
-  /* Acentos de HackTheBox (verde neón) */
-  --color-primary-500: #9FEE00;
+  --color-primary-50:  #f0ffe0;
+  --color-primary-100: #d9fca0;
+  --color-primary-200: #c2f860;
+  --color-primary-300: #aaf420;
   --color-primary-400: #b5f233;
+  --color-primary-500: #9FEE00;
   --color-primary-600: #88cc00;
   --color-primary-700: #6ca000;
   --color-primary-800: #547c00;
   --color-primary-900: #426000;
 }
 
-body {
-  font-family: var(--font-inter);
+/* ── LAYOUT: ANCHO DEL CONTENIDO ─────────────────────────── */
+/* Blowfish usa contenedores max-w-7xl y columna de prosa.
+   Nos aseguramos de que el cuerpo del artículo tenga padding. */
+.max-w-prose, .prose {
+  max-width: 75ch !important;
 }
 
-/* Tipografía de código */
-code, pre, kbd, samp {
-  font-family: var(--font-fira);
+/* Padding lateral en pantallas grandes para que no quede
+   pegado a la izquierda en monitores ultrawide */
+main > div,
+main > section,
+.mx-auto {
+  padding-left: 2rem !important;
+  padding-right: 2rem !important;
 }
 
-/* Efecto hover en las tarjetas de artículos (Glassmorphism sutil y Neon glow) */
-.article-card, .hover\:shadow-xl:hover {
-  transition: all 0.3s ease;
+/* El header también necesita padding */
+header .max-w-7xl,
+footer .max-w-7xl {
+  padding-left: 2rem !important;
+  padding-right: 2rem !important;
 }
 
-.article-card:hover, .hover\:shadow-xl:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 25px -5px rgba(159, 238, 0, 0.2), 0 8px 10px -6px rgba(159, 238, 0, 0.1);
-  border-color: rgba(159, 238, 0, 0.4);
+/* ── TEXTO DEL CUERPO (PROSE) ────────────────────────────── */
+/* Forzar color de texto legible – override del verde del tema */
+.prose p,
+.prose li,
+.prose td,
+.prose th,
+.prose dt,
+.prose dd {
+  color: #cbd5e1 !important;
+  line-height: 1.8;
 }
 
-/* Títulos y gradientes */
-.prose h1, .prose h2, .prose h3 {
-  color: #E2E8F0;
+/* El primer párrafo (lead) a menudo hereda verde del tema */
+.prose > p:first-child,
+.prose > p:first-of-type,
+.prose .lead {
+  color: #94a3b8 !important;
+  font-size: 1.05em;
+}
+
+.prose strong, .prose b {
+  color: #e2e8f0 !important;
   font-weight: 700;
+}
+
+.prose em { color: #a8d890 !important; }
+
+/* ── HEADINGS ────────────────────────────────────────────── */
+.prose h1 {
+  color: #f1f5f9 !important;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  margin-bottom: 0.5rem;
+}
+.prose h2 {
+  color: #e2e8f0 !important;
+  font-weight: 700;
+  border-bottom: 1px solid rgba(159,238,0,0.15);
+  padding-bottom: 0.5rem;
+  margin-top: 3rem;
+  margin-bottom: 1.5rem;
+}
+.prose h3 {
+  color: #d1e8b0 !important;
+  font-weight: 700;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+}
+.prose h4 {
+  color: #aad880 !important;
+  font-weight: 600;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+/* Título principal de artículos (fuera del .prose) */
+h1.text-4xl, h1.text-5xl, h1.text-3xl {
+  color: #f1f5f9 !important;
   letter-spacing: -0.025em;
 }
 
-/* Estilo para los bloques de código */
-.prose pre {
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  background-color: #0d1117 !important;
-  box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+/* ── LINKS ───────────────────────────────────────────────── */
+.prose a {
+  color: #9FEE00 !important;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(159,238,0,0.3);
+  transition: border-color 0.2s ease, text-shadow 0.2s ease;
+}
+.prose a:hover {
+  color: #b5f233 !important;
+  border-bottom-color: rgba(159,238,0,0.8);
+  text-shadow: 0 0 10px rgba(159,238,0,0.4);
 }
 
-/* Botones principales */
-.btn-primary, [href*="/posts/"], [href*="/reports/"] {
-  transition: all 0.2s ease-in-out;
-}
-.btn-primary:hover, a:hover {
-  text-shadow: 0 0 8px rgba(159, 238, 0, 0.6);
-}
-
-/* Badges y tags */
-.badge {
-  background-color: rgba(159, 238, 0, 0.1);
-  color: var(--color-primary-500);
-  border: 1px solid rgba(159, 238, 0, 0.3);
+/* ── CÓDIGO INLINE ───────────────────────────────────────── */
+.prose :not(pre) > code {
+  background: rgba(159,238,0,0.08) !important;
+  color: #9FEE00 !important;
+  border: 1px solid rgba(159,238,0,0.25);
   border-radius: 4px;
+  padding: 0.15em 0.45em;
+  font-size: 0.87em;
 }
+
+/* ── BLOQUES DE CÓDIGO ───────────────────────────────────── */
+.prose pre {
+  background-color: #0a0f15 !important;
+  border: 1px solid rgba(159,238,0,0.18) !important;
+  border-radius: 10px !important;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.6);
+  padding: 1.5rem !important;
+  overflow-x: auto;
+  margin-top: 1.5rem !important;
+  margin-bottom: 1.5rem !important;
+}
+
+/* Scrollbar verde del bloque de código */
+.prose pre::-webkit-scrollbar { height: 4px; }
+.prose pre::-webkit-scrollbar-track { background: #0a0f15; }
+.prose pre::-webkit-scrollbar-thumb { background: rgba(159,238,0,0.35); border-radius: 2px; }
+
+/* ── BLOCKQUOTES ─────────────────────────────────────────── */
+.prose blockquote {
+  border-left: 3px solid rgba(159,238,0,0.65) !important;
+  background: rgba(159,238,0,0.04) !important;
+  border-radius: 0 8px 8px 0;
+  padding: 1rem 1.5rem !important;
+  margin: 1.75rem 0 !important;
+  font-style: italic;
+}
+.prose blockquote p { color: #94a3b8 !important; }
+.prose blockquote > p:first-child::before { content: none; }
+
+/* ── TABLAS ──────────────────────────────────────────────── */
+.prose table {
+  border: 1px solid rgba(159,238,0,0.15);
+  border-radius: 8px;
+  overflow: hidden;
+  width: 100%;
+}
+.prose thead { background: rgba(159,238,0,0.08); }
+.prose thead th { color: #9FEE00 !important; padding: 0.75rem 1rem; }
+.prose tbody tr:nth-child(even) { background: rgba(159,238,0,0.025); }
+.prose td { border-color: rgba(159,238,0,0.08) !important; padding: 0.65rem 1rem; }
+
+/* ── HR / SEPARADORES ────────────────────────────────────── */
+.prose hr {
+  border: none !important;
+  border-top: 1px solid rgba(159,238,0,0.15) !important;
+  margin: 2.5rem 0 !important;
+}
+
+/* ── TAXONOMY TAGS (Windows, Medium, Active Directory…) ──── */
+/* Blowfish renderiza los tags dentro de una lista de enlaces */
+.flex.flex-wrap a[href*="/tags/"],
+.flex.flex-wrap a[href*="/categories/"],
+a[href^="/tags/"],
+a[href^="/categories/"],
+a[href*="/tags/"],
+a[href*="/categories/"] {
+  display: inline-flex !important;
+  align-items: center !important;
+  background: rgba(159,238,0,0.1) !important;
+  color: #9FEE00 !important;
+  border: 1px solid rgba(159,238,0,0.3) !important;
+  border-radius: 6px !important;
+  padding: 0.3em 0.75em !important;
+  font-size: 0.8rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.03em !important;
+  text-decoration: none !important;
+  margin: 0.2rem 0.2rem !important;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+a[href*="/tags/"]:hover, a[href*="/categories/"]:hover {
+  background: rgba(159,238,0,0.2) !important;
+  box-shadow: 0 0 8px rgba(159,238,0,0.2);
+}
+
+/* ── SERIES BANNER ───────────────────────────────────────── */
+details, details[open],
+[class*="series"] {
+  background: rgba(159,238,0,0.05) !important;
+  border: 1px solid rgba(159,238,0,0.2) !important;
+  border-radius: 10px !important;
+  padding: 0.75rem 1.25rem !important;
+  margin: 1.5rem 0 !important;
+  color: #94a3b8 !important;
+}
+details summary { color: #9FEE00 !important; cursor: pointer; font-weight: 600; }
+details a { color: #9FEE00 !important; border-bottom: none !important; }
+
+/* ── METADATA (fecha, tiempo lectura) ────────────────────── */
+time, .text-neutral-500, .text-sm.text-neutral-500,
+dl dt, dl dd {
+  color: #4a5568 !important;
+  font-size: 0.85rem;
+}
+
+/* ── TARJETAS DE ARTÍCULOS EN LISTA ──────────────────────── */
+/* IMPORTANTE: solo aplica tarjeta a artículos en LISTAS, no
+   al artículo completo usando el selector de lista .grid */
+.grid article,
+.list-article,
+[class*="article-grid"] article {
+  background: #111820 !important;
+  border: 1px solid rgba(159,238,0,0.1) !important;
+  border-radius: 12px !important;
+  padding: 1.25rem !important;
+  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+}
+.grid article:hover,
+.list-article:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 0 28px rgba(159,238,0,0.12);
+  border-color: rgba(159,238,0,0.35) !important;
+}
+
+/* Título dentro de las tarjetas de lista */
+.grid article h2 a,
+.grid article h3 a {
+  color: #e2e8f0 !important;
+  text-decoration: none;
+  transition: color 0.2s;
+  border-bottom: none !important;
+}
+.grid article h2 a:hover,
+.grid article h3 a:hover { color: #9FEE00 !important; }
+
+/* ── PÁGINA DE ARTÍCULO: máxima comodidad de lectura ─────── */
+/* El artículo individual tiene mejor aspecto sin card */
+body:not(.list):not(.home) article,
+.single article {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+}
+
+/* ── NAVBAR ──────────────────────────────────────────────── */
+header nav a {
+  color: #94a3b8 !important;
+  transition: color 0.2s;
+}
+header nav a:hover { color: #9FEE00 !important; }
+
+/* Título del sitio en el nav */
+header a[href="/"],
+.site-title, header .text-xl {
+  color: #9FEE00 !important;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+/* Línea inferior del header */
+header {
+  border-bottom: 1px solid rgba(159,238,0,0.08) !important;
+}
+
+/* ── FOOTER ──────────────────────────────────────────────── */
+footer {
+  border-top: 1px solid rgba(159,238,0,0.08) !important;
+  padding-top: 1.5rem;
+  padding-bottom: 1.5rem;
+  color: #2d3748 !important;
+}
+footer a { color: #374151 !important; }
+footer a:hover { color: #9FEE00 !important; }
+footer p { color: #374151 !important; }
+
+/* ── BOTÓN SCROLL TO TOP ─────────────────────────────────── */
+#scroll-to-top, [id*="scroll"] button {
+  background: rgba(159,238,0,0.1) !important;
+  border: 1px solid rgba(159,238,0,0.3) !important;
+  color: #9FEE00 !important;
+  border-radius: 50%;
+}
+#scroll-to-top:hover { background: rgba(159,238,0,0.2) !important; }
+
+/* ── TABLA DE CONTENIDOS (TOC) ───────────────────────────── */
+nav[id*="toc"], nav[class*="toc"],
+aside nav {
+  background: rgba(159,238,0,0.04) !important;
+  border: 1px solid rgba(159,238,0,0.12) !important;
+  border-radius: 10px;
+  padding: 1rem !important;
+  margin-bottom: 2rem;
+}
+nav[id*="toc"] a, nav[class*="toc"] a {
+  color: #64748b !important;
+  text-decoration: none;
+  transition: color 0.15s;
+}
+nav[id*="toc"] a:hover { color: #9FEE00 !important; }
+
+/* ── DIVISORES DE AÑO EN LISTAS ──────────────────────────── */
+.text-xl.font-semibold,
+h2.text-xl {
+  color: rgba(159,238,0,0.75) !important;
+  font-family: 'Fira Code', monospace !important;
+  font-size: 0.95rem !important;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-bottom: 1px solid rgba(159,238,0,0.12) !important;
+  padding-bottom: 0.4rem;
+  margin-bottom: 1.25rem !important;
+}
+
+/* ── TÍTULO DE PÁGINAS DE LISTADO ────────────────────────── */
+/* El h1 de las páginas /posts/ y /reports/ */
+h1 {
+  color: #f1f5f9 !important;
+  letter-spacing: -0.025em;
+}
+
+/* ── BREADCRUMBS ─────────────────────────────────────────── */
+nav[aria-label*="breadcrumb"] a,
+[class*="breadcrumb"] a {
+  color: #4a5568 !important;
+}
+nav[aria-label*="breadcrumb"] a:hover { color: #9FEE00 !important; }
+nav[aria-label*="breadcrumb"] span { color: #2d3748 !important; }
+
+/* ==========================================================
+   FIXES EXACTOS BASADOS EN EL DOM REAL DE BLOWFISH
+   (obtenidos via inspección de elemento en el navegador)
+   ========================================================== */
+
+/* ── TAGS / TAXONOMY LABELS ──────────────────────────────── */
+/* En Blowfish los tags son <span> NO <a>, con clases Tailwind.
+   Los estilos dark:border-primary-600 dark:text-primary-400
+   utilizan las variables CSS del tema, que ya sobrescribimos.
+   Además añadimos override directo para tamaño y padding. */
+span.rounded-md.border,
+span[class*="border-primary"],
+span[class*="text-primary"] {
+  background: rgba(159,238,0,0.1) !important;
+  border-color: rgba(159,238,0,0.4) !important;
+  color: #9FEE00 !important;
+  padding: 0.3em 0.85em !important;
+  font-size: 0.82rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.04em;
+  border-radius: 6px !important;
+}
+
+/* Contenedor flex de los tags — dar espacio entre ellos */
+span.flex.cursor-pointer {
+  margin: 0.2rem 0.2rem !important;
+  display: inline-flex !important;
+}
+
+/* ── LEAD / DESCRIPCIÓN DEL ARTÍCULO ─────────────────────── */
+/* Blowfish genera: <div class="lead text-neutral-500 dark:text-neutral-400 !mb-9 text-xl"> */
+div.lead,
+.lead {
+  color: #748096 !important;
+  font-size: 1.05rem !important;
+  line-height: 1.75 !important;
+  margin-bottom: 2.5rem !important;
+}
+div.lead strong, .lead strong { color: #94a3b8 !important; }
+div.lead a, .lead a {
+  color: #9FEE00 !important;
+  border-bottom: 1px solid rgba(159,238,0,0.3);
+}
+
+/* ── ANCHOR LINKS (#) EN HEADINGS ────────────────────────── */
+/* Blowfish añade un # al hacer hover en los headings */
+h2 .anchor + span a,
+h3 .anchor + span a {
+  color: rgba(159,238,0,0.4) !important;
+}
+
+/* ── LISTA DE POSTS: mínimo ancho de tarjeta ─────────────── */
+/* Cuando hay pocas tarjetas, aseguramos que ocupen todo el ancho */
+.list article,
+[class*="list"] article {
+  background: #111820 !important;
+  border: 1px solid rgba(159,238,0,0.12) !important;
+  border-radius: 12px !important;
+  padding: 1.25rem 1.5rem !important;
+  margin-bottom: 0.75rem;
+  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+}
+.list article:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 0 25px rgba(159,238,0,0.12);
+  border-color: rgba(159,238,0,0.35) !important;
+}
+
+/* Title of post card */
+.list article h2 a,
+.list article h3 a {
+  color: #e2e8f0 !important;
+  text-decoration: none;
+  border-bottom: none !important;
+}
+.list article h2 a:hover { color: #9FEE00 !important; }
+
