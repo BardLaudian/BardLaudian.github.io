@@ -1,8 +1,57 @@
-baseURL = "https://bardlaudian.github.io/"
+# --- CONFIGURACIÓN BÁSICA ---
+baseURL = "https://BardLaudian.github.io/"
 languageCode = "es-es"
-title = "Laudian | Pentesting & CPTS"
+title = "BardLaudian | Pentester Journey"
 theme = "blowfish"
 
+# --- PARÁMETROS DEL TEMA (EL "LOOK") ---
 [params]
-    colorScheme = "terminal"
-    defaultAppearance = "dark"
+    colorScheme = "terminal"     # El toque hacker (letras verdes/azules sobre fondo negro)
+    defaultAppearance = "dark"   # Modo oscuro por defecto
+    showSunMoon = true           # Botón para cambiar entre modo claro/oscuro
+    showScrollToTop = true       # Flecha para volver arriba
+    enableSearch = true          # Buscador interno (muy útil para tus notas)
+
+# --- CONFIGURACIÓN DE LA PORTADA (HOMEPAGE) ---
+[params.homepage]
+    showRecent = true            # Muestra tus últimos writeups automáticamente
+    showRecentItems = 5          # Cuántos posts mostrar en la portada
+    layout = "profile"           # Diseño centrado en tu perfil
+    showContact = true           # Muestra los iconos de contacto/redes
+
+# --- TU IDENTIDAD (AUTOR) ---
+[author]
+    name = "Bard Laudian"        # Pon aquí tu nombre real o alias
+    image = "img/perfil.jpg"     # Tu foto en assets/img/perfil.jpg
+    headline = "Junior Pentester en formación | Aspirante a CPTS"
+    bio = "Apasionado del Hacking Ético basado en A Coruña. Documentando mi proceso de certificación CPTS y mis peleas con máquinas de Hack The Box."
+    
+    # Redes sociales (Blowfish usa iconos automáticos)
+    links = [
+        { linkedin = "https://linkedin.com/in/pablo-seoane-temprano" },
+        { github = "https://github.com/BardLaudian" },
+        { hackthebox = "https://app.hackthebox.com/users/tu-id-de-htb" },
+    ]
+
+# --- MENÚ DE NAVEGACIÓN ---
+[[menu.main]]
+    name = "Writeups"
+    url = "/posts/"              # Donde irán tus máquinas de HTB
+    weight = 10
+
+[[menu.main]]
+    name = "Informes"
+    url = "/reports/"            # Donde pondrás tus PDFs de SysReptor
+    weight = 20
+
+[[menu.main]]
+    name = "Sobre mí"
+    url = "/about/"
+    weight = 30
+
+# --- CONFIGURACIÓN DE CONTENIDO ---
+[markup.goldmark.renderer]
+    unsafe = true                # Permite usar HTML en tu Markdown (necesario para algunas funciones)
+
+[outputs]
+    home = ["HTML", "RSS", "JSON"] # Necesario para el buscador
