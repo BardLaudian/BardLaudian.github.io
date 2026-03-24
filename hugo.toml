@@ -14,10 +14,18 @@ theme = "blowfish"
 
 # --- CONFIGURACIÓN DE LA PORTADA (HOMEPAGE) ---
 [params.homepage]
-    showRecent = true            # Muestra tus últimos writeups automáticamente
-    showRecentItems = 5          # Cuántos posts mostrar en la portada
-    layout = "profile"           # Diseño centrado en tu perfil
-    showContact = true           # Muestra los iconos de contacto/redes
+    layout = "profile"        # Estilo perfil profesional
+    showRecent = true         # Mostrar posts recientes debajo
+    showRecentItems = 3       # Solo los 3 últimos para que no sature
+    showContact = true        # Iconos de contacto visibles
+    cardView = true           # Los posts se verán como tarjetas modernas
+
+[params.hero]
+    # Esto es lo que sale en grande al entrar
+    title = "Pablo Seoane Temprano"
+    subtitle = "Junior Pentester | Aspirante a CPTS de Hack The Box"
+    content = "Ex-ingeniero de robótica reconvertido a la ciberseguridad ofensiva. Mi enfoque: entender el sistema para saber cómo protegerlo."
+    image = "img/perfil.jpg"  # Asegúrate de tener tu foto en assets/img/perfil.jpg
 
 # --- TU IDENTIDAD (AUTOR) ---
 [author]
