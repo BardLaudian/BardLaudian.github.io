@@ -1,0 +1,8 @@
+baseURL = "https://tuusuario.github.io/"
+languageCode = "es-es"
+title = "TuNombre | Pentesting & CPTS"
+theme = "blowfish"
+
+[params]
+    colorScheme = "terminal"
+    defaultAppearance = "dark"
