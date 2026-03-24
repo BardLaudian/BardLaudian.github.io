@@ -32,7 +32,7 @@ theme = "blowfish"
     # Esto es lo que sale en grande al entrar
     title = "Pablo Seoane Temprano"
     subtitle = "Junior Pentester | Aspirante a CPTS de Hack The Box"
-    content = "Ex-ingeniero de robótica reconvertido a la ciberseguridad ofensiva. Mi enfoque: entender el sistema para saber cómo protegerlo."
+    content = "Estudiante de Ingeniería Robótica apasionado por la ciberseguridad ofensiva. Mi enfoque: entender el sistema para saber cómo protegerlo."
     image = "img/perfil.jpg"  # Asegúrate de tener tu foto en assets/img/perfil.jpg
 
 # --- TU IDENTIDAD (AUTOR) ---
@@ -55,10 +55,6 @@ theme = "blowfish"
     url = "/posts/"              # Donde irán tus máquinas de HTB
     weight = 10
 
-[[menu.main]]
-    name = "Informes"
-    url = "/reports/"            # Donde pondrás tus PDFs de SysReptor
-    weight = 20
 
 [[menu.main]]
     name = "Sobre mí"

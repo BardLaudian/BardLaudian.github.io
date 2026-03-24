@@ -237,12 +237,41 @@ details, details[open],
 details summary { color: #9FEE00 !important; cursor: pointer; font-weight: 600; }
 details a { color: #9FEE00 !important; border-bottom: none !important; }
 
-/* ── METADATA (fecha, tiempo lectura) ────────────────────── */
-time, .text-neutral-500, .text-sm.text-neutral-500,
+/* ── METADATA (fecha, tiempo lectura, separadores) ───────── */
+time,
+.text-neutral-500,
+.text-sm.text-neutral-500,
 dl dt, dl dd {
   color: #4a5568 !important;
-  font-size: 0.85rem;
+  font-size: 0.82rem !important;
 }
+
+/* ── PUNTOS SEPARADORES · DEL METADATA ───────────────────── */
+/* DOM exacto: <span class="px-2 text-primary-500">·</span>
+   Los igualamos visualmente al texto de "words" y "mins" */
+span.px-2.text-primary-500,
+span.px-2[class*="text-primary"] {
+  color: #4a5568 !important;
+  font-size: 0.82rem !important;
+  opacity: 1;
+  vertical-align: middle;
+}
+
+/* El span de la flecha ↓ de los timeline items —
+   igual de discreto */
+span.font-bold.text-primary-600,
+span.font-bold[class*="text-primary"] {
+  color: rgba(159,238,0,0.6) !important;
+}
+
+/* SVG icons del metadata (reloj, calendario, palabras) */
+.text-neutral-500 svg {
+  width: 0.85rem !important;
+  height: 0.85rem !important;
+  opacity: 0.5;
+}
+
+
 
 /* ── TARJETAS DE ARTÍCULOS EN LISTA ──────────────────────── */
 /* IMPORTANTE: solo aplica tarjeta a artículos en LISTAS, no

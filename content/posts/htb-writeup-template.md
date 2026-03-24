@@ -1,59 +1,113 @@
 ---
-title: "HTB Writeup Template: [Nombre de la Máquina]"
+title: "HTB Walkthrough: [Nombre de la Máquina]"
 date: 2026-03-24
-draft: false
-description: "Resolución detallada de la máquina [Nombre] de Hack The Box."
-tags: ["HackTheBox", "Windows", "Active Directory", "Medium"]
-categories: ["Writeups"]
+draft: true
+description: "Walkthrough completo de la máquina [Nombre] de Hack The Box. Dificultad [Easy/Medium/Hard], OS [Linux/Windows]."
+tags: ["HackTheBox", "Linux", "Medium"]
+categories: ["HTB Walkthroughs"]
 series: ["HackTheBox CPTS"]
-feature: "https://www.hackthebox.com/images/htb_logo/HTB%20Logo.png"
-thumbnail: "https://www.hackthebox.com/images/htb_logo/HTB%20Logo.png"
 ---
 
 {{< lead >}}
-En este artículo detallo la resolución completa de **[Nombre]**, una máquina de dificultad [Dificultad] en la plataforma Hack The Box. Exploraremos vulnerabilidades en [Servicio] y escalaremos privilegios mediante [Técnica].
+Resolución paso a paso de **[Nombre de la Máquina]** en Hack The Box. Máquina de dificultad **[Easy/Medium/Hard]** con sistema operativo **[Linux/Windows]**. Cubrimos recon, explotación y escalada de privilegios hasta root.
 {{< /lead >}}
 
-{{< badge >}}Windows{{< /badge >}}
-{{< badge >}}Medium{{< /badge >}}
-{{< badge >}}Active Directory{{< /badge >}}
+{{< badge >}}HackTheBox{{< /badge >}}
+{{< badge >}}[Linux/Windows]{{< /badge >}}
+{{< badge >}}[Easy/Medium/Hard]{{< /badge >}}
 
 ---
 
-## 🔎 Reconocimiento (Recon)
+## 🗺️ Información de la Máquina
 
-Comenzamos con un escaneo inicial de puertos usando `nmap` para descubrir los servicios expuestos en la máquina objetivo.
+| Campo        | Detalle                     |
+|--------------|-----------------------------|
+| **Nombre**   | [Nombre]                    |
+| **OS**       | [Linux / Windows]           |
+| **Dificultad** | [Easy / Medium / Hard]   |
+| **IP**       | 10.10.11.X                  |
+| **Técnicas** | [ej. SQLi, RCE, PrivEsc]    |
+
+---
+
+## 🔎 Reconocimiento
+
+### Escaneo de puertos (Nmap)
 
 ```bash
 nmap -p- --open -sS --min-rate 5000 -vvv -n -Pn 10.10.11.X -oG allPorts
 ```
 
-Analizamos los puertos encontrados...
-
-## 🚪 Explotación (Foothold)
-
-Aprovechamos la vulnerabilidad encontrada en **[Servicio/Aplicación]** para obtener nuestro acceso inicial.
-
-```python
-# Exploit de ejemplo
-import requests
-url = "http://10.10.11.X/vulnerable"
+```bash
+# Escaneo de versiones y scripts sobre puertos abiertos
+nmap -sCV -p[PUERTOS] 10.10.11.X -oN targeted
 ```
 
-Obtenemos la flag de usuario:
+*Puertos abiertos:*
+- `[PUERTO]` → `[SERVICIO/VERSIÓN]`
+
+### Enumeración Web (si aplica)
+
+```bash
+# Fuzzing de directorios
+gobuster dir -u http://10.10.11.X -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt -x php,html,txt
+```
+
+---
+
+## 🚪 Foothold / Explotación
+
+Descripción del vector de ataque encontrado...
+
+```bash
+# Comando / exploit utilizado
+```
+
+---
+
+## 🔑 User Flag
+
 {{< spoiler text="user.txt" >}}
 `HTB{f4k3_us3r_fl4g_h3r3}`
 {{< /spoiler >}}
 
+---
+
 ## 👑 Escalada de Privilegios (PrivEsc)
 
-Una vez obtenida la shell como usuario no privilegiado, procedemos a enumerar el sistema y descubrimos...
+### Enumeración del sistema
 
-Obtenemos la flag de root:
+```bash
+# Qué enumeré para buscar el vector de escalada
+id
+sudo -l
+find / -perm -4000 2>/dev/null   # SUID binaries
+```
+
+Descripción de la vulnerabilidad o misconfiguration encontrada...
+
+```bash
+# Exploit de escalada
+```
+
+---
+
+## 🏁 Root Flag
+
 {{< spoiler text="root.txt" >}}
 `HTB{f4k3_r00t_fl4g_h3r3}`
 {{< /spoiler >}}
 
-## 🛠️ Conclusiones y Resumen
+---
 
-Esta máquina me permitió consolidar mis conocimientos sobre Active Directory y la explotación de malas configuraciones en servicios web.
+## 📝 Resumen y Lecciones Aprendidas
+
+**Ruta de compromiso:**
+1. Recon → [hall of fame del escaneo]
+2. Foothold → [vector inicial]
+3. PrivEsc → [técnica usada]
+
+**Lo que aprendí con esta máquina:**
+
+- [Lección 1]
+- [Lección 2]
