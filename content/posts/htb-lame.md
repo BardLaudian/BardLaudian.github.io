@@ -16,8 +16,6 @@ Resolución de **Lame**, una de las máquinas más clásicas de Hack The Box. Di
 {{< badge >}}Linux{{< /badge >}}
 {{< badge >}}Easy{{< /badge >}}
 
-> ⚠️ **Esta máquina está retirada.** Los writeups públicos solo están permitidos sobre máquinas retiradas según las [normas de la comunidad HTB](https://help.hackthebox.com/en/articles/5188925-streaming-writeups-walkthrough-guidelines).
-
 ---
 
 ## 🗺️ Información de la Máquina
