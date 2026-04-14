@@ -14,6 +14,11 @@ theme = "blowfish"
     showReadingTime = true       # Mostrar tiempo de lectura
     showBreadcrumbs = true       # Mostrar migas de pan
     showTaxonomies = true        # Mostrar tags y categorías
+    smartTOC = true              # Resaltar en el índice la sección que se está leyendo
+
+[params.article]
+    showTableOfContents = true         # Índice lateral con los headings del propio writeup
+    smartTOCHideUnfocusedChildren = true  # Colapsar subsecciones que no se están leyendo
     
 # --- CONFIGURACIÓN DE LA PORTADA (HOMEPAGE) ---
 [params.homepage]

