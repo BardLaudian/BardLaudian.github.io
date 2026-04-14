@@ -16,8 +16,6 @@ Resolución paso a paso de **Principal** en Hack The Box. Máquina de dificultad
 {{< badge >}}Linux{{< /badge >}}
 {{< badge >}}Medium{{< /badge >}}
 
-> ⚠️ **Esta máquina está retirada.** Los writeups públicos solo están permitidos sobre máquinas retiradas según las [normas de la comunidad HTB](https://help.hackthebox.com/en/articles/5188925-streaming-writeups-walkthrough-guidelines).
-
 ---
 
 ## 🗺️ Información de la Máquina
