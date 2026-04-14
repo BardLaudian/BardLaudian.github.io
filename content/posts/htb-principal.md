@@ -1,7 +1,7 @@
 ---
 title: "HTB Walkthrough: Principal"
 date: 2026-04-14
-draft: true
+draft: false
 description: "Walkthrough completo de la máquina Principal de Hack The Box. Dificultad Medium, OS Linux (Ubuntu 24.04 LTS)."
 tags: ["HackTheBox", "Linux", "Medium", "JWT", "SSH", "CVE-2026-29000"]
 categories: ["HTB Walkthroughs"]
