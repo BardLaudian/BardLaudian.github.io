@@ -3,6 +3,7 @@ title: "HTB Walkthrough: Principal"
 date: 2026-04-14
 draft: false
 description: "Walkthrough completo de la máquina Principal de Hack The Box. Dificultad Medium, OS Linux (Ubuntu 24.04 LTS). CVE-2026-29000 JWT bypass, credenciales expuestas y escalada por SSH Certificate Forgery."
+images: ["https://htb-mp-prod-public-storage.s3.eu-central-1.amazonaws.com/avatars/a3257c109bddf7358350a2cf02b8ae81.png"]
 tags: ["HackTheBox", "Linux", "Medium", "JWT", "JWE", "SSH", "CVE-2026-29000", "pac4j", "PrivEsc", "CertificateForge", "principal", "writeups"]
 categories: ["HTB Walkthroughs"]
 series: ["HackTheBox CPTS"]

@@ -1,7 +1,7 @@
 # --- CONFIGURACIÓN BÁSICA ---
 baseURL = "https://BardLaudian.github.io/"
 languageCode = "es-es"
-title = "BardLaudian | Pentester Journey"
+title = "Pablo Seoane · Pentester & Security Researcher"
 theme = "blowfish"
 
 # --- PARÁMETROS DEL TEMA (EL "LOOK") ---
@@ -15,10 +15,12 @@ theme = "blowfish"
     showBreadcrumbs = true       # Mostrar migas de pan
     showTaxonomies = true        # Mostrar tags y categorías
     smartTOC = true              # Resaltar en el índice la sección que se está leyendo
+    description = "Portfolio técnico de Pablo Seoane, Junior Pentester aspirante a CPTS. Writeups detallados de máquinas Hack The Box con técnicas de pentesting ofensivo, escalada de privilegios y análisis de vulnerabilidades."
 
 [params.article]
-    showTableOfContents = true         # Índice lateral con los headings del propio writeup
+    showTableOfContents = true            # Índice lateral con los headings del propio writeup
     smartTOCHideUnfocusedChildren = true  # Colapsar subsecciones que no se están leyendo
+    showAuthor = true                     # Mostrar autor con redes sociales al pie de cada post
     
 # --- CONFIGURACIÓN DE LA PORTADA (HOMEPAGE) ---
 [params.homepage]
@@ -51,7 +53,8 @@ theme = "blowfish"
     links = [
         { linkedin = "https://linkedin.com/in/pablo-seoane-temprano" },
         { github = "https://github.com/BardLaudian" },
-        { hackthebox = "https://app.hackthebox.com/users/tu-id-de-htb" },
+        { hackthebox = "https://app.hackthebox.com/users/204160" },
+        { email = "seoane.pablo16@gmail.com" },
     ]
 
 # --- MENÚ DE NAVEGACIÓN ---
