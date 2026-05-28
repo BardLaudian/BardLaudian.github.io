@@ -1,15 +1,15 @@
 ---
 title: "HTB Walkthrough: Facts"
-date: 2026-04-17
+date: 2026-06-07
 draft: false
-description: "Walkthrough completo de la máquina Facts de Hack The Box. Dificultad Medium, OS Linux (Ubuntu 25.04). Mass Assignment en Camaleon CMS para escalar a admin, Path Traversal para extraer clave SSH, cracking de passphrase con John y escalada mediante Facter NOPASSWD sudo."
-tags: ["HackTheBox", "Linux", "Medium", "MassAssignment", "PathTraversal", "CVE-2025-2304", "CVE-2026-1776", "CamaleonCMS", "SSHCracking", "Facter", "sudo", "PrivEsc", "facts", "writeups"]
+description: "Walkthrough completo de la máquina Facts de Hack The Box. Dificultad Easy, OS Linux (Ubuntu 25.04). Mass Assignment en Camaleon CMS para escalar a admin, Path Traversal para extraer clave SSH, cracking de passphrase con John y escalada mediante Facter NOPASSWD sudo."
+tags: ["HackTheBox", "Linux", "Easy", "MassAssignment", "PathTraversal", "CVE-2025-2304", "CVE-2026-1776", "CamaleonCMS", "SSHCracking", "Facter", "sudo", "PrivEsc", "facts", "writeups"]
 categories: ["HTB Walkthroughs"]
 series: ["HackTheBox CPTS"]
 ---
 
 {{< lead >}}
-Resolución de **Facts** en Hack The Box. Máquina de dificultad **Medium** con sistema operativo **Linux (Ubuntu 25.04)**. Explotamos un Mass Assignment en Camaleon CMS para escalar nuestro rol a administrador sin conocer ninguna contraseña, aprovechamos un Path Traversal en el uploader de AWS para leer archivos del sistema y extraer una clave SSH cifrada, crackeamos la passphrase con John the Ripper, y escalamos a root abusando de permisos `sudo NOPASSWD` sobre `facter` con un custom fact Ruby malicioso.
+Resolución de **Facts** en Hack The Box. Máquina de dificultad **Easy** con sistema operativo **Linux (Ubuntu 25.04)**. Explotamos un Mass Assignment en Camaleon CMS para escalar nuestro rol a administrador sin conocer ninguna contraseña, aprovechamos un Path Traversal en el uploader de AWS para leer archivos del sistema y extraer una clave SSH cifrada, crackeamos la passphrase con John the Ripper, y escalamos a root abusando de permisos `sudo NOPASSWD` sobre `facter` con un custom fact Ruby malicioso.
 {{< /lead >}}
 
 {{< badge >}}HackTheBox{{< /badge >}}
