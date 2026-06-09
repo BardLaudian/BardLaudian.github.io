@@ -24,7 +24,7 @@ Resolución de **Facts** en Hack The Box. Máquina de dificultad **Easy** con si
 |----------------|-------------------------------------------------------------------------------------------------------|
 | **Nombre**     | Facts                                                                                                 |
 | **OS**         | Linux (Ubuntu 25.04 — GNU/Linux 6.14.0)                                                              |
-| **Dificultad** | Medium                                                                                                |
+| **Dificultad** | Easy                                                                                                |
 | **IP**         | 10.129.20.171                                                                                         |
 | **Técnicas**   | Mass Assignment · Path Traversal · SSH Key Cracking · Facter sudo NOPASSWD RCE                       |
 
