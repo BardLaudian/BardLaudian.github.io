@@ -14,7 +14,7 @@ Resolución de **Facts** en Hack The Box. Máquina de dificultad **Easy** con si
 
 {{< badge >}}HackTheBox{{< /badge >}}
 {{< badge >}}Linux{{< /badge >}}
-{{< badge >}}Medium{{< /badge >}}
+{{< badge >}}Easy{{< /badge >}}
 
 ---
 
