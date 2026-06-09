@@ -1,6 +1,6 @@
 ---
 title: "HTB Walkthrough: Facts"
-date: 2026-06-07
+date: 2026-06-09
 draft: false
 description: "Walkthrough completo de la máquina Facts de Hack The Box. Dificultad Easy, OS Linux (Ubuntu 25.04). Mass Assignment en Camaleon CMS para escalar a admin, Path Traversal para extraer clave SSH, cracking de passphrase con John y escalada mediante Facter NOPASSWD sudo."
 tags: ["HackTheBox", "Linux", "Easy", "MassAssignment", "PathTraversal", "CVE-2025-2304", "CVE-2026-1776", "CamaleonCMS", "SSHCracking", "Facter", "sudo", "PrivEsc", "facts", "writeups"]
