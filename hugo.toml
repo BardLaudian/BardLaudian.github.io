@@ -64,10 +64,6 @@ theme = "blowfish"
     weight = 10
 
 
-[[menu.main]]
-    name = "Sobre mí"
-    url = "/about/"
-    weight = 30
 
 # --- CONFIGURACIÓN DE CONTENIDO ---
 [markup.goldmark.renderer]
