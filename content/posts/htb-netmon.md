@@ -7,13 +7,17 @@ tags: ["HackTheBox", "Windows", "Easy", "FTP", "PRTG", "CVE-2018-9276", "Command
 categories: ["HTB Walkthroughs"]
 series: ["HackTheBox CPTS"]
 ---
+
 {{< lead >}}
 Resolución de **NetMon** en Hack The Box. Máquina de dificultad **Easy** con sistema operativo **Windows Server 2016**. El FTP anónimo expone el sistema de archivos raíz de Windows, lo que nos permite leer un backup de configuración de PRTG con credenciales en texto claro. Con acceso al panel de administración explotamos CVE-2018-9276, una inyección de comandos en el sistema de notificaciones de PRTG que ejecuta código como **NT AUTHORITY\SYSTEM**.
 {{< /lead >}}
+
 {{< badge >}}HackTheBox{{< /badge >}}
 {{< badge >}}Windows{{< /badge >}}
 {{< badge >}}Easy{{< /badge >}}
+
 ---
+
 ## 🗺️ Información de la Máquina
 | Campo          | Detalle                                                              |
 |----------------|----------------------------------------------------------------------|
@@ -104,7 +108,13 @@ Credenciales encontradas: `prtgadmin:PrTg@dmin2018`. Sin embargo, este backup es
 PrTg@dmin2018 → Login fallido
 PrTg@dmin2019 → ✅ Login exitoso
 ```
-Con `prtgadmin:PrTg@dmin2019` accedemos al panel de administración en `http://10.129.14.77/`. La versión instalada es **PRTG 18.1.37.13946**, vulnerable al **CVE-2018-9276**.
+Con `prtgadmin:PrTg@dmin2019` accedemos al panel de administración en `http://10.129.14.77/`.
+
+![Página de login de PRTG Network Monitor](/img/netmon1.png)
+
+![Dashboard de PRTG tras el login exitoso como administrador](/img/netmon2.png)
+
+La versión instalada es **PRTG 18.1.37.13946**, vulnerable al **CVE-2018-9276**.
 ### 2.2 Análisis de la Vulnerabilidad — CVE-2018-9276
 PRTG permite configurar notificaciones que ejecutan scripts externos cuando se disparan ciertos eventos. El campo **"Parameter"** de la sección "Execute Program" no sanitiza el input del usuario antes de pasarlo al proceso de ejecución. Usando `;` podemos encadenar comandos adicionales que PRTG ejecutará como **NT AUTHORITY\SYSTEM**.
 ```
@@ -113,11 +123,15 @@ Flujo malicioso: Parameter: "archivo.txt;comando" → script recibe argumento
                  → PRTG pasa el resto al shell sin sanitizar → comando ejecutado como SYSTEM
 ```
 ### 2.3 Explotación Manual — Crear Usuario Administrador
-Navegamos a **Setup → Account Settings → Notifications → Add new notification**. En la sección **"Execute Program"** configuramos:
+Navegamos a **Setup → Account Settings → Notifications → Add new notification**:
+
+![Menú Setup → Notifications en PRTG](/img/netmon3.png)
+
+En la sección **"Execute Program"** configuramos:
 - **Program File:** `Demo exe notification - outfile.ps1`
 - **Parameter:** `test.txt;net user attacker P@ssw0rd! /add;net localgroup administrators attacker /add`
 
-![Configuración de la notificación maliciosa en PRTG con el comando inyectado en el campo Parameter](/img/netmon1.png)
+![Configuración de la notificación maliciosa en PRTG con el comando inyectado en el campo Parameter](/img/netmon4.png)
 
 El payload encadena tres acciones:
 1. `test.txt` — argumento esperado por el script para que no falle.
@@ -125,7 +139,7 @@ El payload encadena tres acciones:
 3. `net localgroup administrators attacker /add` — lo añade al grupo de administradores.
 Guardamos la notificación y la disparamos desde la lista usando el **icono de campana** ("Send test notification"):
 
-![Lista de notificaciones con el icono Send test notification resaltado](/img/netmon2.png)
+![Lista de notificaciones con el icono Send test notification resaltado](/img/netmon5.png)
 
 PRTG ejecuta el script como SYSTEM y los comandos se procesan.
 ### 2.4 Shell de SYSTEM con Exploit Automatizado
