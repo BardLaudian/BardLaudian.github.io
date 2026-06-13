@@ -7,12 +7,14 @@ tags: ["HackTheBox", "Windows", "Easy", "FTP", "IIS", "ASPX", "Webshell", "MS10-
 categories: ["HTB Walkthroughs"]
 series: ["HackTheBox CPTS"]
 ---
+
 {{< lead >}}
 Resolución de **Devel** en Hack The Box. Máquina de dificultad **Easy** con sistema operativo **Windows 7 x86**. El FTP anónimo comparte directorio raíz con el webroot de IIS, lo que nos permite subir una webshell ASPX y obtener ejecución remota de código. Escalamos a **NT AUTHORITY\SYSTEM** explotando MS10-015 (KiTrap0D), un fallo en el kernel x86 de Windows.
 {{< /lead >}}
 {{< badge >}}HackTheBox{{< /badge >}}
 {{< badge >}}Windows{{< /badge >}}
 {{< badge >}}Easy{{< /badge >}}
+
 ---
 ## 🗺️ Información de la Máquina
 | Campo          | Detalle                                                            |
