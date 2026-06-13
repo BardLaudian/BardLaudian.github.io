@@ -18,12 +18,6 @@ Resolución de **NetMon** en Hack The Box. Máquina de dificultad **Easy** con s
 
 ---
 
-<div style="text-align:center;margin:1.5rem 0 0.5rem;">
-  <img src="https://htb-mp-prod-public-storage.s3.eu-central-1.amazonaws.com/avatars/3fa8184483e279369b81becafbac9dee.png"
-       alt="NetMon icon"
-       style="width:80px;height:80px;border-radius:50%;border:2px solid rgba(159,238,0,0.4);box-shadow:0 0 16px rgba(159,238,0,0.2);">
-</div>
-
 ## 🗺️ Información de la Máquina
 | Campo          | Detalle                                                              |
 |----------------|----------------------------------------------------------------------|
