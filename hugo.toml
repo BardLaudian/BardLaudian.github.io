@@ -60,8 +60,13 @@ theme = "blowfish"
 # --- MENÚ DE NAVEGACIÓN ---
 [[menu.main]]
     name = "Writeups"
-    url = "/posts/"              # Donde irán tus máquinas de HTB
+    url = "/posts/"
     weight = 10
+
+[[menu.main]]
+    name = "Honeypot"
+    url = "/honeypot/"
+    weight = 20
 
 
 
