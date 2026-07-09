@@ -59,13 +59,13 @@ theme = "blowfish"
 
 # --- MENÚ DE NAVEGACIÓN ---
 [[menu.main]]
-    name = "Writeups"
-    url = "/posts/"
+    name = "Honeypot"
+    url = "/honeypot/"
     weight = 10
 
 [[menu.main]]
-    name = "Honeypot"
-    url = "/honeypot/"
+    name = "Writeups"
+    url = "/posts/"
     weight = 20
 
 
