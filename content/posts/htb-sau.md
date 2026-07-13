@@ -87,7 +87,7 @@ Powered by request-baskets | Version: 1.2.1
 
 Desde `/web` creamos una nueva cesta. La aplicación asigna un nombre aleatorio (p. ej. `h68nagt`). Configuramos el `forward_url` hacia nuestra IP de VPN con `Proxy Response` y `Expand Forward Path` activados:
 
-![Configuración de la cesta apuntando a nuestra IP de VPN para confirmar el SSRF](/img/sau4.png)
+![Configuración de la cesta apuntando a nuestra IP de VPN para confirmar el SSRF](/img/sau2.png)
 
 Abrimos un listener:
 
@@ -122,7 +122,7 @@ Reconfiguramos la cesta para apuntar a `http://127.0.0.1:80` — el localhost de
 
 Al repetir la petición contra la cesta, la respuesta reenviada revela la aplicación local:
 
-![Maltrail v0.53 descubierto tras el pivotaje SSRF a localhost](/img/sau2.png)
+![Maltrail v0.53 descubierto tras el pivotaje SSRF a localhost](/img/sau4.png)
 
 **Maltrail v0.53** — un sistema de detección de tráfico malicioso.
 
