@@ -15,7 +15,7 @@ theme = "blowfish"
     showBreadcrumbs = true       # Mostrar migas de pan
     showTaxonomies = true        # Mostrar tags y categorías
     smartTOC = true              # Resaltar en el índice la sección que se está leyendo
-    description = "Portfolio técnico de Pablo Seoane, Junior Pentester aspirante a CPTS. Writeups detallados de máquinas Hack The Box con técnicas de pentesting ofensivo, escalada de privilegios y análisis de vulnerabilidades."
+    description = "Blog personal de Pablo Seoane donde subo todo lo que hago en ciberseguridad a modo de portfolio: writeups de máquinas, análisis de muestras capturadas en mi honeypot y cualquier cosa que considere interesante documentar."
 
 [params.article]
     showTableOfContents = true            # Índice lateral con los headings del propio writeup
@@ -39,7 +39,7 @@ theme = "blowfish"
     # Esto es lo que sale en grande al entrar
     title = "Pablo Seoane Temprano"
     subtitle = "Junior Pentester · CJCA · Preparando Security+ y CPTS"
-    content = "Estudiante de Ingeniería Robótica con nivel junior en ciberseguridad ofensiva. Certificado CJCA y en camino al CompTIA Security+ y al CPTS de Hack The Box. Mi enfoque: entender el sistema para saber cómo protegerlo."
+    content = "Estudiante de Ingeniería Robótica con nivel junior en ciberseguridad. Certificado CJCA, preparando el Security+ y el CPTS. Este es mi blog: subo todo lo que hago en ciberseguridad a modo de portfolio."
     image = "img/perfil.jpg"  # Asegúrate de tener tu foto en assets/img/perfil.jpg
 
 # --- TU IDENTIDAD (AUTOR) ---
