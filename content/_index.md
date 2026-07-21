@@ -1,6 +1,6 @@
 ---
 title: "Pablo Seoane · Pentester & Security Researcher"
-description: "Portfolio técnico de Pablo Seoane, Junior Pentester aspirante a CPTS. Writeups detallados de máquinas Hack The Box con técnicas de pentesting ofensivo, escalada de privilegios y análisis de vulnerabilidades CVE."
+description: "Blog personal de Pablo Seoane donde subo todo lo que hago en ciberseguridad a modo de portfolio: writeups de máquinas, análisis de muestras capturadas en mi honeypot y cualquier cosa que considere interesante documentar."
 layout: "profile"
 ---
-Ex-ingeniero de robótica especializado en **ciberseguridad ofensiva**. Documentando el camino hacia la certificación CPTS de Hack The Box con writeups técnicos de máquinas reales.
+Este es mi blog personal donde subo todo lo que hago en ciberseguridad a modo de **portfolio**. Nivel junior, certificado **CJCA**, preparando el **Security+** y el **CPTS** de Hack The Box.
