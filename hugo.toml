@@ -38,16 +38,16 @@ theme = "blowfish"
 [params.hero]
     # Esto es lo que sale en grande al entrar
     title = "Pablo Seoane Temprano"
-    subtitle = "Junior Pentester | Aspirante a CPTS de Hack The Box"
-    content = "Estudiante de Ingeniería Robótica apasionado por la ciberseguridad ofensiva. Mi enfoque: entender el sistema para saber cómo protegerlo."
+    subtitle = "Junior Pentester · CJCA · Preparando Security+ y CPTS"
+    content = "Estudiante de Ingeniería Robótica con nivel junior en ciberseguridad ofensiva. Certificado CJCA y en camino al CompTIA Security+ y al CPTS de Hack The Box. Mi enfoque: entender el sistema para saber cómo protegerlo."
     image = "img/perfil.jpg"  # Asegúrate de tener tu foto en assets/img/perfil.jpg
 
 # --- TU IDENTIDAD (AUTOR) ---
 [author]
     name = "BardLaudian"        # Pon aquí tu nombre real o alias
     image = "img/perfil.jpg"     # Tu foto en assets/img/perfil.jpg
-    headline = "Junior Pentester en formación | Aspirante a CPTS"
-    bio = "Apasionado del Hacking Ético basado en A Coruña. Documentando mi proceso de certificación CPTS y mis peleas con máquinas de Hack The Box."
+    headline = "Junior Pentester · CJCA · En camino al Security+ y CPTS"
+    bio = "Apasionado del Hacking Ético basado en A Coruña. Certificado CJCA, preparando el CompTIA Security+ y el CPTS de Hack The Box. Documentando el proceso máquina a máquina."
     
     # Redes sociales (Blowfish usa iconos automáticos)
     links = [
