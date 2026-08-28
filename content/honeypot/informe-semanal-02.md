@@ -1,198 +1,198 @@
 ---
-title: "Informe Semanal de Threat Intelligence — Honeypot T-Pot (12–18 julio 2026)"
+title: "Weekly Threat Intelligence Report — T-Pot Honeypot (Jul 12–18, 2026)"
 date: 2026-07-19
 draft: false
-description: "Segundo informe semanal del honeypot T-Pot: volumen x3,2 respecto a la semana anterior (~3.213.000 eventos). RDPHoneypot se dispara x20,7 con Flyservers S.A. como origen dominante, Sentrypeer x9,3 con cambio de objetivo a numeración UK, nuevo loader para loongarch64 y m68k en Cowrie, y confirmación de actores recurrentes en múltiples sensores."
+description: "Second weekly report from the T-Pot honeypot: volume x3.2 compared to the previous week (~3,213,000 events). RDPHoneypot spikes x20.7 with Flyservers S.A. as the dominant source, Sentrypeer x9.3 with a target shift to UK numbering, new loongarch64 and m68k loader in Cowrie, and confirmation of recurring actors across multiple sensors."
 tags: ["Honeypot", "TPot", "ThreatIntel", "SOC", "BlueTeam", "Cowrie", "Dionaea", "Adbhoney", "Sentrypeer", "ConPot", "Honeytrap", "RDP", "VoIP", "TollFraud", "Malware", "IoT", "Botnet", "Redtail", "ICS", "SCADA", "IEC104", "IPMI"]
 categories: ["Honeypot Diaries"]
 ---
 
 {{< lead >}}
-Segundo informe semanal del honeypot T-Pot, período **12–18 de julio de 2026**. El volumen total se dispara a **~3.213.000 eventos** (x3,2 respecto a la semana anterior), pero el crecimiento no es homogéneo: está casi enteramente explicado por dos sensores — **RDPHoneypot x20,7** con Flyservers S.A. como origen dominante, y **Sentrypeer x9,3** con un cambio de objetivo hacia numeración del Reino Unido. Se confirman además actores recurrentes en múltiples sensores y un nuevo loader compilado para arquitecturas poco habituales (`loongarch64`, `m68k`).
+Second weekly report from the T-Pot honeypot, period **July 12–18, 2026**. Total volume spikes to **~3,213,000 events** (x3.2 compared to the previous week), but growth is not uniform: it's almost entirely explained by two sensors — **RDPHoneypot x20.7** with Flyservers S.A. as the dominant source, and **Sentrypeer x9.3** with a target shift toward UK numbering. Recurring actors are confirmed across multiple sensors, and a new loader compiled for unusual architectures (`loongarch64`, `m68k`) is identified.
 {{< /lead >}}
 
 ---
 
-**Período analizado:** 12 – 18 de julio de 2026
-**Fuente:** T-Pot (multi-honeypot + ELK Stack) — instancia expuesta públicamente en internet
-**Clasificación:** Uso en portfolio / TLP:CLEAR
-**Informe anterior:** [semana del 7–11 de julio de 2026](/honeypot/informe-semanal-01/)
+**Period analyzed:** July 12–18, 2026
+**Source:** T-Pot (multi-honeypot + ELK Stack) — publicly internet-exposed instance
+**Classification:** Portfolio use / TLP:CLEAR
+**Previous report:** [week of July 7–11, 2026](/honeypot/informe-semanal-01/)
 
 ---
 
-## 1. Resumen Ejecutivo
+## 1. Executive Summary
 
-Esta semana el volumen total se **dispara a ~3.213.000 eventos**, frente a ~1.011.000 la semana anterior (x3,2). El salto no es homogéneo: está casi enteramente concentrado en dos sensores muy concretos, mientras otros incluso bajan.
+This week total volume **spikes to ~3,213,000 events**, compared to ~1,011,000 the previous week (x3.2). The jump is not uniform: it's almost entirely concentrated in two very specific sensors, while others actually decrease.
 
-Los cambios más significativos respecto a la semana anterior:
+Most significant changes from the previous week:
 
-- **RDPHoneypot pasa de 111.818 a 2.312.634 ataques (x20,7)**, con foco geográfico desplazado a Mónaco, Alemania, Panamá y Bulgaria. El origen se concentra en dos ASN con el mismo nombre comercial (**Flyservers S.A.**) que juntos suman más de un millón de eventos.
-- **Sentrypeer pasa de 36.522 a 340.759 ataques (x9,3)**, con cambio de objetivo: la semana anterior era numeración francesa/norteamericana, **esta semana es un bloque del Reino Unido** probado de forma sistemática y secuencial.
-- **Honeytrap cae de 678.792 a 218.202 ataques**, pero las IPs únicas **suben de 6.119 a 10.015** — el tráfico pasó de pocos orígenes generando mucho volumen a un patrón más distribuido.
-- **Confirmación de actor recurrente:** las subredes `62.84.80.240-243` (Dionaea) y `217.154.196-197.x` / `31.70.86.6x` (Sentrypeer) vuelven a aparecer con las mismas IPs exactas. Ya no es coincidencia puntual, es presencia sostenida.
-- **Nuevo loader multi-arquitectura en Cowrie:** binarios para `aarch64`, `i386`, `loongarch64` y `m68k`. La inclusión de `loongarch64` (arquitectura china de nicho) y `m68k` (hardware de los años 80, hoy en sistemas embebidos/routers muy antiguos) es inusual.
-- **El mismo payload de Adbhoney de la semana pasada reaparece con 228 descargas** (frente a 110), confirmando que la campaña de minería Android (`UFO Miner`) sigue activa.
-- **IEC-104** (protocolo de subestaciones eléctricas) sigue presente en ConPot por segunda semana consecutiva.
+- **RDPHoneypot goes from 111,818 to 2,312,634 attacks (x20.7)**, with geographic focus shifted to Monaco, Germany, Panama, and Bulgaria. The source is concentrated in two ASNs sharing the same commercial name (**Flyservers S.A.**) that together account for over a million events.
+- **Sentrypeer goes from 36,522 to 340,759 attacks (x9.3)**, with a target change: last week it was French/North American numbering, **this week it's a UK block** tested systematically and sequentially.
+- **Honeytrap drops from 678,792 to 218,202 attacks**, but unique IPs **increase from 6,119 to 10,015** — traffic shifted from few origins generating high volume to a more distributed pattern.
+- **Recurring actor confirmed:** subnets `62.84.80.240-243` (Dionaea) and `217.154.196-197.x` / `31.70.86.6x` (Sentrypeer) reappear with the exact same IPs. No longer a one-off coincidence — it's sustained presence.
+- **New multi-architecture loader in Cowrie:** binaries for `aarch64`, `i386`, `loongarch64`, and `m68k`. The inclusion of `loongarch64` (a niche Chinese architecture) and `m68k` (1980s hardware, today only in embedded systems/very old routers) is unusual.
+- **The same Adbhoney payload from last week reappears with 228 downloads** (compared to 110), confirming the Android mining campaign (`UFO Miner`) is still active.
+- **IEC-104** (electrical substation protocol) remains present in ConPot for a second consecutive week.
 
 ---
 
-## 2. Volumetría Comparativa
+## 2. Comparative Volume
 
-| Honeypot | Semana 7–11 jul | Semana 12–18 jul | Variación |
+| Honeypot | Week Jul 7–11 | Week Jul 12–18 | Change |
 |---|---:|---:|---:|
-| RDPHoneypot | 111.818 | 2.312.634 | **x20,7** ⬆️⬆️ |
-| Sentrypeer | 36.522 | 340.759 | **x9,3** ⬆️⬆️ |
-| Cowrie | 116.390 | 229.182 | x1,97 ⬆️ |
-| Honeytrap | 678.792 | 218.202 | x0,32 ⬇️⬇️ |
-| Dionaea | 61.123 | 91.957 | x1,50 ⬆️ |
-| ConPot | 1.594 | 4.461 | x2,80 ⬆️ |
-| Adbhoney | 2.618 | 2.012 | x0,77 ≈ |
-| Tanner | ~2.000 | ~6.000 | ⬆️ |
-| Mailoney | 906 | ~6.000 | ⬆️ fuerte |
-| **Total aprox.** | **~1.011.000** | **~3.213.000** | **x3,18** |
+| RDPHoneypot | 111,818 | 2,312,634 | **x20.7** ⬆️⬆️ |
+| Sentrypeer | 36,522 | 340,759 | **x9.3** ⬆️⬆️ |
+| Cowrie | 116,390 | 229,182 | x1.97 ⬆️ |
+| Honeytrap | 678,792 | 218,202 | x0.32 ⬇️⬇️ |
+| Dionaea | 61,123 | 91,957 | x1.50 ⬆️ |
+| ConPot | 1,594 | 4,461 | x2.80 ⬆️ |
+| Adbhoney | 2,618 | 2,012 | x0.77 ≈ |
+| Tanner | ~2,000 | ~6,000 | ⬆️ |
+| Mailoney | 906 | ~6,000 | ⬆️ strong |
+| **Approx. total** | **~1,011,000** | **~3,213,000** | **x3.18** |
 
-El crecimiento total está explicado casi en su totalidad por RDPHoneypot y Sentrypeer — entre los dos aportan **más de 2,6 millones** de los ~3,2 millones de eventos. Honeytrap, dominante la semana pasada, pasa a un rol secundario en volumen, aunque su base de IPs únicas casi se duplica (6.119 → 10.015): tráfico más disperso, no menos interés en el servicio.
+Total growth is almost entirely explained by RDPHoneypot and Sentrypeer — between them they contribute **over 2.6 million** of the ~3.2 million events. Honeytrap, dominant last week, drops to a secondary role in volume, though its unique IP base nearly doubles (6,119 → 10,015): more dispersed traffic, not less interest in the service.
 
 ---
 
-## 3. RDPHoneypot — El Sensor Dominante de la Semana
+## 3. RDPHoneypot — The Week's Dominant Sensor
 
-**2.312.634 ataques, 470 IPs únicas.** La media de eventos por IP pasa de ~447 la semana pasada a **~4.920** — no solo hay más IPs atacando, cada una es mucho más agresiva.
+**2,312,634 attacks, 470 unique IPs.** The average events per IP goes from ~447 last week to **~4,920** — not only are more IPs attacking, each one is far more aggressive.
 
-### Distribución temporal
+### Temporal distribution
 
-Actividad sostenida y creciente durante toda la semana, con un pico documentado el **18 de julio (56.293 ataques en un solo intervalo)**. A diferencia del pico aislado del 9-10 de julio, aquí el patrón es de **crecimiento sostenido**, no un pico y caída.
+Sustained and growing activity throughout the week, with a documented peak on **July 18 (56,293 attacks in a single interval)**. Unlike the isolated spike of July 9–10, here the pattern is **sustained growth**, not a spike and drop.
 
-### Origen geográfico e infraestructura
+### Geographic origin and infrastructure
 
-Los países dominantes son **Mónaco, Alemania, Bulgaria y Panamá** — cambio notable respecto a Bulgaria/Azerbaiyán/Ucrania de la semana anterior.
+Dominant countries are **Monaco, Germany, Bulgaria, and Panama** — a notable shift from Bulgaria/Azerbaijan/Ukraine the previous week.
 
-| ASN | Organización | Eventos |
+| ASN | Organization | Events |
 |---|---|---:|
-| 48721 | Flyservers S.A. | 736.290 |
-| 201814 | MEVSPACE sp. z o.o. | 424.077 |
-| 35042 | Layer7 Networks GmbH | 343.918 |
-| 267784 | Flyservers S.A. (2º AS) | 320.582 |
-| 211736 | FOP Dmytro Nedilskyi | 149.293 |
-| 49434 | Fbw Networks SAS | 109.146 |
+| 48721 | Flyservers S.A. | 736,290 |
+| 201814 | MEVSPACE sp. z o.o. | 424,077 |
+| 35042 | Layer7 Networks GmbH | 343,918 |
+| 267784 | Flyservers S.A. (2nd AS) | 320,582 |
+| 211736 | FOP Dmytro Nedilskyi | 149,293 |
+| 49434 | Fbw Networks SAS | 109,146 |
 
-**Flyservers S.A.** aparece con **dos números de ASN distintos** (48721 y 267784) sumando **más de 1.056.000 eventos** — casi la mitad de todo el tráfico RDP de la semana. Mismo proveedor de hosting con presencia en Panamá, posiblemente el mismo actor operando bloques de IP en dos rangos de ASN distintos del mismo proveedor.
-
----
-
-## 4. Sentrypeer — Escalada del Fraude VoIP y Cambio de Objetivo
-
-**340.759 ataques, 198 IPs únicas** (x9,3). El histograma muestra **dos oleadas distintas**: actividad alta el 12-13 de julio, caída pronunciada del 13 al 16, y nuevo pico fuerte el 17-18.
-
-### Cambio de objetivo de fraude
-
-La semana pasada: numeración francesa y norteamericana. **Esta semana: bloque del Reino Unido** (prefijo `+44 1292 379...`), probado con variaciones de prefijo consecutivas (`0014`, `0021`, `0024`, `0031`, `0041`...) — barrido metódico de un rango específico, consistente con reconocimiento previo a toll fraud dirigido, no escaneo genérico.
-
-### Infraestructura
-
-La IP `108.181.56.189` acumula **200.379 eventos** — la IP individual más activa de todo el dataset de la semana. Los ASN dominantes son **Psychz Networks (202.591)** e **IONOS SE (122.465)**.
-
-**Confirmación de actor recurrente:** `217.154.196.179`, `217.154.197.64`, `217.154.196.247` y `31.70.86.62` / `31.70.86.68` — ya señaladas la semana pasada — **vuelven a aparecer esta semana en el top 10**, algunas con las mismas IPs exactas. Es un operador con presencia sostenida y repetida contra este servicio concreto.
+**Flyservers S.A.** appears with **two different ASN numbers** (48721 and 267784) totaling **over 1,056,000 events** — nearly half of all RDP traffic this week. Same hosting provider with presence in Panama, possibly the same actor operating IP blocks in two different ASN ranges of the same provider.
 
 ---
 
-## 5. Honeytrap — Menos Volumen, Más Dispersión y Cambio de Foco
+## 4. Sentrypeer — VoIP Fraud Escalation and Target Shift
 
-**218.202 ataques, 10.015 IPs únicas.** Pico inicial fuerte el día 12 (~57.000 eventos) y luego actividad baja y estable el resto de la semana.
+**340,759 attacks, 198 unique IPs** (x9.3). The histogram shows **two distinct waves**: high activity July 12–13, sharp drop July 13–16, and another strong peak July 17–18.
 
-### Cambio de puertos objetivo
+### Fraud target change
 
-| Semana anterior | Esta semana |
+Last week: French and North American numbering. **This week: UK block** (prefix `+44 1292 379...`), tested with consecutive prefix variations (`0014`, `0021`, `0024`, `0031`, `0041`...) — methodical sweep of a specific range, consistent with reconnaissance prior to targeted toll fraud, not generic scanning.
+
+### Infrastructure
+
+IP `108.181.56.189` accumulates **200,379 events** — the most active individual IP in the entire dataset this week. Dominant ASNs are **Psychz Networks (202,591)** and **IONOS SE (122,465)**.
+
+**Recurring actor confirmed:** `217.154.196.179`, `217.154.197.64`, `217.154.196.247`, and `31.70.86.62` / `31.70.86.68` — flagged last week — **reappear this week in the top 10**, some with the exact same IPs. This is an operator with sustained, repeated presence against this specific service.
+
+---
+
+## 5. Honeytrap — Less Volume, More Dispersion and Focus Shift
+
+**218,202 attacks, 10,015 unique IPs.** Strong initial peak on day 12 (~57,000 events) then low, stable activity for the rest of the week.
+
+### Target port change
+
+| Previous week | This week |
 |---|---|
 | 11434 — Ollama | 2763 |
 | 7860 — Gradio | **5038 — Asterisk Manager Interface** |
-| 8501 — Streamlit | **8728 — API MikroTik** |
+| 8501 — Streamlit | **8728 — MikroTik API** |
 
-El escaneo de infraestructura de IA desaparece del top 5. El giro hacia **puerto 5038 (AMI, Asterisk Manager Interface)** es relevante: es el puerto de gestión de centralitas Asterisk, lo que conecta temáticamente con el repunte de fraude VoIP en Sentrypeer esta misma semana — posible coordinación o reflejo de una campaña más amplia de reconocimiento de infraestructura de telefonía IP.
+AI infrastructure scanning disappears from the top 5. The shift to **port 5038 (AMI, Asterisk Manager Interface)** is relevant: it's the management port for Asterisk PBX systems, which thematically connects to the VoIP fraud surge in Sentrypeer this same week — possibly coordination or a reflection of a broader IP telephony infrastructure reconnaissance campaign.
 
-**LANTEC COMUNICACAO MULTIMIDIA LTDA (Brasil)** domina con 71.274 eventos. Modat B.V. (el escáner de investigación identificado la semana pasada) reaparece con 11.086 eventos — presente, pero en proporción mucho menor.
+**LANTEC COMUNICACAO MULTIMIDIA LTDA (Brazil)** dominates with 71,274 events. Modat B.V. (the research scanner identified last week) reappears with 11,086 events — present but in a much smaller proportion.
 
 ---
 
-## 6. Cowrie — Crecimiento Sostenido y Nuevo Loader Multi-Arquitectura
+## 6. Cowrie — Sustained Growth and New Multi-Architecture Loader
 
-**229.182 ataques, 1.798 IPs únicas, 65 HASSH únicos** (x1,97). Repunte marcado el 17-18 de julio.
+**229,182 attacks, 1,798 unique IPs, 65 unique HASSH** (x1.97). Marked uptick July 17–18.
 
-### Credenciales (datos exactos vía CSV)
+### Credentials (exact data via CSV)
 
-| Usuario | Intentos | | Contraseña | Intentos |
+| Username | Attempts | | Password | Attempts |
 |---|---:|---|---|---:|
-| Administrator | 273.098 | | 123456 | 1.629 |
-| Administrador | 52.633 | | 123 | 788 |
-| root | 14.292 | | 1234 | 732 |
-| admin | 2.500 | | password | 630 |
+| Administrator | 273,098 | | 123456 | 1,629 |
+| Administrador | 52,633 | | 123 | 788 |
+| root | 14,292 | | 1234 | 732 |
+| admin | 2,500 | | password | 630 |
 | sa | 679 | | admin | 614 |
 
-**Dato llamativo:** `Administrador` (en español, 52.633 intentos) aparece como segundo usuario más probado — diccionarios localizados para hispanohablantes, algo ausente la semana pasada.
+**Notable data:** `Administrador` (in Spanish, 52,633 attempts) appears as the second most tested username — localized dictionaries for Spanish speakers, absent last week.
 
-### Post-explotación
+### Post-exploitation
 
-El patrón de comandos se repite casi idéntico: `uname -a`, `chattr -ia .ssh; lockr -ia .ssh`, `cat /proc/cpuinfo`, `whoami` — mismo script de fingerprinting/bloqueo de `.ssh` de la semana anterior. Mismo tipo de loader, misma operación.
+The command pattern repeats almost identically: `uname -a`, `chattr -ia .ssh; lockr -ia .ssh`, `cat /proc/cpuinfo`, `whoami` — same fingerprinting/`.ssh` blocking script from the previous week. Same loader type, same operation.
 
-### Nuevo loader: arquitecturas inusuales
+### New loader: unusual architectures
 
-Descargas capturadas desde `41.216.189.157` con patrón de nombre ofuscado `xnxnxnxnxnxn[arquitectura]xnxn`:
+Downloads captured from `41.216.189.157` with obfuscated name pattern `xnxnxnxnxnxn[architecture]xnxn`:
 
-| Arquitectura | Contexto |
+| Architecture | Context |
 |---|---|
-| `aarch64` | ARM 64-bit — servidores y móviles modernos |
+| `aarch64` | ARM 64-bit — modern servers and mobile devices |
 | `i386` | x86 32-bit |
-| `loongarch64` | Arquitectura china de propósito general, muy poco habitual en malware |
-| `m68k` | Arquitectura de los años 80, hoy solo en sistemas embebidos/routers legacy |
+| `loongarch64` | Chinese general-purpose architecture, very unusual in malware |
+| `m68k` | 1980s architecture, today only in embedded systems/legacy routers |
 
-Compilar para `loongarch64` y `m68k` junto a las arquitecturas habituales indica un intento deliberado de **maximizar la superficie de dispositivos comprometibles**, incluyendo hardware legacy que normalmente no recibe atención de este tipo de malware. **Redtail** (identificado la semana pasada) también sigue presente.
+Compiling for `loongarch64` and `m68k` alongside the usual architectures indicates a deliberate attempt to **maximize the compromisable device surface**, including legacy hardware that normally doesn't receive this type of malware attention. **Redtail** (identified last week) also remains present.
 
-TechTies Inc. (37.526) y Net Access Internet India (24.150) encabezan el origen por ASN. La IP `103.149.197.34` acumula 24.150 eventos — prácticamente todo el tráfico de Net Access Internet India viene de esa única IP.
-
----
-
-## 7. Dionaea — El Mismo Actor, Segunda Semana
-
-**91.957 ataques, 1.474 IPs únicas** (x1,50).
-
-Las IPs `62.84.80.240`, `.241`, `.242` y `.243` — marcadas la semana pasada con ~5.600-5.700 eventos cada una — **vuelven a aparecer esta semana con conteos similares (3.796-3.874 cada una)**. Segunda semana consecutiva. Ya no es ruido: es un operador con infraestructura fija y presencia continuada contra este honeypot.
-
-Aparece con fuerza el protocolo **`ftpdatalisten`** (nuevo en el top de esta semana), ganando peso el puerto 21 (FTP) frente al dominio casi exclusivo de SMB/RPC de la semana anterior.
-
-Líbano y Vietnam repiten como países de origen; se suman **Japón y Armenia**, ausentes la semana pasada. Broadband Plus S.a.l. (Líbano) sigue siendo el ASN más activo (15.316).
+TechTies Inc. (37,526) and Net Access Internet India (24,150) lead by ASN origin. IP `103.149.197.34` accumulates 24,150 events — virtually all Net Access Internet India traffic comes from that single IP.
 
 ---
 
-## 8. ConPot — IEC-104 por Segunda Semana Consecutiva
+## 7. Dionaea — The Same Actor, Second Week
 
-**4.461 ataques, 257 IPs únicas** (x2,8). El protocolo **IEC-104** (puerto 2404, telecontrol de subestaciones eléctricas) sigue presente — ya no es un evento puntual, hay sondeo recurrente.
+**91,957 attacks, 1,474 unique IPs** (x1.50).
 
-Aparece también actividad en el **puerto 623 (IPMI)**, gestión remota fuera de banda de servidores — vector distinto al resto de protocolos ICS vistos hasta ahora, relevante porque IPMI mal asegurado es una vía de compromiso real y documentada en entornos de datacenter.
+IPs `62.84.80.240`, `.241`, `.242`, and `.243` — flagged last week with ~5,600–5,700 events each — **reappear this week with similar counts (3,796–3,874 each)**. Second consecutive week. This is no longer noise: it's an operator with fixed infrastructure and continued presence against this honeypot.
 
-**Censys, Inc.** aparece en el top de ASN (110 eventos) — al igual que Modat B.V. y ONYPHE SAS, es una empresa de escaneo de investigación de internet, no un actor malicioso. Confirma el patrón ya visto: parte del tráfico "de ataque" hacia honeypots ICS es catalogación pasiva de internet.
+The **`ftpdatalisten`** protocol appears strongly (new in this week's top), with port 21 (FTP) gaining weight compared to the near-exclusive SMB/RPC dominance last week.
 
----
-
-## 9. Adbhoney — Misma Campaña, Más Actividad
-
-**2.012 ataques, 106 IPs únicas.** El **mismo hash de payload de la semana pasada** reaparece con **228 descargas** (frente a 110 la semana anterior). La cadena Rebirth → `com.ufo.miner` → Trinity sigue activa con la misma muestra, confirmando una campaña persistente, no un evento aislado.
+Lebanon and Vietnam repeat as source countries; **Japan and Armenia** are added, absent last week. Broadband Plus S.a.l. (Lebanon) remains the most active ASN (15,316).
 
 ---
 
-## 10. Conclusiones
+## 8. ConPot — IEC-104 for a Second Consecutive Week
 
-1. **El crecimiento de esta semana es una redistribución del foco, no "más de lo mismo"**: RDP y VoIP se disparan mientras Honeytrap se modera. Un entorno real con RDP o centralita SIP expuestos debería considerar esta semana como una ventana de riesgo elevado específica para esos dos servicios.
+**4,461 attacks, 257 unique IPs** (x2.8). The **IEC-104** protocol (port 2404, electrical substation telecontrol) remains present — this is no longer a one-off event, there's recurring probing.
 
-2. **Los mismos actores/subredes reaparecen semana tras semana** (`62.84.80.240-243` en Dionaea; `217.154.196-197.x` y `31.70.86.6x` en Sentrypeer). Ya justifica una regla de bloqueo permanente a nivel de subred para estos rangos en un entorno real, en lugar de bloqueos puntuales por IP.
+**Port 623 (IPMI)** activity also appears, out-of-band remote management of servers — a different vector from the ICS protocols seen so far, relevant because insecure IPMI is a real, documented compromise path in datacenter environments.
 
-3. **El giro hacia AMI (5038) en Honeytrap coincidiendo con el pico de Sentrypeer** sugiere interés más amplio en infraestructura VoIP/PBX esta semana — merece seguimiento la semana siguiente para confirmar si es tendencia o coincidencia puntual.
-
-4. **El loader con soporte para `loongarch64` y `m68k`** es un dato técnico distintivo: pocos análisis de honeypot mencionan malware dirigido a estas arquitecturas. Merece un post independiente.
-
-5. **La reaparición y crecimiento del hash de Adbhoney** confirma el valor del seguimiento longitudinal: permite diferenciar entre "ruido nuevo cada semana" y "campañas persistentes" — exactamente lo que distingue un informe de threat intel con perspectiva temporal real de una foto aislada.
-
-6. **IEC-104 e IPMI en ConPot, dos semanas seguidas**, consolidan la recomendación anterior: cualquier repunte en estos puertos merece revisión prioritaria por el tipo de infraestructura que simulan.
+**Censys, Inc.** appears in the top ASNs (110 events) — like Modat B.V. and ONYPHE SAS, it's an internet research scanning company, not a malicious actor. Confirms the already-observed pattern: some "attack" traffic toward ICS honeypots is passive internet cataloguing.
 
 ---
 
-*Informe elaborado a partir de datos propios recogidos en una instancia T-Pot expuesta públicamente a internet. Metodología: exportación de paneles agregados de Kibana (rango 12–18 julio 2026) más tagclouds de credenciales en CSV. Comparativa realizada frente al [informe de la semana anterior (7–11 julio 2026)](/honeypot/informe-semanal-01/).*
+## 9. Adbhoney — Same Campaign, More Activity
+
+**2,012 attacks, 106 unique IPs.** The **same payload hash from last week** reappears with **228 downloads** (compared to 110 the previous week). The Rebirth → `com.ufo.miner` → Trinity chain remains active with the same sample, confirming a persistent campaign, not an isolated event.
+
+---
+
+## 10. Conclusions
+
+1. **This week's growth is a redistribution of focus, not "more of the same"**: RDP and VoIP spike while Honeytrap moderates. A real environment with exposed RDP or SIP PBX should consider this week a specific elevated-risk window for those two services.
+
+2. **The same actors/subnets reappear week after week** (`62.84.80.240-243` in Dionaea; `217.154.196-197.x` and `31.70.86.6x` in Sentrypeer). This now justifies a permanent subnet-level blocking rule for these ranges in a real environment, rather than one-off per-IP blocks.
+
+3. **The shift to AMI (5038) in Honeytrap coinciding with the Sentrypeer peak** suggests broader interest in VoIP/PBX infrastructure this week — worth tracking next week to confirm whether it's a trend or a one-off.
+
+4. **The loader with `loongarch64` and `m68k` support** is a distinctive technical data point: few honeypot analyses mention malware targeting these architectures. It warrants a separate post.
+
+5. **The reappearance and growth of the Adbhoney hash** confirms the value of longitudinal tracking: it allows distinguishing between "new noise each week" and "persistent campaigns" — exactly what separates a threat intel report with real temporal perspective from an isolated snapshot.
+
+6. **IEC-104 and IPMI in ConPot, two weeks in a row**, consolidates the previous recommendation: any uptick on these ports warrants priority review given the type of infrastructure they simulate.
+
+---
+
+*Report compiled from data collected in a publicly internet-exposed T-Pot instance. Methodology: export of aggregated Kibana dashboards (range July 12–18, 2026) plus credential tag clouds in CSV. Comparison made against the [previous week's report (July 7–11, 2026)](/honeypot/informe-semanal-01/).*

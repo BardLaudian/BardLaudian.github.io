@@ -1,223 +1,223 @@
 ---
-title: "Informe Semanal de Threat Intelligence — Honeypot T-Pot (26 jul – 2 ago 2026)"
+title: "Weekly Threat Intelligence Report — T-Pot Honeypot (Jul 26 – Aug 2, 2026)"
 date: 2026-08-03
 draft: false
-description: "Cuarto informe semanal del honeypot T-Pot: ~2.023.000 eventos. El botnet SNMP residencial de ConPot se confirma por segunda semana consecutiva (Comcast, AT&T, Verizon, Charter). La IP 91.199.133.133 —catalogada en ThreatFox como C2 de Mirai Katana— reaparece sirviendo payloads en Cowrie. Redtail añade soporte RISC-V y el objetivo ERP turco en Dionaea se confirma como campaña activa."
+description: "Fourth weekly report from the T-Pot honeypot: ~2,023,000 events. The residential SNMP botnet on ConPot is confirmed for a second consecutive week (Comcast, AT&T, Verizon, Charter). IP 91.199.133.133 — catalogued in ThreatFox as a Mirai Katana C2 — reappears serving payloads in Cowrie. Redtail adds RISC-V support and the Turkish ERP target in Dionaea is confirmed as an active campaign."
 tags: ["Honeypot", "TPot", "ThreatIntel", "SOC", "BlueTeam", "Cowrie", "Dionaea", "Adbhoney", "Sentrypeer", "ConPot", "Honeytrap", "RDP", "SNMP", "Botnet", "Redtail", "Mirai", "Katana", "IoT", "ICS", "SCADA", "IEC104", "IPMI", "MSSQL", "ERP", "RISCV", "VoIP"]
 categories: ["Honeypot Diaries"]
 ---
 
 {{< lead >}}
-Cuarto informe semanal del honeypot T-Pot, período **26 de julio – 2 de agosto de 2026**. Con cuatro semanas de datos acumuladas, los patrones dejan de ser anecdóticos y se convierten en tendencias: el **botnet SNMP residencial de ConPot se confirma por segunda semana consecutiva** (Comcast, AT&T, Verizon, Charter sin un solo VPS en el top 10), la IP **`91.199.133.133` catalogada en ThreatFox como C2 de Mirai Katana reaparece** sirviendo payloads en Cowrie, **Redtail añade arquitectura RISC-V**, y la campaña de fuerza bruta contra software ERP turco en Dionaea se confirma con una segunda semana de datos consistentes.
+Fourth weekly report from the T-Pot honeypot, period **July 26 – August 2, 2026**. With four weeks of accumulated data, patterns stop being anecdotal and become trends: the **residential SNMP botnet on ConPot is confirmed for a second consecutive week** (Comcast, AT&T, Verizon, Charter with not a single VPS in the top 10), IP **`91.199.133.133` catalogued in ThreatFox as a Mirai Katana C2 reappears** serving payloads in Cowrie, **Redtail adds RISC-V architecture**, and the brute force campaign against Turkish ERP software in Dionaea is confirmed with a second week of consistent data.
 {{< /lead >}}
 
 ---
 
-**Período analizado:** 26 de julio – 2 de agosto de 2026
-**Fuente:** T-Pot (multi-honeypot + ELK Stack) — instancia expuesta públicamente en internet
-**Clasificación:** Uso en portfolio / TLP:CLEAR
-**Informes anteriores:** [7–11 jul](/honeypot/informe-semanal-01/) · [12–18 jul](/honeypot/informe-semanal-02/) · [19–25 jul](/honeypot/informe-semanal-03/)
+**Period analyzed:** July 26 – August 2, 2026
+**Source:** T-Pot (multi-honeypot + ELK Stack) — publicly internet-exposed instance
+**Classification:** Portfolio use / TLP:CLEAR
+**Previous reports:** [Jul 7–11](/honeypot/informe-semanal-01/) · [Jul 12–18](/honeypot/informe-semanal-02/) · [Jul 19–25](/honeypot/informe-semanal-03/)
 
 ---
 
-## 1. Resumen Ejecutivo
+## 1. Executive Summary
 
-El volumen total sube a **~2.023.000 eventos** (frente a ~1.820.000 la semana anterior). Con cuatro semanas de datos, los patrones dejan de ser anecdóticos:
+Total volume rises to **~2,023,000 events** (compared to ~1,820,000 last week). With four weeks of data, patterns stop being anecdotal:
 
-- **El botnet residencial de ConPot no fue un evento puntual**: top 10 de ASN copado de nuevo por ISPs domésticos (Comcast, AT&T, Verizon, Charter ×3, Cox, CenturyLink, Videotron, SFR), sin un solo proveedor de hosting/VPS. Segunda semana idéntica en composición.
-- **Cierre de círculo con la primera investigación del proyecto**: la IP `91.199.133.133` —catalogada en ThreatFox como C2 activo de la variante Mirai "Katana"— **reaparece sirviendo `deploy.sh` a Cowrie**, semanas después de su primera detección. Sigue operativa.
-- **Nuevo actor dominante**: `45.95.147.229` (Alsycon B.V.) se convierte en la **IP más activa de todo el dashboard** (194.606 eventos), concentrada en Honeytrap. Sin presencia relevante en semanas anteriores.
-- **Persistencia a cuatro semanas**: `108.181.56.189` (Sentrypeer) y `103.149.197.34` (Cowrie) llevan cuatro semanas consecutivas en el top 10 de sus respectivos sensores.
-- **Primera caída del hash de Adbhoney tras tres semanas de crecimiento**: 110→228→287→**102 descargas**. ¿Pausa o takedown del servidor origen? El dato clave será la semana que viene.
-- **Redtail amplía arquitecturas**: primera aparición de `redtail.riscv`, sumando RISC-V a ARM7/ARM8/i686/x86_64.
-- **El objetivo turco en Dionaea se confirma**: segunda semana con terminología ERP turca en el tagcloud (`POS`, `ERCYONETICI` como términos nuevos) y Turk Telekom repitiendo en el top de ASN.
+- **The residential ConPot botnet was not a one-off event**: top 10 ASN again dominated by domestic ISPs (Comcast, AT&T, Verizon, Charter ×3, Cox, CenturyLink, Videotron, SFR), with not a single hosting/VPS provider. Second identical week in composition.
+- **Full-circle with the project's first investigation**: IP `91.199.133.133` — catalogued in ThreatFox as an active C2 for the Mirai "Katana" variant — **reappears serving `deploy.sh` to Cowrie**, weeks after its first detection. Still operational.
+- **New dominant actor**: `45.95.147.229` (Alsycon B.V.) becomes the **most active IP in the entire dashboard** (194,606 events), concentrated in Honeytrap. No relevant presence in previous weeks.
+- **Four-week persistence**: `108.181.56.189` (Sentrypeer) and `103.149.197.34` (Cowrie) have been in the top 10 of their respective sensors for four consecutive weeks.
+- **First drop in the Adbhoney hash after three weeks of growth**: 110→228→287→**102 downloads**. Pause or takedown of the origin server? The key data point will be next week.
+- **Redtail expands architectures**: first appearance of `redtail.riscv`, adding RISC-V to ARM7/ARM8/i686/x86_64.
+- **The Turkish target in Dionaea is confirmed**: second week with Turkish ERP terminology in the tagcloud (`POS`, `ERCYONETICI` as new terms) and Turk Telekom repeating in the top ASN.
 
 ---
 
-## 2. Volumetría — Cuatro Semanas de Contexto
+## 2. Volume — Four Weeks of Context
 
-| Honeypot | 7–11 jul | 12–18 jul | 19–25 jul | 26 jul–2 ago |
+| Honeypot | Jul 7–11 | Jul 12–18 | Jul 19–25 | Jul 26–Aug 2 |
 |---|---:|---:|---:|---:|
-| RDPHoneypot | 111.818 | 2.312.634 | 843.181 | 657.393 |
-| Honeytrap | 678.792 | 218.202 | 372.001 | 545.549 |
-| Cowrie | 116.390 | 229.182 | 249.057 | 318.800 |
-| Sentrypeer | 36.522 | 340.759 | 119.651 | 279.730 |
-| ConPot | 1.594 | 4.461 | 122.376 | 100.475 |
-| Dionaea | 61.123 | 91.957 | 92.722 | 74.429 |
-| Adbhoney | 2.618 | 2.012 | 1.737 | 1.292 |
-| **Total aprox.** | **~1.011.000** | **~3.213.000** | **~1.820.000** | **~2.023.000** |
+| RDPHoneypot | 111,818 | 2,312,634 | 843,181 | 657,393 |
+| Honeytrap | 678,792 | 218,202 | 372,001 | 545,549 |
+| Cowrie | 116,390 | 229,182 | 249,057 | 318,800 |
+| Sentrypeer | 36,522 | 340,759 | 119,651 | 279,730 |
+| ConPot | 1,594 | 4,461 | 122,376 | 100,475 |
+| Dionaea | 61,123 | 91,957 | 92,722 | 74,429 |
+| Adbhoney | 2,618 | 2,012 | 1,737 | 1,292 |
+| **Approx. total** | **~1,011,000** | **~3,213,000** | **~1,820,000** | **~2,023,000** |
 
-**Patrones que emergen a cuatro semanas:**
+**Patterns emerging at four weeks:**
 
-- **Cowrie es el único sensor con crecimiento monótono** las cuatro semanas (116k→229k→249k→319k) — actividad orgánica, sin picos artificiales.
-- **RDPHoneypot lleva tres semanas de caída consecutiva** tras el pico de la semana 2 (2,3M→843k→657k) — la campaña se está desinflando gradualmente.
-- **Sentrypeer es el más errático** (36k→340k→119k→280k) — sugiere varios actores independientes entrando y saliendo, no una única campaña predecible.
-- **Adbhoney es el único con declive sostenido** en volumen de sensor las cuatro semanas, aunque el hash específico creció tres semanas antes de caer esta semana — son señales distintas.
+- **Cowrie is the only sensor with monotonic growth** across all four weeks (116k→229k→249k→319k) — organic activity, without artificial spikes.
+- **RDPHoneypot has been declining for three consecutive weeks** after the week 2 peak (2.3M→843k→657k) — the campaign is gradually deflating.
+- **Sentrypeer is the most erratic** (36k→340k→119k→280k) — suggests several independent actors entering and exiting, not a single predictable campaign.
+- **Adbhoney is the only one with sustained volume decline** across all four weeks, although the specific hash grew for three weeks before dropping this week — these are distinct signals.
 
 ---
 
-## 3. ConPot — Segunda Semana del Botnet Residencial: ya es Patrón
+## 3. ConPot — Second Week of the Residential Botnet: It's a Pattern Now
 
-**100.475 ataques, 1.077 IPs únicas.** Volumen algo menor que la semana pasada (122.376) pero **el hallazgo importante es que se repite exactamente la composición del origen**.
+**100,475 attacks, 1,077 unique IPs.** Slightly lower volume than last week (122,376) but **the important finding is that origin composition repeats exactly**.
 
-### Top ASN: segunda semana sin un solo proveedor de hosting
+### Top ASN: second week with not a single hosting provider
 
-| ASN | Organización | País | Eventos |
+| ASN | Organization | Country | Events |
 |---|---|---|---:|
-| 7922 | Comcast Cable Communications | EE. UU. | 29.940 |
-| 7018 | AT&T Enterprises | EE. UU. | 8.303 |
-| 701 | Verizon Business | EE. UU. | 7.434 |
-| 20001 / 11426 / 10796 | Charter Communications | EE. UU. | 3.799 / 2.339 / 2.155 |
-| 22773 | Cox Communications | EE. UU. | 2.809 |
-| 15557 | SFR | Francia | 2.547 |
-| 209 | CenturyLink | EE. UU. | 2.271 |
-| 5769 | Videotron Ltée | Canadá | 2.188 |
+| 7922 | Comcast Cable Communications | USA | 29,940 |
+| 7018 | AT&T Enterprises | USA | 8,303 |
+| 701 | Verizon Business | USA | 7,434 |
+| 20001 / 11426 / 10796 | Charter Communications | USA | 3,799 / 2,339 / 2,155 |
+| 22773 | Cox Communications | USA | 2,809 |
+| 15557 | SFR | France | 2,547 |
+| 209 | CenturyLink | USA | 2,271 |
+| 5769 | Videotron Ltée | Canada | 2,188 |
 
-Con dos semanas idénticas en composición (ISPs residenciales puros, sin VPS/hosting), la hipótesis del **botnet de routers domésticos/IoT comprometidos escaneando SNMP** pasa de ser una hipótesis razonable a ser la explicación más probable respaldada por datos repetidos. El perfil es clásico: Comcast, AT&T, Charter y Verizon son los cuatro mayores operadores de banda ancha de EE. UU., con decenas de millones de routers domésticos — exactamente el tipo de infraestructura que un botnet IoT comprometería de forma masiva.
+With two identical weeks in composition (pure residential ISPs, no VPS/hosting), the **compromised home/IoT router botnet scanning SNMP** hypothesis moves from being a reasonable hypothesis to being the most likely explanation backed by repeated data. The profile is classic: Comcast, AT&T, Charter, and Verizon are the four largest broadband operators in the USA, with tens of millions of home routers — exactly the kind of infrastructure an IoT botnet would compromise at scale.
 
-### IPMI sube posiciones
+### IPMI rises
 
-El puerto **623 (IPMI)** pasa a ser el segundo más atacado del sensor, solo por detrás del 161 (SNMP). IPMI mal asegurado es una vía de compromiso real de servidores en datacenters — su crecimiento sostenido merece seguimiento si continúa.
+Port **623 (IPMI)** becomes the second most attacked port on the sensor, just behind 161 (SNMP). Poorly secured IPMI is a real server compromise path in datacenter environments — its sustained growth warrants tracking if it continues.
 
-### IEC-104: quinta semana consecutiva
+### IEC-104: fifth consecutive week
 
-El protocolo de telecontrol de subestaciones eléctricas sigue presente. El "Conpot Response - Top 10" muestra la respuesta *"? Command not found. Send 'H' for help."* repetida **53 veces** esta semana, frente a 2-3 veces en semanas anteriores — más intentos de interacción exploratoria con el servicio simulado, no solo escaneo automático de puertos.
+The electrical substation telecontrol protocol remains present. The "Conpot Response - Top 10" shows the response *"? Command not found. Send 'H' for help."* repeated **53 times** this week, compared to 2–3 times in previous weeks — more exploratory interaction attempts with the simulated service, not just automatic port scanning.
 
 ---
 
-## 4. El Nuevo Actor Dominante: `45.95.147.229` (Alsycon B.V.)
+## 4. The New Dominant Actor: `45.95.147.229` (Alsycon B.V.)
 
-La **IP individual más activa de todo el dashboard esta semana: 194.606 eventos**. Sin presencia destacable en ninguna semana anterior.
+**Most active individual IP in the entire dashboard this week: 194,606 events.** No notable presence in any previous week.
 
-| Sensor | Eventos |
+| Sensor | Events |
 |---|---:|
-| Honeytrap | 188.529 |
+| Honeytrap | 188,529 |
 | Adbhoney | 266 |
 
-El ASN Alsycon B.V. había aparecido en semanas anteriores con volúmenes menores repartidos entre varios sensores, pero nunca con una sola IP concentrando casi 200.000 eventos en una semana. Perfil típico de una IP recién puesta en producción para una campaña de escaneo agresiva. El dato clave será la semana que viene: ¿se consolida como actor recurrente o sigue el camino de Flyservers S.A. y desaparece casi por completo?
+The Alsycon B.V. ASN had appeared in previous weeks with smaller volumes distributed across several sensors, but never with a single IP concentrating nearly 200,000 events in one week. Typical profile of an IP recently put into production for an aggressive scanning campaign. The key data point will be next week: does it consolidate as a recurring actor or follow Flyservers S.A.'s path and disappear almost entirely?
 
 ---
 
-## 5. Cowrie — Cierre de Círculo con ThreatFox y RISC-V en Redtail
+## 5. Cowrie — ThreatFox Full Circle and RISC-V in Redtail
 
-**318.800 ataques, 1.821 IPs únicas, 63 HASSH.** Cuarto incremento semanal consecutivo.
+**318,800 attacks, 1,821 unique IPs, 63 HASSH.** Fourth consecutive weekly increase.
 
-### La IP de ThreatFox reaparece
+### The ThreatFox IP reappears
 
-En el panel de descargas aparece la URL **`http://91.199.133.133:8080/deploy.sh`** con 10 descargas. **`91.199.133.133` es la misma IP que identificamos en ThreatFox al inicio de este proyecto**, catalogada como C2 activo de la variante Mirai **"Katana"** con confianza del 100%. Ahora sirve un script de despliegue por HTTP en el puerto 8080, confirmando que la infraestructura **sigue operativa semanas después** de su primera detección. Sin el registro de IOCs de semanas anteriores, esta reaparición habría pasado desapercibida como "una URL más" en el top de descargas.
+In the download panel, the URL **`http://91.199.133.133:8080/deploy.sh`** appears with 10 downloads. **`91.199.133.133` is the same IP we identified in ThreatFox at the start of this project**, catalogued as an active C2 for the Mirai **"Katana"** variant with 100% confidence. It now serves a deployment script over HTTP on port 8080, confirming that the infrastructure **remains operational weeks after its first detection**. Without the IOC record from previous weeks, this reappearance would have gone unnoticed as "just another URL" in the download top.
 
-### Redtail añade RISC-V
+### Redtail adds RISC-V
 
-Primera aparición de `redtail.riscv` junto a los ya habituales `.arm7`, `.arm8`, `.i686`. RISC-V es una arquitectura de conjunto de instrucciones abierta con presencia creciente en microcontroladores y hardware IoT de bajo coste. Su inclusión confirma que el operador de Redtail sigue ampliando activamente su cobertura de dispositivos objetivo.
+First appearance of `redtail.riscv` alongside the already familiar `.arm7`, `.arm8`, `.i686`. RISC-V is an open instruction set architecture with growing presence in microcontrollers and low-cost IoT hardware. Its inclusion confirms that the Redtail operator is still actively expanding their target device coverage.
 
-### Actores persistentes
+### Persistent actors
 
-| Indicador | Sem 1 | Sem 2 | Sem 3 | Sem 4 |
+| Indicator | Week 1 | Week 2 | Week 3 | Week 4 |
 |---|:---:|:---:|:---:|:---:|
-| Subred `45.153.34.x` | ✅ | ✅ | ✅ | ✅ |
-| Malware Redtail | ✅ | ✅ | ✅ | ✅ |
-| Script `chattr -ia .ssh` | ✅ | ✅ | ✅ | ✅ |
-| `103.149.197.34` en top 10 | ✅ | ✅ | ✅ | ✅ |
+| Subnet `45.153.34.x` | ✅ | ✅ | ✅ | ✅ |
+| Redtail malware | ✅ | ✅ | ✅ | ✅ |
+| `chattr -ia .ssh` script | ✅ | ✅ | ✅ | ✅ |
+| `103.149.197.34` in top 10 | ✅ | ✅ | ✅ | ✅ |
 
-### Curiosidad técnica: cabeceras HTTP como "credenciales"
+### Technical curiosity: HTTP headers as "credentials"
 
-En los tagclouds de usuario y contraseña aparecen literalmente fragmentos de peticiones HTTP: `User-Agent: python-requests/2.27.1`, `Accept: */*`, `Host: 62.84.184.111:23`. Esto ocurre cuando un cliente HTTP automatizado (escáner mal configurado, dado el user-agent `python-requests`) envía una petición HTTP completa contra el puerto SSH de Cowrie — el honeypot intenta interpretar las primeras líneas como intento de login y las registra tal cual. No es un ataque en sí, pero es un buen ejemplo de ruido de escáneres mal construidos que puede distorsionar las estadísticas de credenciales si no se filtra con criterio.
-
----
-
-## 6. Sentrypeer — Repunte con Nuevos Protagonistas del Mismo Bloque
-
-**279.730 ataques, 178 IPs únicas** (x2,3 respecto a la semana anterior). Dos fases: meseta alta el 26-27 de julio, pico aún mayor el 30-31.
-
-### Persistencia a cuatro semanas
-
-`108.181.56.189` vuelve con **96.541 eventos** — cuarta semana consecutiva con presencia relevante en este sensor y en el dashboard general.
-
-### Nuevo protagonista del mismo bloque
-
-`108.181.64.154` —del mismo rango `108.181.6x.x`— se convierte en la IP más activa del sensor con **103.695 eventos**. Dos IPs del mismo bloque /16 siendo las más activas en semanas consecutivas apunta a que no opera una única IP, sino **un bloque de direcciones bajo el mismo control**, rotando de forma similar a lo ya visto con la subred `45.153.34.x` en Cowrie.
-
-Los user-agents SIP más frecuentes cambian a `Cisco-SIPGateway/IOS` y `FreeSWITCH-mod_sofia` — variación en las herramientas, mismo objetivo de fraude/enumeración VoIP.
+The username and password tagclouds literally include fragments of HTTP requests: `User-Agent: python-requests/2.27.1`, `Accept: */*`, `Host: 62.84.184.111:23`. This happens when an automated HTTP client (a misconfigured scanner, given the `python-requests` user-agent) sends a complete HTTP request against Cowrie's SSH port — the honeypot tries to interpret the first lines as a login attempt and records them verbatim. Not an attack per se, but a good example of poorly-built scanner noise that can distort credential statistics if not filtered with judgment.
 
 ---
 
-## 7. RDPHoneypot — Tercera Semana de Declive Sostenido
+## 6. Sentrypeer — Rebound with New Protagonists from the Same Block
 
-**657.393 ataques, 551 IPs únicas.** Tendencia confirmada: 2.312.634 → 843.181 → 657.393.
+**279,730 attacks, 178 unique IPs** (x2.3 compared to last week). Two phases: high plateau July 26–27, even higher peak July 30–31.
 
-MEVSPACE sp. z o.o. se mantiene como el ASN más constante de las últimas semanas (190.392 esta semana). **Flyservers S.A.**, que casi desapareció en la semana 3, reaparece con un volumen modesto (22.783) — ni vuelve a dominar ni desaparece del todo. Se consolida como actor secundario recurrente.
+### Four-week persistence
+
+`108.181.56.189` returns with **96,541 events** — fourth consecutive week with relevant presence on this sensor and in the general dashboard.
+
+### New protagonist from the same block
+
+`108.181.64.154` — from the same range `108.181.6x.x` — becomes the most active IP on the sensor with **103,695 events**. Two IPs from the same /16 block being the most active in consecutive weeks points to operating not a single IP, but **a block of addresses under the same control**, rotating similarly to what we already saw with subnet `45.153.34.x` in Cowrie.
+
+The most frequent SIP user-agents change to `Cisco-SIPGateway/IOS` and `FreeSWITCH-mod_sofia` — variation in tools, same VoIP fraud/enumeration objective.
 
 ---
 
-## 8. Dionaea — Segunda Semana del Objetivo ERP Turco: ya es Campaña
+## 7. RDPHoneypot — Third Week of Sustained Decline
 
-**74.429 ataques, 1.660 IPs únicas** — a la baja en volumen, pero con el hallazgo cualitativo más importante del sensor.
+**657,393 attacks, 551 unique IPs.** Trend confirmed: 2,312,634 → 843,181 → 657,393.
 
-### El tagcloud se amplía
+MEVSPACE sp. z o.o. remains the most consistent ASN of recent weeks (190,392 this week). **Flyservers S.A.**, which nearly disappeared in week 3, reappears with modest volume (22,783) — neither dominating again nor disappearing entirely. It consolidates as a recurring secondary actor.
 
-| Término | Significado / Contexto |
+---
+
+## 8. Dionaea — Second Week of the Turkish ERP Target: It's a Campaign Now
+
+**74,429 attacks, 1,660 unique IPs** — declining in volume, but with the most important qualitative finding on the sensor.
+
+### The tagcloud expands
+
+| Term | Meaning / Context |
 |---|---|
-| `KASA` | Caja/efectivo |
-| `MIKRO`, `LOGO` | Marcas reales de ERP turco |
-| `MUHASEBE` | Contabilidad |
-| `BARKOD` | Código de barras |
-| `ENTEGRA` | Integración (módulo ERP) |
-| `POS` *(nuevo)* | Punto de venta |
-| `ERCYONETICI` *(nuevo)* | Probable "ERP yöneticisi" — administrador de ERP en turco |
+| `KASA` | Cash/register |
+| `MIKRO`, `LOGO` | Real Turkish ERP brands |
+| `MUHASEBE` | Accounting |
+| `BARKOD` | Barcode |
+| `ENTEGRA` | Integration (ERP module) |
+| `POS` *(new)* | Point of sale |
+| `ERCYONETICI` *(new)* | Likely "ERP yöneticisi" — ERP administrator in Turkish |
 
-**Turk Telekom repite en el top de ASN** (3.670 eventos, frente a 3.410 la semana pasada). Con dos semanas de datos consistentes en terminología, protocolo (MSSQL) y origen geográfico, la clasificación de campaña dirigida es ya sólida, no una hipótesis.
+**Turk Telekom repeats in the top ASN** (3,670 events, compared to 3,410 last week). With two weeks of consistent data in terminology, protocol (MSSQL), and geographic origin, the directed campaign classification is now solid, not a hypothesis.
 
-**India** se convierte en el primer país de origen (nuevo en Dionaea), con Alliance Broadband Services Pvt. Ltd. (11.070 eventos) y la IP `144.48.227.75` como principal origen.
+**India** becomes the top origin country (new in Dionaea), with Alliance Broadband Services Pvt. Ltd. (11,070 events) and IP `144.48.227.75` as the main origin.
 
 ---
 
-## 9. Adbhoney — Primera Caída: ¿Pausa o Takedown?
+## 9. Adbhoney — First Drop: Pause or Takedown?
 
-**1.292 ataques, 108 IPs únicas.** El dato que rompe la racha:
+**1,292 attacks, 108 unique IPs.** The data that breaks the streak:
 
-| Semana | Descargas del hash |
+| Week | Hash `849840...` downloads |
 |---|---:|
-| 7–11 jul | 110 |
-| 12–18 jul | 228 |
-| 19–25 jul | 287 |
-| 26 jul–2 ago | **102** |
+| Jul 7–11 | 110 |
+| Jul 12–18 | 228 |
+| Jul 19–25 | 287 |
+| Jul 26–Aug 2 | **102** |
 
-El hash `849840d92c44ed04af624abd9e5d79a7a082016c89ac39ac50d19f3d53839b5` cae de 287 a 102 descargas. El comando `busybox wget` contra `94.154.43.48` también cae de forma proporcional (218 → 80 ejecuciones). Las causas posibles son la baja de la infraestructura de origen, una pausa deliberada de la campaña, o variabilidad puntual. **El dato decisivo será la semana que viene**: si se recupera, fue una pausa; si sigue cayendo o desaparece, es indicio de takedown o abandono de la campaña.
+The hash `849840d92c44ed04af624abd9e5d79a7a082016c89ac39ac50d19f3d53839b5` drops from 287 to 102 downloads. The `busybox wget` command against `94.154.43.48` also drops proportionally (218 → 80 executions). Possible causes include the origin infrastructure being taken down, a deliberate campaign pause, or one-off variability. **The decisive data point will be next week**: if it recovers, it was a pause; if it keeps dropping or disappears, it's an indicator of takedown or campaign abandonment.
 
 ---
 
-## 10. Actores Persistentes — Primera Tabla Consolidada
+## 10. Persistent Actors — First Consolidated Table
 
-Con cuatro semanas de datos ya disponibles, se inaugura esta sección de seguimiento longitudinal:
+With four weeks of data now available, this longitudinal tracking section is inaugurated:
 
-| Indicador | S1 (7-11 jul) | S2 (12-18 jul) | S3 (19-25 jul) | S4 (26 jul-2 ago) |
+| Indicator | W1 (Jul 7–11) | W2 (Jul 12–18) | W3 (Jul 19–25) | W4 (Jul 26–Aug 2) |
 |---|:---:|:---:|:---:|:---:|
 | `45.153.34.x` (Cowrie) | ✅ | ✅ | ✅ | ✅ |
 | Redtail (Cowrie) | ✅ | ✅ | ✅ | ✅ (+RISC-V) |
 | `103.149.197.34` (Cowrie) | ✅ | ✅ | ✅ | ✅ |
 | `108.181.56.189` (Sentrypeer) | ❌ | ✅ | ✅ | ✅ |
-| Hash Adbhoney `849840...` | ✅ 110 | ✅ 228 | ✅ 287 | ⚠️ 102 |
-| IEC-104 en ConPot | ✅ | ✅ | ✅ | ✅ |
-| Botnet SNMP residencial (ConPot) | ❌ | ❌ | ✅ | ✅ |
-| Objetivo ERP turco (Dionaea) | ❌ | ❌ | ✅ | ✅ |
-| `91.199.133.133` (C2 Katana) | 🔍 IOC | ❌ | ❌ | ✅ reaparece |
+| Adbhoney hash `849840...` | ✅ 110 | ✅ 228 | ✅ 287 | ⚠️ 102 |
+| IEC-104 on ConPot | ✅ | ✅ | ✅ | ✅ |
+| Residential SNMP botnet (ConPot) | ❌ | ❌ | ✅ | ✅ |
+| Turkish ERP target (Dionaea) | ❌ | ❌ | ✅ | ✅ |
+| `91.199.133.133` (Katana C2) | 🔍 IOC | ❌ | ❌ | ✅ reappears |
 
 ---
 
-## 11. Conclusiones
+## 11. Conclusions
 
-1. **El botnet SNMP residencial es ya el hallazgo más sólido del proyecto**: dos semanas con composición de origen idéntica (ISPs domésticos puros) eliminan la posibilidad de anomalía puntual. Es el mejor candidato para un post técnico independiente.
+1. **The residential SNMP botnet is the project's most solid finding so far**: two weeks with identical origin composition (pure domestic ISPs, no VPS) eliminate the possibility of a one-off anomaly. Best candidate for an independent technical post.
 
-2. **La reaparición de `91.199.133.133` demuestra el valor del registro longitudinal de IOCs**: sin el contexto de semanas anteriores, habría sido "una URL más". Con el contexto, es la confirmación de que una infraestructura C2 investigada explícitamente sigue operativa semanas después.
+2. **The reappearance of `91.199.133.133` demonstrates the value of longitudinal IOC tracking**: without the context from previous weeks, it would have been "just another URL." With context, it's confirmation that an explicitly researched C2 infrastructure remains operational weeks later.
 
-3. **Vigilar `45.95.147.229` la semana que viene**: ¿actor recurrente o flash-in-the-pan como Flyservers S.A.? Una sola semana no permite clasificarlo.
+3. **Watch `45.95.147.229` next week**: recurring actor or flash-in-the-pan like Flyservers S.A.? One week doesn't allow classification.
 
-4. **El objetivo ERP turco en Dionaea es ya campaña confirmada**: dos semanas con el mismo perfil (terminología, protocolo, ASN de origen) justifican tratarlo como ataque dirigido, no ruido genérico.
+4. **The Turkish ERP target in Dionaea is now a confirmed campaign**: two weeks with the same profile (terminology, protocol, origin ASN) justify treating it as a directed attack, not generic noise.
 
-5. **La caída del hash de Adbhoney es la señal más incierta de la semana**: el seguimiento de la semana que viene resolverá si fue pausa o fin de campaña.
+5. **The Adbhoney hash drop is the week's most uncertain signal**: next week's tracking will resolve whether it was a pause or campaign end.
 
-6. **La tabla de actores persistentes está ya en condiciones de ser una sección fija** del informe — con cuatro semanas de histórico, tiene valor real para distinguir comportamiento orgánico de campañas estructuradas.
+6. **The persistent actors table is now ready to be a fixed section** of the report — with four weeks of history, it has real value for distinguishing organic behavior from structured campaigns.
 
 ---
 
-*Informe elaborado a partir de datos propios recogidos en una instancia T-Pot expuesta públicamente a internet. Metodología: exportación de paneles agregados de Kibana (rango 26 julio – 2 agosto 2026) más tagclouds de credenciales en CSV. Comparativa realizada frente a los tres informes anteriores ([7–11 jul](/honeypot/informe-semanal-01/), [12–18 jul](/honeypot/informe-semanal-02/), [19–25 jul](/honeypot/informe-semanal-03/)).*
+*Report compiled from data collected in a publicly internet-exposed T-Pot instance. Methodology: export of aggregated Kibana dashboards (range July 26 – August 2, 2026) plus credential tag clouds in CSV. Comparison made against the three previous reports ([Jul 7–11](/honeypot/informe-semanal-01/), [Jul 12–18](/honeypot/informe-semanal-02/), [Jul 19–25](/honeypot/informe-semanal-03/)).*

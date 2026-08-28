@@ -1,196 +1,196 @@
 ---
-title: "Informe Semanal de Threat Intelligence — Honeypot T-Pot (19–25 julio 2026)"
+title: "Weekly Threat Intelligence Report — T-Pot Honeypot (Jul 19–25, 2026)"
 date: 2026-07-26
 draft: false
-description: "Tercer informe semanal del honeypot T-Pot: volumen baja a ~1.820.000 eventos pero la composición cambia radicalmente. ConPot se dispara x27 con ISPs residenciales (Comcast, AT&T, Virgin Media) atacando SNMP — firma de botnet IoT. Flyservers S.A. colapsa en RDP, Adbhoney confirma campaña activa por tercera semana y Dionaea detecta fuerza bruta dirigida a software de contabilidad turco (LOGO, Mikro)."
+description: "Third weekly report from the T-Pot honeypot: volume drops to ~1,820,000 events but composition changes radically. ConPot spikes x27 with residential ISPs (Comcast, AT&T, Virgin Media) attacking SNMP — the signature of an IoT botnet. Flyservers S.A. collapses on RDP, Adbhoney confirms an active campaign for a third week, and Dionaea detects brute force targeting Turkish accounting software (LOGO, Mikro)."
 tags: ["Honeypot", "TPot", "ThreatIntel", "SOC", "BlueTeam", "Cowrie", "Dionaea", "Adbhoney", "Sentrypeer", "ConPot", "Honeytrap", "RDP", "SNMP", "VoIP", "Malware", "IoT", "Botnet", "Redtail", "ICS", "SCADA", "IEC104", "MSSQL", "ERP"]
 categories: ["Honeypot Diaries"]
 ---
 
 {{< lead >}}
-Tercer informe semanal del honeypot T-Pot, período **19–25 de julio de 2026**. El volumen total baja a **~1.820.000 eventos** (la mitad que la semana anterior), pero el dato relevante no es el total sino la composición: **ConPot se dispara x27** con origen en ISPs residenciales (Comcast, AT&T, Virgin Media, Free SAS) — la firma de un botnet de routers domésticos atacando SNMP, un actor cualitativamente distinto a todo lo visto hasta ahora. Mientras tanto, Flyservers S.A. colapsa en RDP, el mismo payload de Adbhoney lleva tres semanas creciendo, y Dionaea detecta fuerza bruta dirigida específicamente a software de contabilidad turco sobre MSSQL.
+Third weekly report from the T-Pot honeypot, period **July 19–25, 2026**. Total volume drops to **~1,820,000 events** (half of last week), but the relevant data isn't the total — it's the composition: **ConPot spikes x27** with origin in residential ISPs (Comcast, AT&T, Virgin Media, Free SAS) — the signature of a domestic router botnet attacking SNMP, a qualitatively different actor from anything seen so far. Meanwhile, Flyservers S.A. collapses on RDP, the same Adbhoney payload is in its third week of growth, and Dionaea detects brute force specifically targeting Turkish accounting software over MSSQL.
 {{< /lead >}}
 
 ---
 
-**Período analizado:** 19 – 25 de julio de 2026
-**Fuente:** T-Pot (multi-honeypot + ELK Stack) — instancia expuesta públicamente en internet
-**Clasificación:** Uso en portfolio / TLP:CLEAR
-**Informes anteriores:** [semana 7–11 jul](/honeypot/informe-semanal-01/) · [semana 12–18 jul](/honeypot/informe-semanal-02/)
+**Period analyzed:** July 19–25, 2026
+**Source:** T-Pot (multi-honeypot + ELK Stack) — publicly internet-exposed instance
+**Classification:** Portfolio use / TLP:CLEAR
+**Previous reports:** [Jul 7–11](/honeypot/informe-semanal-01/) · [Jul 12–18](/honeypot/informe-semanal-02/)
 
 ---
 
-## 1. Resumen Ejecutivo
+## 1. Executive Summary
 
-El volumen total baja a **~1.820.000 eventos**, prácticamente la mitad que la semana anterior (~3.213.000). Pero el dato relevante no es el volumen total — es que **la composición cambia radicalmente sensor a sensor**:
+Total volume drops to **~1,820,000 events**, roughly half of last week (~3,213,000). But the relevant data isn't the total volume — it's that **composition changes radically sensor by sensor**:
 
-- **ConPot se dispara x27** (4.461 → 122.376 ataques) con un cambio de origen sin precedentes: ya no son VPS de hosting ni escáneres de investigación, sino **ISPs residenciales** — Comcast, Charter, AT&T, Virgin Media, Free SAS, TIM. Todo concentrado en el puerto **161 (SNMP)**. La firma de un **botnet compuesto por routers domésticos/IoT comprometidos**.
-- **RDPHoneypot se desploma a un tercio** (2.312.634 → 843.181). **Flyservers S.A.**, que la semana pasada generaba más de un millón de eventos, cae a apenas ~40.800 — su campaña se detuvo o migró casi por completo.
-- **Sentrypeer también cae a un tercio** (340.759 → 119.651), pero la IP `108.181.56.189` — la más activa del dataset la semana pasada — **vuelve a aparecer como la más activa**, ahora destacada también en el top 10 global. Tercera semana con presencia relevante.
-- **Honeytrap vuelve a crecer** (218.202 → 372.001), impulsado en un 40% por una sola IP de la **red académica alemana DFN** — casi con toda seguridad tráfico de investigación, no un ataque real.
-- **Cowrie confirma por tercera semana consecutiva** la subred `45.153.34.x` y el malware Redtail. Mismo actor, misma infraestructura, mismo payload.
-- **El hash de Adbhoney sigue creciendo semana a semana**: 110 → 228 → **287 descargas**. Tres semanas de datos confirman una campaña activa y en expansión.
-- **Nuevo hallazgo en Dionaea**: términos en turco en el tagcloud de usuarios (`KASA`, `DEPO`, `FATURA`, `LOGO`, `MIKRO`) — nombres de software ERP/contable real turco — junto al repunte de `mssqld` y un ISP turco en el top de ASN. Fuerza bruta vertical dirigida a un sector y geografía específicos.
+- **ConPot spikes x27** (4,461 → 122,376 attacks) with an unprecedented origin shift: no longer VPS hosting or research scanners, but **residential ISPs** — Comcast, Charter, AT&T, Virgin Media, Free SAS, TIM. All concentrated on **port 161 (SNMP)**. The signature of a **botnet of compromised home routers/IoT devices**.
+- **RDPHoneypot drops to a third** (2,312,634 → 843,181). **Flyservers S.A.**, which generated over a million events last week, falls to barely ~40,800 — its campaign stopped or migrated almost entirely.
+- **Sentrypeer also drops to a third** (340,759 → 119,651), but the IP `108.181.56.189` — the most active in the dataset last week — **reappears as the most active again**, also highlighted in the global top 10. Third week with relevant presence.
+- **Honeytrap grows again** (218,202 → 372,001), driven 40% by a single IP from the **German academic network DFN** — almost certainly research traffic, not a real attack.
+- **Cowrie confirms for a third consecutive week** the subnet `45.153.34.x` and the Redtail malware. Same actor, same infrastructure, same payload.
+- **The Adbhoney hash keeps growing week over week**: 110 → 228 → **287 downloads**. Three weeks of data confirm an active, expanding campaign.
+- **New Dionaea finding**: Turkish terms in the username tagcloud (`KASA`, `DEPO`, `FATURA`, `LOGO`, `MIKRO`) — names of real Turkish ERP/accounting software — alongside an uptick of `mssqld` and a Turkish ISP in the top ASN. Vertical brute force targeting a specific sector and geography.
 
 ---
 
-## 2. Volumetría Comparativa (tres semanas)
+## 2. Comparative Volume (three weeks)
 
-| Honeypot | 7–11 jul | 12–18 jul | 19–25 jul | Tendencia |
+| Honeypot | Jul 7–11 | Jul 12–18 | Jul 19–25 | Trend |
 |---|---:|---:|---:|---|
-| RDPHoneypot | 111.818 | 2.312.634 | 843.181 | 📈📉 pico y caída |
-| Honeytrap | 678.792 | 218.202 | 372.001 | 📉📈 en forma de V |
-| Cowrie | 116.390 | 229.182 | 249.057 | 📈 crecimiento sostenido |
-| ConPot | 1.594 | 4.461 | 122.376 | 📈📈📈 explosión |
-| Sentrypeer | 36.522 | 340.759 | 119.651 | 📈📉 pico y caída |
-| Dionaea | 61.123 | 91.957 | 92.722 | ➡️ estable |
-| Adbhoney | 2.618 | 2.012 | 1.737 | ➡️ (payload +161%) |
-| **Total aprox.** | **~1.011.000** | **~3.213.000** | **~1.820.000** | |
+| RDPHoneypot | 111,818 | 2,312,634 | 843,181 | 📈📉 spike and drop |
+| Honeytrap | 678,792 | 218,202 | 372,001 | 📉📈 V-shaped |
+| Cowrie | 116,390 | 229,182 | 249,057 | 📈 sustained growth |
+| ConPot | 1,594 | 4,461 | 122,376 | 📈📈📈 explosion |
+| Sentrypeer | 36,522 | 340,759 | 119,651 | 📈📉 spike and drop |
+| Dionaea | 61,123 | 91,957 | 92,722 | ➡️ stable |
+| Adbhoney | 2,618 | 2,012 | 1,737 | ➡️ (payload +161%) |
+| **Approx. total** | **~1,011,000** | **~3,213,000** | **~1,820,000** | |
 
-Ningún sensor mantiene un comportamiento estable salvo Dionaea y Cowrie. Esta variabilidad extrema semana a semana es en sí misma un dato: un snapshot de una sola semana sin comparación histórica daría una foto muy distorsionada del riesgo real de este honeypot.
+No sensor maintains stable behavior except Dionaea and Cowrie. This extreme week-to-week variability is itself a data point: a single-week snapshot without historical comparison would give a very distorted picture of this honeypot's real risk level.
 
 ---
 
-## 3. ConPot — El Hallazgo Más Relevante de la Semana
+## 3. ConPot — The Week's Most Relevant Finding
 
-**122.376 ataques, 1.009 IPs únicas** (x27 en volumen, x4 en IPs respecto a la semana anterior). Varios picos abruptos a lo largo de la semana (~20.000 eventos en un solo intervalo), no un crecimiento gradual.
+**122,376 attacks, 1,009 unique IPs** (x27 in volume, x4 in IPs compared to last week). Several abrupt peaks throughout the week (~20,000 events in a single interval), not gradual growth.
 
-### Cambio radical de infraestructura de origen
+### Radical origin infrastructure shift
 
-La semana pasada, los orígenes de ConPot eran proveedores de hosting/VPS típicos. **Esta semana, el top de ASN está copado por ISPs residenciales**:
+Last week ConPot's origins were typical hosting/VPS providers. **This week, the top ASN is dominated by residential ISPs**:
 
-| ASN | Organización | País | Eventos |
+| ASN | Organization | Country | Events |
 |---|---|---|---:|
-| 7922 | Comcast Cable Communications | EE. UU. | 12.053 |
-| 33363 | Charter Communications | EE. UU. | 11.644 |
-| 12322 | Free SAS | Francia | 10.889 |
-| 11426 / 20001 | Charter Communications | EE. UU. | 9.872 / 7.923 |
-| 3269 | TIM | Italia | 6.337 |
-| 7018 | AT&T Enterprises | EE. UU. | 5.489 |
-| 5089 | Virgin Media | Reino Unido | 4.765 |
+| 7922 | Comcast Cable Communications | USA | 12,053 |
+| 33363 | Charter Communications | USA | 11,644 |
+| 12322 | Free SAS | France | 10,889 |
+| 11426 / 20001 | Charter Communications | USA | 9,872 / 7,923 |
+| 3269 | TIM | Italy | 6,337 |
+| 7018 | AT&T Enterprises | USA | 5,489 |
+| 5089 | Virgin Media | UK | 4,765 |
 
-**Comcast, Charter, AT&T, Virgin Media, Free SAS y TIM** son operadores de banda ancha residencial. Ninguno es un proveedor de hosting/VPS. Este perfil de origen, combinado con el hecho de que el **99% del tráfico apunta al puerto 161 (SNMP)**, es la firma característica de un **botnet formado por routers domésticos o dispositivos IoT comprometidos** escaneando SNMP a gran escala — no de un actor con su propia infraestructura de ataque.
+**Comcast, Charter, AT&T, Virgin Media, Free SAS, and TIM** are residential broadband operators. None is a hosting/VPS provider. This origin profile, combined with the fact that **99% of traffic targets port 161 (SNMP)**, is the characteristic signature of a **botnet formed by compromised home routers or IoT devices** scanning SNMP at scale — not an actor with their own attack infrastructure.
 
-> **¿Por qué SNMP?** SNMP (Simple Network Management Protocol) es el protocolo de gestión remota más extendido en routers, switches y dispositivos de red. Escanearlo masivamente sirve para identificar dispositivos con SNMP habilitado y credenciales por defecto (community string `public`/`private`), el primer paso para comprometer nuevos nodos que incorporar al botnet.
+> **Why SNMP?** SNMP (Simple Network Management Protocol) is the most widespread remote management protocol in routers, switches, and network devices. Scanning it massively serves to identify devices with SNMP enabled and default credentials (community string `public`/`private`), the first step to compromising new nodes to add to the botnet.
 
-El protocolo **IEC-104** (telecontrol de subestaciones eléctricas, puerto 2404) sigue presente por **cuarta semana consecutiva**, aunque en proporción mínima frente al aluvión de SNMP de esta semana.
+The **IEC-104** protocol (electrical substation telecontrol, port 2404) remains present for a **fourth consecutive week**, though in minimal proportion compared to this week's SNMP deluge.
 
 ---
 
-## 4. RDPHoneypot — El Gran Actor de la Semana Pasada Desaparece
+## 4. RDPHoneypot — Last Week's Major Actor Disappears
 
-**843.181 ataques, 453 IPs únicas** (frente a 2.312.634 la semana pasada). Dos picos concretos el 22 y 23 de julio (~85-90k cada uno) y caída sostenida el resto de la semana.
+**843,181 attacks, 453 unique IPs** (compared to 2,312,634 last week). Two concrete peaks on July 22 and 23 (~85-90k each) and sustained decline the rest of the week.
 
-### Colapso de Flyservers S.A.
+### Flyservers S.A. collapse
 
-La semana pasada, **Flyservers S.A.** (dos ASN distintos) generaba más de 1.056.000 eventos — casi la mitad de todo el tráfico RDP. Esta semana, ambos ASN suman apenas **~40.800 eventos combinados**: una caída del 96% en siete días. Este tipo de colapso abrupto es típico de: (a) el operador fue detectado y su infraestructura dada de baja por el proveedor, (b) migró a otro proveedor, o (c) simplemente pausó la campaña.
+Last week, **Flyservers S.A.** (two different ASNs) generated over 1,056,000 events — nearly half of all RDP traffic. This week, both ASNs combined total barely **~40,800 events**: a 96% drop in seven days. This type of abrupt collapse is typical of: (a) the operator was detected and their infrastructure taken down by the provider, (b) they migrated to another provider, or (c) they simply paused the campaign.
 
-### Nuevos protagonistas
+### New protagonists
 
-| ASN | Organización | Eventos |
+| ASN | Organization | Events |
 |---|---|---:|
-| 201814 | MEVSPACE sp. z o.o. | 260.270 |
-| 205997 | Vlad Cojuhari | 224.226 |
+| 201814 | MEVSPACE sp. z o.o. | 260,270 |
+| 205997 | Vlad Cojuhari | 224,226 |
 
-**"Vlad Cojuhari"** (ASN 205997, 224.226 eventos) es un ASN registrado a nombre de una persona física en lugar de una empresa — inusual, y habitual en operaciones de hosting más pequeñas o menos reguladas. Mónaco y Panamá, dominantes la semana pasada (ligados a Flyservers), prácticamente desaparecen del top. Los países de origen son ahora Estados Unidos, Polonia, Francia y Azerbaiyán.
-
----
-
-## 5. Honeytrap — Recuperación Impulsada por Tráfico de Investigación
-
-**372.001 ataques, 9.974 IPs únicas** (x1,7 respecto a la semana anterior). Pico marcado el 22-23 de julio.
-
-### El actor dominante no es malicioso
-
-La IP `141.76.94.28`, perteneciente al ASN **Verein zur Förderung eines Deutschen Forschungsnetzes e.V. (DFN)** — la red académica y de investigación de Alemania — genera **146.980 eventos, casi el 40% de todo el tráfico de Honeytrap esta semana**. Es, con alta probabilidad, un proyecto de medición/escaneo de internet con fines de investigación académica. **No debe contabilizarse con el mismo peso que tráfico de un actor malicioso** al valorar el nivel de amenaza real de la semana.
-
-Los puertos más atacados mantienen el perfil de la semana pasada (8728/MikroTik, 5038/Asterisk AMI, 7070), sumando ahora **8081 y 2222** (puerto SSH alternativo, común en configuraciones no estándar).
+**"Vlad Cojuhari"** (ASN 205997, 224,226 events) is an ASN registered in an individual's name rather than a company — unusual, and common in smaller or less regulated hosting operations. Monaco and Panama, dominant last week (linked to Flyservers), virtually disappear from the top. Origin countries are now United States, Poland, France, and Azerbaijan.
 
 ---
 
-## 6. Cowrie — Tercera Semana Confirmando el Mismo Actor
+## 5. Honeytrap — Recovery Driven by Research Traffic
 
-**249.057 ataques, 1.623 IPs únicas, 57 HASSH únicos.** Crecimiento sostenido y moderado, coherente con las dos semanas anteriores.
+**372,001 attacks, 9,974 unique IPs** (x1.7 compared to last week). Marked peak on July 22–23.
 
-### Confirmación longitudinal a tres semanas
+### The dominant actor is not malicious
 
-| Indicador | Sem 1 (7-11 jul) | Sem 2 (12-18 jul) | Sem 3 (19-25 jul) |
+IP `141.76.94.28`, belonging to ASN **Verein zur Förderung eines Deutschen Forschungsnetzes e.V. (DFN)** — Germany's academic and research network — generates **146,980 events, nearly 40% of all Honeytrap traffic this week**. It is, with high probability, an internet measurement/scanning project for academic research purposes. **It should not be weighted the same as traffic from a malicious actor** when assessing the real threat level for the week.
+
+The most attacked ports maintain last week's profile (8728/MikroTik, 5038/Asterisk AMI, 7070), now adding **8081 and 2222** (alternative SSH port, common in non-standard configurations).
+
+---
+
+## 6. Cowrie — Third Week Confirming the Same Actor
+
+**249,057 attacks, 1,623 unique IPs, 57 unique HASSH.** Sustained and moderate growth, consistent with the two previous weeks.
+
+### Three-week longitudinal confirmation
+
+| Indicator | Week 1 (Jul 7–11) | Week 2 (Jul 12–18) | Week 3 (Jul 19–25) |
 |---|---|---|---|
-| Subred `45.153.34.x` | ✅ ~3.817/IP | ✅ ~3.817/IP | ✅ ~3.815/IP |
-| Malware Redtail | ✅ | ✅ | ✅ |
-| Script `chattr -ia .ssh` | ✅ | ✅ | ✅ |
-| Loader `xnxnxnxn` (loongarch64/m68k) | ❌ | ✅ | ❌ (puntual) |
+| Subnet `45.153.34.x` | ✅ ~3,817/IP | ✅ ~3,817/IP | ✅ ~3,815/IP |
+| Redtail malware | ✅ | ✅ | ✅ |
+| `chattr -ia .ssh` script | ✅ | ✅ | ✅ |
+| `xnxnxnxn` loader (loongarch64/m68k) | ❌ | ✅ | ❌ (one-off) |
 
-La subred `45.153.34.x`, Redtail y el script de bloqueo de `.ssh` son ya actores/TTPs permanentes de este honeypot. El loader con arquitecturas inusuales de la semana pasada no reaparece — fue una campaña puntual, no persistente.
+The subnet `45.153.34.x`, Redtail, and the `.ssh` blocking script are already permanent actors/TTPs of this honeypot. Last week's loader with unusual architectures doesn't reappear — it was a one-off campaign, not persistent.
 
-El comando `uname -a` casi duplica su frecuencia (384 → 711 ejecuciones) — mayor actividad del mismo loader. TechTies Inc. e India Net Access Internet lideran por tercer semana consecutiva; la IP `103.149.197.34` sigue siendo la más activa.
-
----
-
-## 7. Sentrypeer — Actor Recurrente, Tercera Semana
-
-**119.651 ataques, 192 IPs únicas.** Pico inicial el 19 de julio y caída sostenida el resto de la semana.
-
-`108.181.56.189` acumula **59.769 eventos** y vuelve a ser la IP más activa del sensor, y una de las más destacadas en el dashboard global. Con presencia en al menos dos semanas consecutivas y visibilidad a nivel de dashboard, es ya un actor confirmado con actividad prolongada contra esta instancia.
-
-### Detalle técnico curioso
-
-En el panel de user-agents SIP aparece la cadena **`'or"='`** — literalmente una carga de inyección SQL/comando clásica, usada aquí como valor de cabecera SIP. No es un ataque dirigido contra la base de datos del honeypot, sino una prueba automatizada genérica para comprobar si el servidor procesa cabeceras sin sanitizar. Ilustrativo del nivel de ruido que lanza cualquier escáner masivo: ensaya técnicas de inyección independientemente de que el protocolo objetivo sea SQL, SIP o cualquier otra cosa.
+The `uname -a` command nearly doubles in frequency (384 → 711 executions) — more activity from the same loader. TechTies Inc. and India Net Access Internet lead by ASN for a third consecutive week; IP `103.149.197.34` remains the most active.
 
 ---
 
-## 8. Dionaea — Fuerza Bruta Dirigida a Software ERP Turco
+## 7. Sentrypeer — Recurring Actor, Third Week
 
-**92.722 ataques, 1.799 IPs únicas** — volumen estable respecto a la semana anterior.
+**119,651 attacks, 192 unique IPs.** Initial peak on July 19 and sustained decline the rest of the week.
 
-### Hallazgo del tagcloud
+`108.181.56.189` accumulates **59,769 events** and is again the most active IP on the sensor, and one of the most visible in the global dashboard. With presence in at least two consecutive weeks and dashboard-level visibility, it is now a confirmed actor with prolonged activity against this instance.
 
-Junto a las credenciales genéricas habituales (`admin`, `root`, `sa`), aparece un conjunto de términos que no encajan con fuerza bruta genérica:
+### Curious technical detail
 
-| Término | Significado | Contexto |
+In the SIP user-agents panel, the string **`'or"='`** appears — literally a classic SQL/command injection payload, used here as a SIP header value. This is not a directed attack against the honeypot's database, but a generic automated test to check whether the server processes headers without sanitizing. Illustrative of the noise level any mass scanner generates: it tries injection techniques regardless of whether the target protocol is SQL, SIP, or anything else.
+
+---
+
+## 8. Dionaea — Brute Force Targeting Turkish ERP Software
+
+**92,722 attacks, 1,799 unique IPs** — stable volume compared to last week.
+
+### Tagcloud finding
+
+Alongside the usual generic credentials (`admin`, `root`, `sa`), a set of terms appears that doesn't fit generic brute force:
+
+| Term | Meaning | Context |
 |---|---|---|
-| `KASA` | Caja/efectivo | Módulo de caja en ERP turco |
-| `DEPO` | Almacén | Módulo de stock/almacén |
-| `FATURA` | Factura | Módulo de facturación |
-| `MUHASEBE` | Contabilidad | Módulo contable |
-| `LOGO` | — | Marca real de software ERP turco |
-| `MIKRO` | — | Marca real de software contable turco |
-| `BARKOD` | Código de barras | Módulo de inventario |
+| `KASA` | Cash/register | Cash module in Turkish ERP |
+| `DEPO` | Warehouse | Stock/warehouse module |
+| `FATURA` | Invoice | Billing module |
+| `MUHASEBE` | Accounting | Accounting module |
+| `LOGO` | — | Real brand of Turkish ERP software |
+| `MIKRO` | — | Real brand of Turkish accounting software |
+| `BARKOD` | Barcode | Inventory module |
 
-**LOGO y MIKRO son marcas reales de software ERP/contable muy usadas en Turquía**, con bases de datos MSSQL como backend habitual. Combinado con el protocolo `mssqld` ganando peso en Dionaea y **TurkNet İletişim Hizmetleri A.Ş.** en el top de ASN (3.410 eventos), esto sugiere un ataque *vertical*: fuerza bruta dirigida específicamente contra instalaciones de MSSQL usadas por software de gestión empresarial turco, en lugar del ruido genérico habitual.
+**LOGO and MIKRO are real brands of ERP/accounting software widely used in Turkey**, with MSSQL databases as their typical backend. Combined with the `mssqld` protocol gaining weight in Dionaea and **TurkNet İletişim Hizmetleri A.Ş.** in the top ASN (3,410 events), this suggests a *vertical* attack: brute force targeting specifically MSSQL installations used by Turkish business management software, rather than the usual generic noise.
 
-**México** aparece como primer país de origen (nuevo, no visto en semanas anteriores), con la IP `187.235.152.60` (11.055 eventos, ASN **UNINET** — el mayor operador de telecomunicaciones de México). Arabia Saudí y Uruguay también son nuevos en el top.
+**Mexico** appears as the top origin country (new, not seen in previous weeks), with IP `187.235.152.60` (11,055 events, ASN **UNINET** — Mexico's largest telecom operator). Saudi Arabia and Uruguay are also new in the top.
 
 ---
 
-## 9. Adbhoney — Tres Semanas de Crecimiento Confirmado
+## 9. Adbhoney — Three Weeks of Confirmed Growth
 
-**1.737 ataques, 102 IPs únicas.** El volumen del sensor se mantiene bajo y estable, pero el dato relevante es la progresión del payload:
+**1,737 attacks, 102 unique IPs.** Sensor volume remains low and stable, but the relevant data is the payload progression:
 
-| Semana | Descargas del hash |
+| Week | Hash downloads |
 |---|---:|
-| 7–11 jul | 110 |
-| 12–18 jul | 228 |
-| 19–25 jul | **287** |
+| Jul 7–11 | 110 |
+| Jul 12–18 | 228 |
+| Jul 19–25 | **287** |
 
-El hash `849840d92c44ed04af624abd9e5d79a7a082016c89ac39ac50d19f3d53839b5.raw` (cadena Rebirth → `com.ufo.miner` → Trinity) lleva **tres semanas creciendo de forma consecutiva con el mismo payload**. Es el indicador más claro de inteligencia longitudinal de todo el seguimiento: una campaña real, activa y en expansión, no un evento puntual.
-
----
-
-## 10. Conclusiones
-
-1. **El hallazgo de la semana es ConPot**: ISPs residenciales + puerto 161 SNMP es la firma de un botnet IoT/router doméstico — un tipo de actor cualitativamente distinto a la infraestructura VPS/hosting vista en semanas anteriores. Merece seguimiento la semana que viene para confirmar si el patrón se consolida o fue puntual.
-
-2. **No todo pico de volumen es una amenaza**: el 40% del tráfico de Honeytrap esta semana viene de la red académica alemana DFN. La separación entre escaneo de investigación y tráfico malicioso real sigue siendo crítica para no distorsionar el nivel de amenaza percibido.
-
-3. **Redtail, la subred `45.153.34.x` y el payload de Adbhoney llevan tres semanas activos** — son ya candidatos sólidos para reglas de bloqueo permanente a nivel de subred y hash si se gestionara un entorno real.
-
-4. **El colapso de Flyservers S.A. en RDP** ilustra lo rápido que cambia la infraestructura de un actor — de dominar casi la mitad del tráfico de un sensor a prácticamente desaparecer en siete días. Cualquier lista de bloqueo basada en ASN necesita revisión frecuente.
-
-5. **La fuerza bruta contra software ERP turco (LOGO/Mikro) en Dionaea** es un buen candidato para un post independiente sobre ataques verticales dirigidos a sectores y geografías específicos.
-
-6. Con tres semanas de datos acumulados, el informe empieza a tener valor real de **inteligencia longitudinal**. La próxima entrega debería incluir una sección fija de "actores persistentes" (IPs, hashes y subredes vistas en 2+ semanas) — ya hay suficiente histórico para sostenerla.
+The hash `849840d92c44ed04af624abd9e5d79a7a082016c89ac39ac50d19f3d53839b5.raw` (Rebirth → `com.ufo.miner` → Trinity chain) has been **growing consecutively for three weeks with the same payload**. It's the clearest indicator of longitudinal intelligence in the entire tracking: a real, active, expanding campaign — not a one-off event.
 
 ---
 
-*Informe elaborado a partir de datos propios recogidos en una instancia T-Pot expuesta públicamente a internet. Metodología: exportación de paneles agregados de Kibana (rango 19–25 julio 2026) más tagclouds de credenciales en CSV. Comparativa realizada frente a los informes de las semanas anteriores ([7–11 jul](/honeypot/informe-semanal-01/) y [12–18 jul](/honeypot/informe-semanal-02/)).*
+## 10. Conclusions
+
+1. **The week's finding is ConPot**: residential ISPs + SNMP port 161 is the signature of an IoT/domestic router botnet — a qualitatively different actor type from the VPS/hosting infrastructure seen in previous weeks. Worth tracking next week to confirm whether the pattern consolidates or was a one-off.
+
+2. **Not every volume spike is a threat**: 40% of Honeytrap traffic this week comes from the German academic network DFN. Separating research scanning from real malicious traffic remains critical to avoid distorting perceived threat level.
+
+3. **Redtail, subnet `45.153.34.x`, and the Adbhoney payload have been active for three weeks** — they are already solid candidates for permanent subnet-level and hash blocking rules in a real environment.
+
+4. **The Flyservers S.A. collapse on RDP** illustrates how quickly an actor's infrastructure changes — from dominating nearly half of a sensor's traffic to virtually disappearing in seven days. Any ASN-based block list needs frequent revision.
+
+5. **The brute force against Turkish ERP software (LOGO/Mikro) in Dionaea** is a good candidate for an independent post on vertical attacks targeting specific sectors and geographies.
+
+6. With three weeks of accumulated data, the report is starting to have real **longitudinal intelligence value**. The next edition should include a fixed "persistent actors" section (IPs, hashes, and subnets seen in 2+ weeks) — there's already enough history to sustain it.
+
+---
+
+*Report compiled from data collected in a publicly internet-exposed T-Pot instance. Methodology: export of aggregated Kibana dashboards (range July 19–25, 2026) plus credential tag clouds in CSV. Comparison made against the previous week reports ([Jul 7–11](/honeypot/informe-semanal-01/) and [Jul 12–18](/honeypot/informe-semanal-02/)).*

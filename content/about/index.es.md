@@ -1,70 +1,70 @@
 ---
-title: "About Me"
-description: "Pablo Seoane Temprano — Junior Pentester in training, pursuing CPTS (Hack The Box). Robotics Engineer specializing in offensive cybersecurity, based in Sada, Galicia."
+title: "Sobre Mí"
+description: "Pablo Seoane Temprano — Junior Pentester en formación, aspirante a CPTS (Hack The Box). Ingeniero Robótico especializado en ciberseguridad ofensiva, basado en Sada, Galicia."
 date: 2026-03-24
 showDate: false
 layout: "about"
 ---
 
 {{< lead >}}
-Based in **Sada, Galicia**. My path in technology started from the ground up — networks, systems, and programming. Today I channel all of that foundation into what I'm truly passionate about: **offensive cybersecurity**.
+Ubicado en **Sada, Galicia**. Mi camino en tecnología empezó desde la base — redes, sistemas y programación. Hoy toda esa base la enfoco en lo que realmente me apasiona: la **ciberseguridad ofensiva**.
 {{< /lead >}}
 
-## 🎯 Professional Profile
+## 🎯 Perfil Profesional
 
-Passionate about **Ethical Hacking** and **Pentesting**. I studied Robotics Engineering, but it was along that path that I discovered offensive cybersecurity and got hooked — so I decided to orient my entire career toward that field. I'm currently working toward the **CPTS** (Certified Penetration Testing Specialist) certification from Hack The Box.
+Apasionado del **Hacking Ético** y el **Pentesting**. Estudié Ingeniería Robótica, pero fue durante ese camino cuando descubrí la ciberseguridad ofensiva y me enganché — así que decidí orientar toda mi carrera hacia ese campo. Actualmente me preparo para la certificación **CPTS** (Certified Penetration Testing Specialist) de Hack The Box.
 
-> "Understanding how the system works is the first step to knowing how to defend it — or break it."
+> "Entender cómo funciona el sistema es el primer paso para saber cómo defenderlo — o romperlo."
 
 ---
 
-## 🎓 Education
+## 🎓 Formación
 
 {{< timeline >}}
-{{< timelineItem icon="shield" header="Cybersecurity and Ethical Hacking" badge="Present" >}}
-Full-time dedication to obtaining CPTS. Specialization in Malware Analysis, Digital Forensics Triage, and advanced lab challenges on Hack The Box.
+{{< timelineItem icon="shield" header="Ciberseguridad y Hacking Ético" badge="Actualidad" >}}
+Dedicación a tiempo completo a la obtención del CPTS. Especialización en análisis de Malware, Triage Informático y resolución de laboratorios avanzados en Hack The Box.
 {{< /timelineItem >}}
 
-{{< timelineItem icon="robot" header="Robotics Engineering" subheader="Universidade de Santiago de Compostela (USC)" badge="Bachelor's Degree" >}}
-Advanced programming in **Python** and **C++**, control systems, and analytical thinking in complex environments. This foundation allowed me to understand systems at a deeper level and orient my career toward cybersecurity.
+{{< timelineItem icon="robot" header="Ingeniería Robótica" subheader="Universidade de Santiago de Compostela (USC)" badge="Grado" >}}
+Programación avanzada en **Python** y **C++**, sistemas de control y pensamiento analítico en entornos complejos. Esta base me permitió entender los sistemas a un nivel más profundo y orientar mi carrera hacia la ciberseguridad.
 {{< /timelineItem >}}
 
-{{< timelineItem icon="server" header="Systems Administration (ASIR)" subheader="Liceo La Paz" badge="Vocational" >}}
-Networks, protocols, services, and enterprise infrastructure administration. The technical foundation on which I built everything else.
+{{< timelineItem icon="server" header="Administración de Sistemas (ASIR)" subheader="Liceo La Paz" badge="CS" >}}
+Redes, protocolos, servicios y administración de infraestructuras empresariales. La base técnica sobre la que construí todo lo demás.
 {{< /timelineItem >}}
 {{< /timeline >}}
 
 ---
 
-## 🛠️ Personal Projects
+## 🛠️ Proyectos Personales
 
 {{< timeline >}}
-{{< timelineItem icon="code" header="FiveM Server Development and Management" subheader="Personal Project" badge="Feb. 2020 – Present" >}}
+{{< timelineItem icon="code" header="Desarrollo y Gestión de Servidores FiveM" subheader="Proyecto Personal" badge="feb. 2020 – Actualidad" >}}
 
 <div style="display:flex;flex-wrap:wrap;gap:0.45rem;margin-bottom:1rem;">
-  <span style="display:inline-flex;align-items:center;gap:0.35rem;padding:0.22rem 0.7rem;background:rgba(159,238,0,0.07);border:1px solid rgba(159,238,0,0.18);border-radius:999px;font-size:0.73rem;color:#9FEE00;font-family:'Fira Code',monospace;">👥 2000+ active users</span>
-  <span style="display:inline-flex;align-items:center;gap:0.35rem;padding:0.22rem 0.7rem;background:rgba(159,238,0,0.07);border:1px solid rgba(159,238,0,0.18);border-radius:999px;font-size:0.73rem;color:#9FEE00;font-family:'Fira Code',monospace;">🗓️ 5+ years active</span>
-  <span style="display:inline-flex;align-items:center;gap:0.35rem;padding:0.22rem 0.7rem;background:rgba(159,238,0,0.07);border:1px solid rgba(159,238,0,0.18);border-radius:999px;font-size:0.73rem;color:#9FEE00;font-family:'Fira Code',monospace;">👨‍💻 Team of 3 devs</span>
+  <span style="display:inline-flex;align-items:center;gap:0.35rem;padding:0.22rem 0.7rem;background:rgba(159,238,0,0.07);border:1px solid rgba(159,238,0,0.18);border-radius:999px;font-size:0.73rem;color:#9FEE00;font-family:'Fira Code',monospace;">👥 2000+ usuarios activos</span>
+  <span style="display:inline-flex;align-items:center;gap:0.35rem;padding:0.22rem 0.7rem;background:rgba(159,238,0,0.07);border:1px solid rgba(159,238,0,0.18);border-radius:999px;font-size:0.73rem;color:#9FEE00;font-family:'Fira Code',monospace;">🗓️ 5+ años activo</span>
+  <span style="display:inline-flex;align-items:center;gap:0.35rem;padding:0.22rem 0.7rem;background:rgba(159,238,0,0.07);border:1px solid rgba(159,238,0,0.18);border-radius:999px;font-size:0.73rem;color:#9FEE00;font-family:'Fira Code',monospace;">👨‍💻 Equipo de 3 devs</span>
 </div>
 
-<p><strong>Leadership and management:</strong><br>
-Led a team of 3 developers using Trello for sprint planning, task assignment, and release coordination.</p>
+<p><strong>Liderazgo y gestión:</strong><br>
+Dirigí un equipo de 3 desarrolladores usando Trello para la planificación de sprints, asignación de tareas y coordinación de lanzamientos.</p>
 
-<p><strong>Development and version control:</strong><br>
-Developed and maintained multiple scripts in <strong>Lua</strong>. <strong>Git/GitHub/GitLab</strong> workflow: pull requests, code review, and issue management. Designed and administered databases with <strong>MySQL</strong> (SQL) and <strong>Cassandra/MongoDB</strong> (NoSQL).</p>
+<p><strong>Desarrollo y control de versiones:</strong><br>
+Programé y mantuve múltiples scripts en <strong>Lua</strong>. Flujo de trabajo con <strong>Git/GitHub/GitLab</strong>: pull requests, revisión de código y gestión de incidencias. Diseñé y administré bases de datos con <strong>MySQL</strong> (SQL) y <strong>Cassandra/MongoDB</strong> (NoSQL).</p>
 
-<p><strong>Systems administration and security:</strong><br>
-Administered dedicated <strong>Linux</strong> servers with <strong>Docker</strong> for containerization. Implemented perimeter security and DDoS attack mitigation via <strong>Cloudflare</strong>, firewalls, and network policies.</p>
+<p><strong>Administración de sistemas y seguridad:</strong><br>
+Administré servidores dedicados <strong>Linux</strong> con <strong>Docker</strong> para contenerización. Implementé seguridad perimetral y mitigación de ataques DDoS mediante <strong>Cloudflare</strong>, firewalls y políticas de red.</p>
 
-<p><strong>Web development:</strong><br>
-Small web applications in HTML, CSS, and JavaScript for server script interfaces.</p>
+<p><strong>Desarrollo web:</strong><br>
+Pequeñas aplicaciones web en HTML, CSS y JavaScript para interfaces de los scripts del servidor.</p>
 
 {{< /timelineItem >}}
 {{< /timeline >}}
 
 ---
 
-## 🏅 Certifications
+## 🏅 Certificaciones
 
 <div style="display:flex;flex-direction:column;gap:0.85rem;margin:1rem 0 1.75rem;">
 
@@ -73,9 +73,9 @@ Small web applications in HTML, CSS, and JavaScript for server script interfaces
     <div style="flex:1;min-width:0;">
       <div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;">
         <strong style="color:#e2e8f0;font-size:0.92rem;">Linux Essentials — LE-1</strong>
-        <span style="padding:0.12rem 0.55rem;background:rgba(159,238,0,0.1);border:1px solid rgba(159,238,0,0.3);border-radius:999px;font-size:0.6rem;color:#9FEE00;font-family:'Fira Code',monospace;text-transform:uppercase;letter-spacing:0.06em;">Obtained</span>
+        <span style="padding:0.12rem 0.55rem;background:rgba(159,238,0,0.1);border:1px solid rgba(159,238,0,0.3);border-radius:999px;font-size:0.6rem;color:#9FEE00;font-family:'Fira Code',monospace;text-transform:uppercase;letter-spacing:0.06em;">Obtenida</span>
       </div>
-      <div style="font-size:0.75rem;color:#64748b;margin-top:0.25rem;">Linux Professional Institute · Entry level</div>
+      <div style="font-size:0.75rem;color:#64748b;margin-top:0.25rem;">Linux Professional Institute · Nivel de entrada</div>
     </div>
   </div>
 
@@ -84,13 +84,13 @@ Small web applications in HTML, CSS, and JavaScript for server script interfaces
     <div style="flex:1;min-width:0;">
       <div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;">
         <strong style="color:#e2e8f0;font-size:0.92rem;">CPTS — Certified Penetration Testing Specialist</strong>
-        <span style="padding:0.12rem 0.55rem;background:rgba(100,116,139,0.12);border:1px solid rgba(100,116,139,0.3);border-radius:999px;font-size:0.6rem;color:#94a3b8;font-family:'Fira Code',monospace;text-transform:uppercase;letter-spacing:0.06em;">In progress</span>
+        <span style="padding:0.12rem 0.55rem;background:rgba(100,116,139,0.12);border:1px solid rgba(100,116,139,0.3);border-radius:999px;font-size:0.6rem;color:#94a3b8;font-family:'Fira Code',monospace;text-transform:uppercase;letter-spacing:0.06em;">En progreso</span>
       </div>
       <div style="font-size:0.75rem;color:#64748b;margin-top:0.25rem;">Hack The Box Academy · CPTS Path</div>
       <div style="margin-top:0.7rem;height:4px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;">
         <div style="height:100%;width:60%;background:linear-gradient(90deg,rgba(159,238,0,0.75),rgba(159,238,0,0.35));border-radius:2px;"></div>
       </div>
-      <div style="font-size:0.62rem;color:#475569;margin-top:0.35rem;font-family:'Fira Code',monospace;">approx. 60% completed</div>
+      <div style="font-size:0.62rem;color:#475569;margin-top:0.35rem;font-family:'Fira Code',monospace;">aprox. 60% completado</div>
     </div>
   </div>
 
@@ -98,24 +98,24 @@ Small web applications in HTML, CSS, and JavaScript for server script interfaces
 
 ---
 
-## 💻 Technical Skills
+## 💻 Habilidades Técnicas
 
 <div style="display:flex;flex-direction:column;gap:1.35rem;margin:1rem 0 0.5rem;">
 
   <div>
-    <div style="font-size:0.6rem;text-transform:uppercase;letter-spacing:0.14em;color:rgba(159,238,0,0.55);font-family:'Fira Code',monospace;margin-bottom:0.6rem;">Offensive Security</div>
+    <div style="font-size:0.6rem;text-transform:uppercase;letter-spacing:0.14em;color:rgba(159,238,0,0.55);font-family:'Fira Code',monospace;margin-bottom:0.6rem;">Seguridad Ofensiva</div>
     <div style="display:flex;flex-wrap:wrap;gap:0.45rem;">
-      <span style="padding:0.28rem 0.75rem;background:rgba(159,238,0,0.06);border:1px solid rgba(159,238,0,0.16);border-radius:6px;font-size:0.78rem;color:#cbd5e1;">Web Pentesting</span>
-      <span style="padding:0.28rem 0.75rem;background:rgba(159,238,0,0.06);border:1px solid rgba(159,238,0,0.16);border-radius:6px;font-size:0.78rem;color:#cbd5e1;">Privilege Escalation</span>
+      <span style="padding:0.28rem 0.75rem;background:rgba(159,238,0,0.06);border:1px solid rgba(159,238,0,0.16);border-radius:6px;font-size:0.78rem;color:#cbd5e1;">Pentesting Web</span>
+      <span style="padding:0.28rem 0.75rem;background:rgba(159,238,0,0.06);border:1px solid rgba(159,238,0,0.16);border-radius:6px;font-size:0.78rem;color:#cbd5e1;">Escalada de Privilegios</span>
       <span style="padding:0.28rem 0.75rem;background:rgba(159,238,0,0.06);border:1px solid rgba(159,238,0,0.16);border-radius:6px;font-size:0.78rem;color:#cbd5e1;">Active Directory</span>
-      <span style="padding:0.28rem 0.75rem;background:rgba(159,238,0,0.06);border:1px solid rgba(159,238,0,0.16);border-radius:6px;font-size:0.78rem;color:#cbd5e1;">Malware Analysis</span>
-      <span style="padding:0.28rem 0.75rem;background:rgba(159,238,0,0.06);border:1px solid rgba(159,238,0,0.16);border-radius:6px;font-size:0.78rem;color:#cbd5e1;">Digital Forensics Triage</span>
+      <span style="padding:0.28rem 0.75rem;background:rgba(159,238,0,0.06);border:1px solid rgba(159,238,0,0.16);border-radius:6px;font-size:0.78rem;color:#cbd5e1;">Análisis de Malware</span>
+      <span style="padding:0.28rem 0.75rem;background:rgba(159,238,0,0.06);border:1px solid rgba(159,238,0,0.16);border-radius:6px;font-size:0.78rem;color:#cbd5e1;">Triage Informático</span>
       <span style="padding:0.28rem 0.75rem;background:rgba(159,238,0,0.06);border:1px solid rgba(159,238,0,0.16);border-radius:6px;font-size:0.78rem;color:#cbd5e1;">OSINT</span>
     </div>
   </div>
 
   <div>
-    <div style="font-size:0.6rem;text-transform:uppercase;letter-spacing:0.14em;color:rgba(159,238,0,0.55);font-family:'Fira Code',monospace;margin-bottom:0.6rem;">Pentesting Tools</div>
+    <div style="font-size:0.6rem;text-transform:uppercase;letter-spacing:0.14em;color:rgba(159,238,0,0.55);font-family:'Fira Code',monospace;margin-bottom:0.6rem;">Herramientas de Pentesting</div>
     <div style="display:flex;flex-wrap:wrap;gap:0.45rem;">
       <span style="padding:0.28rem 0.75rem;background:rgba(159,238,0,0.06);border:1px solid rgba(159,238,0,0.16);border-radius:6px;font-size:0.78rem;color:#cbd5e1;">Nmap</span>
       <span style="padding:0.28rem 0.75rem;background:rgba(159,238,0,0.06);border:1px solid rgba(159,238,0,0.16);border-radius:6px;font-size:0.78rem;color:#cbd5e1;">Burp Suite</span>
@@ -129,7 +129,7 @@ Small web applications in HTML, CSS, and JavaScript for server script interfaces
   </div>
 
   <div>
-    <div style="font-size:0.6rem;text-transform:uppercase;letter-spacing:0.14em;color:rgba(159,238,0,0.55);font-family:'Fira Code',monospace;margin-bottom:0.6rem;">Languages and Scripting</div>
+    <div style="font-size:0.6rem;text-transform:uppercase;letter-spacing:0.14em;color:rgba(159,238,0,0.55);font-family:'Fira Code',monospace;margin-bottom:0.6rem;">Lenguajes y Scripting</div>
     <div style="display:flex;flex-wrap:wrap;gap:0.45rem;">
       <span style="padding:0.28rem 0.75rem;background:rgba(159,238,0,0.06);border:1px solid rgba(159,238,0,0.16);border-radius:6px;font-size:0.78rem;color:#cbd5e1;">Python</span>
       <span style="padding:0.28rem 0.75rem;background:rgba(159,238,0,0.06);border:1px solid rgba(159,238,0,0.16);border-radius:6px;font-size:0.78rem;color:#cbd5e1;">Bash Scripting</span>
@@ -140,7 +140,7 @@ Small web applications in HTML, CSS, and JavaScript for server script interfaces
   </div>
 
   <div>
-    <div style="font-size:0.6rem;text-transform:uppercase;letter-spacing:0.14em;color:rgba(159,238,0,0.55);font-family:'Fira Code',monospace;margin-bottom:0.6rem;">Infrastructure and DevOps</div>
+    <div style="font-size:0.6rem;text-transform:uppercase;letter-spacing:0.14em;color:rgba(159,238,0,0.55);font-family:'Fira Code',monospace;margin-bottom:0.6rem;">Infraestructura y DevOps</div>
     <div style="display:flex;flex-wrap:wrap;gap:0.45rem;">
       <span style="padding:0.28rem 0.75rem;background:rgba(159,238,0,0.06);border:1px solid rgba(159,238,0,0.16);border-radius:6px;font-size:0.78rem;color:#cbd5e1;">Linux Server Admin</span>
       <span style="padding:0.28rem 0.75rem;background:rgba(159,238,0,0.06);border:1px solid rgba(159,238,0,0.16);border-radius:6px;font-size:0.78rem;color:#cbd5e1;">Docker</span>
@@ -155,7 +155,7 @@ Small web applications in HTML, CSS, and JavaScript for server script interfaces
 
 ---
 
-## 📬 Contact
+## 📬 Contacto
 
 <div style="display:flex;flex-wrap:wrap;gap:0.75rem;margin:1.25rem 0 0.5rem;">
 

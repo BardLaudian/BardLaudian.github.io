@@ -1,52 +1,52 @@
 ---
-title: "Monté un honeypot y voy a contar cada semana lo que veo"
+title: "I Set Up a Honeypot and I'm Going to Report What I See Every Week"
 date: 2026-07-08
 draft: false
-description: "Presentación del proyecto: un honeypot basado en T-Pot expuesto a internet real, con resúmenes semanales de actividad maliciosa y análisis en profundidad cuando algo lo merece."
+description: "Project introduction: a T-Pot based honeypot exposed to real internet, with weekly activity summaries and in-depth analysis when something warrants it."
 tags: ["Honeypot", "TPot", "ThreatIntel", "SOC", "Mirai", "Botnet", "BlueTeam"]
 categories: ["Honeypot Diaries"]
 ---
 
 {{< lead >}}
-Voy a exponer un servidor a internet a propósito para que lo ataquen — y luego contarlo aquí, cada semana. Sin simulaciones ni datos de laboratorio: tráfico malicioso real, de internet real, contra un servidor que no hace nada más que esperar a que alguien intente entrar.
+I'm going to intentionally expose a server to the internet so it gets attacked — and then write about it here, every week. No simulations or lab data: real malicious traffic, from the real internet, against a server that does nothing but wait for someone to try to break in.
 {{< /lead >}}
 
 ---
 
-## Qué es esto
+## What This Is
 
-Este blog documenta lo que un **honeypot** — un sistema señuelo diseñado para parecer vulnerable y atraer ataques — detecta en tiempo real, semana a semana.
+This blog documents what a **honeypot** — a decoy system designed to look vulnerable and attract attacks — detects in real time, week by week.
 
-La idea es sencilla: la mayoría de lo que se lee sobre ciberseguridad son informes trimestrales de grandes empresas o análisis retrospectivos de incidentes ya resueltos. Aquí va a ser lo contrario — un vistazo pequeño pero continuo y sin filtrar a lo que está pasando *ahora mismo* en el ruido de fondo de internet: qué credenciales prueban los bots, qué vulnerabilidades de hace años se siguen explotando, qué botnets siguen activas reclutando dispositivos.
-
----
-
-## La Infraestructura
-
-El honeypot corre sobre **T-Pot**, una plataforma que despliega más de 20 honeypots distintos en paralelo (SSH, ADB de Android, SMB, bases de datos expuestas, sistemas industriales, servidores web vulnerables, entre otros), junto con Elasticsearch y Kibana para poder analizar y visualizar todo lo que entra. Está alojado en un VPS dedicado exclusivamente a esto, aislado de cualquier otro sistema o dato personal.
+The idea is simple: most of what you read about cybersecurity consists of quarterly reports from large companies or retrospective analyses of already-resolved incidents. This is the opposite — a small but continuous, unfiltered look at what's happening *right now* in the background noise of the internet: what credentials bots test, what years-old vulnerabilities are still being exploited, what botnets are still actively recruiting devices.
 
 ---
 
-## Qué vas a encontrar aquí
+## The Infrastructure
 
-Dos tipos de contenido, con ritmos distintos:
-
-**Resúmenes semanales**, cada domingo. Formato corto y consistente: cuántos ataques hubo, qué honeypot recibió más tráfico, de dónde vino, y el hallazgo más interesante de la semana — ya sea un patrón curioso de credenciales, un comando ejecutado, o una alerta de un CVE concreto siendo explotado activamente.
-
-**Análisis en profundidad**, sin calendario fijo. Cuando algo capturado merece más que un párrafo — una muestra de malware real, una técnica de evasión, una campaña identificable — le dedico un post propio. El primero de estos ya está publicado: un análisis de una muestra del botnet **Rebirth** (variante de Mirai/Gafgyt) que capturé intentando infectar el honeypot disfrazada como una app de Clash Royale.
+The honeypot runs on **T-Pot**, a platform that deploys more than 20 different honeypots in parallel (SSH, Android ADB, SMB, exposed databases, industrial systems, vulnerable web servers, among others), together with Elasticsearch and Kibana to analyze and visualize everything coming in. It's hosted on a VPS dedicated exclusively to this project, isolated from any other systems or personal data.
 
 ---
 
-## Por qué lo hago
+## What You'll Find Here
 
-Vengo de un perfil más orientado a lo ofensivo — CJCA, un puñado de máquinas de HackTheBox resueltas y documentadas — y ahora mismo estoy preparando la Security+. Este proyecto es mi forma de meterle horas al otro lado del tablero: detección, análisis de amenazas, y la disciplina de convertir datos crudos en algo legible y útil, que es al fin y al cabo el trabajo diario de un analista SOC o de threat intelligence.
+Two types of content, at different cadences:
 
-No pretendo que cada semana traiga un hallazgo espectacular — muchas van a ser simplemente "más de lo mismo: fuerza bruta SSH, escaneo SMB, credenciales genéricas". Y está bien así. El valor de esto no es que cada entrada sea impactante, sino la constancia: mirar la misma superficie de ataque semana tras semana hasta que los patrones — y las anomalías — se vuelven visibles.
+**Weekly summaries**, every Sunday. Short and consistent format: how many attacks occurred, which honeypot received the most traffic, where it came from, and the most interesting finding of the week — whether it's a curious credential pattern, an executed command, or an alert about a specific CVE being actively exploited.
+
+**In-depth analyses**, on no fixed schedule. When something captured warrants more than a paragraph — a real malware sample, an evasion technique, an identifiable campaign — I dedicate a separate post to it. The first of these is already published: an analysis of a **Rebirth** botnet sample (Mirai/Gafgyt variant) that I captured trying to infect the honeypot disguised as a Clash Royale app.
 
 ---
 
-## Una nota sobre honestidad técnica
+## Why I'm Doing This
 
-Un compromiso que me marco desde el primer post: no voy a inflar la gravedad de lo que encuentro. Si algo es simplemente ruido de escaneo automatizado sin mayor interés, lo digo así. Si un hallazgo requiere matizar ("esto parece X, pero no lo he confirmado del todo"), lo matizo. Prefiero que este blog sea útil y creíble a que sea vistoso.
+I come from a more offensive-oriented background — CJCA certified, a handful of HackTheBox machines solved and documented — and I'm currently preparing for Security+. This project is my way of putting hours into the other side of the board: detection, threat analysis, and the discipline of turning raw data into something readable and useful, which is ultimately the daily work of a SOC analyst or threat intelligence professional.
 
-Nos vemos el domingo con el primer resumen semanal.
+I don't expect every week to bring a spectacular finding — many will simply be "more of the same: SSH brute force, SMB scanning, generic credentials." And that's fine. The value here isn't that each entry is impactful, but consistency: looking at the same attack surface week after week until patterns — and anomalies — become visible.
+
+---
+
+## A Note on Technical Honesty
+
+A commitment I'm setting for myself from the first post: I'm not going to inflate the severity of what I find. If something is simply automated scanning noise of no particular interest, I'll say so. If a finding requires caveats ("this looks like X, but I haven't fully confirmed it"), I'll caveat it. I'd rather this blog be useful and credible than flashy.
+
+See you Sunday with the first weekly summary.

