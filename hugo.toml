@@ -1,55 +1,52 @@
 # --- CONFIGURACIÓN BÁSICA ---
 baseURL = "https://BardLaudian.github.io/"
-languageCode = "es-es"
+defaultContentLanguage = "en"
+defaultContentLanguageInSubdir = false
 title = "Pablo Seoane · Pentester & Security Researcher"
 theme = "blowfish"
 
-# --- PARÁMETROS DEL TEMA (EL "LOOK") ---
+# --- PARÁMETROS DEL TEMA (compartidos entre idiomas) ---
 [params]
-    colorScheme = "ocean"         # Fondo negro profundo – máxima legibilidad
-    defaultAppearance = "dark"   # Modo oscuro por defecto
-    showSunMoon = true           # Botón para cambiar entre modo claro/oscuro
-    showScrollToTop = true       # Flecha para volver arriba
-    enableSearch = true          # Buscador interno (muy útil para tus notas)
-    showReadingTime = true       # Mostrar tiempo de lectura
-    showBreadcrumbs = true       # Mostrar migas de pan
-    showTaxonomies = true        # Mostrar tags y categorías
-    smartTOC = true              # Resaltar en el índice la sección que se está leyendo
-    description = "Blog personal de Pablo Seoane donde subo todo lo que hago en ciberseguridad a modo de portfolio: writeups de máquinas, análisis de muestras capturadas en mi honeypot y cualquier cosa que considere interesante documentar."
+    colorScheme = "ocean"
+    defaultAppearance = "dark"
+    showSunMoon = true
+    showScrollToTop = true
+    enableSearch = true
+    showReadingTime = true
+    showBreadcrumbs = true
+    showTaxonomies = true
+    smartTOC = true
+    description = "Personal blog by Pablo Seoane where I post everything I do in cybersecurity as a portfolio: machine writeups, malware samples captured by my honeypot, and anything else worth documenting."
+    homepage_body = '''This is my personal blog where I post everything I do in cybersecurity as a portfolio. Junior level, <span style="color:#9FEE00;font-weight:600;">CJCA</span> certified, currently pursuing <span style="color:#9FEE00;font-weight:600;">Security+</span> and <span style="color:#9FEE00;font-weight:600;">CPTS</span> by Hack The Box.'''
 
 [params.article]
-    showTableOfContents = true            # Índice lateral con los headings del propio writeup
-    smartTOCHideUnfocusedChildren = true  # Colapsar subsecciones que no se están leyendo
-    showAuthor = true                     # Mostrar autor con redes sociales al pie de cada post
-    
-# --- CONFIGURACIÓN DE LA PORTADA (HOMEPAGE) ---
-[params.homepage]
-    layout = "profile"        # Estilo perfil profesional
-    showRecent = true         # Mostrar posts recientes debajo
-    showRecentItems = 3       # Solo los 3 últimos para que no sature
-    showContact = true        # Iconos de contacto visibles
-    cardView = true           # Los posts se verán como tarjetas modernas
+    showTableOfContents = true
+    smartTOCHideUnfocusedChildren = true
+    showAuthor = true
 
-# Vistas de listado de artículos
+[params.homepage]
+    layout = "profile"
+    showRecent = true
+    showRecentItems = 3
+    showContact = true
+    cardView = true
+
 [params.list]
     groupByYear = true
-    cardView = true           # Tarjetas en vez de lista plana
+    cardView = true
 
 [params.hero]
-    # Esto es lo que sale en grande al entrar
     title = "Pablo Seoane Temprano"
-    subtitle = "Junior Pentester · CJCA · Preparando Security+ y CPTS"
-    content = "Estudiante de Ingeniería Robótica con nivel junior en ciberseguridad. Certificado CJCA, preparando el Security+ y el CPTS. Este es mi blog: subo todo lo que hago en ciberseguridad a modo de portfolio."
-    image = "img/perfil.jpg"  # Asegúrate de tener tu foto en assets/img/perfil.jpg
+    subtitle = "Junior Pentester · CJCA · Pursuing Security+ & CPTS"
+    content = "Robotics Engineering student with junior-level cybersecurity skills. CJCA certified, currently pursuing Security+ and CPTS. This is my blog: I post everything I do in cybersecurity as a portfolio."
+    image = "img/perfil.jpg"
 
-# --- TU IDENTIDAD (AUTOR) ---
+# --- AUTOR ---
 [author]
-    name = "BardLaudian"        # Pon aquí tu nombre real o alias
-    image = "img/perfil.jpg"     # Tu foto en assets/img/perfil.jpg
-    headline = "Junior Pentester · CJCA · En camino al Security+ y CPTS"
-    bio = "Apasionado del Hacking Ético basado en A Coruña. Certificado CJCA, preparando el CompTIA Security+ y el CPTS de Hack The Box. Documentando el proceso máquina a máquina."
-    
-    # Redes sociales (Blowfish usa iconos automáticos)
+    name = "BardLaudian"
+    image = "img/perfil.jpg"
+    headline = "Junior Pentester · CJCA · On the road to Security+ and CPTS"
+    bio = "Passionate about Ethical Hacking based in A Coruña. CJCA certified, pursuing CompTIA Security+ and Hack The Box CPTS. Documenting the process machine by machine."
     links = [
         { linkedin = "https://linkedin.com/in/pablo-seoane-temprano" },
         { github = "https://github.com/BardLaudian" },
@@ -57,22 +54,48 @@ theme = "blowfish"
         { email = "seoane.pablo16@gmail.com" },
     ]
 
-# --- MENÚ DE NAVEGACIÓN ---
-[[menu.main]]
+# --- IDIOMAS ---
+[languages.en]
+    languageName = "English"
+    weight = 1
+    languageCode = "en-us"
+
+[[languages.en.menu.main]]
     name = "Writeups"
     url = "/posts/"
     weight = 10
 
-[[menu.main]]
+[[languages.en.menu.main]]
     name = "Honeypot"
     url = "/honeypot/"
     weight = 20
 
+[languages.es]
+    languageName = "Español"
+    weight = 2
+    languageCode = "es-es"
 
+[languages.es.params]
+    description = "Blog personal de Pablo Seoane donde subo todo lo que hago en ciberseguridad a modo de portfolio: writeups de máquinas, análisis de muestras capturadas en mi honeypot y cualquier cosa que considere interesante documentar."
+    homepage_body = '''Este es mi blog personal donde subo todo lo que hago en ciberseguridad a modo de portfolio. Nivel junior, certificado <span style="color:#9FEE00;font-weight:600;">CJCA</span>, preparando el <span style="color:#9FEE00;font-weight:600;">Security+</span> y el <span style="color:#9FEE00;font-weight:600;">CPTS</span> de Hack The Box.'''
+
+[languages.es.params.hero]
+    subtitle = "Junior Pentester · CJCA · Preparando Security+ y CPTS"
+    content = "Estudiante de Ingeniería Robótica con nivel junior en ciberseguridad. Certificado CJCA, preparando el Security+ y el CPTS. Este es mi blog: subo todo lo que hago en ciberseguridad a modo de portfolio."
+
+[[languages.es.menu.main]]
+    name = "Writeups"
+    url = "/posts/"
+    weight = 10
+
+[[languages.es.menu.main]]
+    name = "Honeypot"
+    url = "/honeypot/"
+    weight = 20
 
 # --- CONFIGURACIÓN DE CONTENIDO ---
 [markup.goldmark.renderer]
-    unsafe = true                # Permite usar HTML en tu Markdown (necesario para algunas funciones)
+    unsafe = true
 
 [taxonomies]
     category = "categories"
@@ -80,4 +103,4 @@ theme = "blowfish"
     series = "series"
 
 [outputs]
-    home = ["HTML", "RSS", "JSON"] # Necesario para el buscador
+    home = ["HTML", "RSS", "JSON"]

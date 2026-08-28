@@ -46,14 +46,12 @@
 
             <!-- Propuesta de valor -->
             <p style="font-size: 0.875rem; color: #64748b; line-height: 1.8; margin: 0 0 2rem 0; max-width: 400px; margin-left: auto; margin-right: auto;">
-                Este es mi blog personal donde subo todo lo que hago en ciberseguridad a modo de portfolio.
-                Nivel junior, certificado <span style="color:#9FEE00;font-weight:600;">CJCA</span>, preparando el
-                <span style="color:#9FEE00;font-weight:600;">Security+</span> y el <span style="color:#9FEE00;font-weight:600;">CPTS</span> de Hack The Box.
+                {{ .Site.Params.homepage_body | safeHTML }}
             </p>
 
             <!-- Botones -->
             <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 1.5rem; margin-bottom: 2rem;">
-                <a href="/posts/"
+                <a href="{{ .Site.LanguagePrefix }}/posts/"
                    style="display: inline-block; padding: 0.75rem 2.5rem;
                           border: 1px solid rgba(159,238,0,0.5); border-radius: 6px;
                           color: rgba(159,238,0,0.9); text-decoration: none; font-weight: 600;
