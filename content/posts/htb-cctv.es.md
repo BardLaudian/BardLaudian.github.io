@@ -2,19 +2,19 @@
 title: "HTB Walkthrough: CCTV"
 date: 2026-06-22
 draft: false
-description: "Walkthrough completo de la máquina CCTV de Hack The Box. Dificultad Medium, OS Linux. SQL Injection ciega en ZoneMinder (CVE-2024-51482) para extraer hashes bcrypt, cracking offline, y escalada a root mediante falsificación de firma de API en motionEye (CVE-2025-60787) con inyección de comandos en nombre de fichero."
-tags: ["HackTheBox", "Linux", "Medium", "SQLi", "BlindSQLi", "ZoneMinder", "CVE-2024-51482", "bcrypt", "JohnTheRipper", "motionEye", "CVE-2025-60787", "HMAC", "RCE", "SUID", "PrivEsc", "cctv", "writeups"]
+description: "Walkthrough completo de la máquina CCTV de Hack The Box. Dificultad Easy, OS Linux. SQL Injection ciega en ZoneMinder (CVE-2024-51482) para extraer hashes bcrypt, cracking offline, y escalada a root mediante falsificación de firma de API en motionEye (CVE-2025-60787) con inyección de comandos en nombre de fichero."
+tags: ["HackTheBox", "Linux", "Easy", "SQLi", "BlindSQLi", "ZoneMinder", "CVE-2024-51482", "bcrypt", "JohnTheRipper", "motionEye", "CVE-2025-60787", "HMAC", "RCE", "SUID", "PrivEsc", "cctv", "writeups"]
 categories: ["HTB Walkthroughs"]
 series: ["HackTheBox CPTS"]
 ---
 
 {{< lead >}}
-Resolución de **CCTV** en Hack The Box. Máquina de dificultad **Medium** con sistema operativo **Linux**. ZoneMinder expuesto con credenciales por defecto es vulnerable al **CVE-2024-51482**, una SQL Injection ciega que nos permite extraer hashes bcrypt y obtener acceso SSH. Una vez dentro, motionEye corre como root con su clave de firma de API expuesta en un fichero de configuración legible — combinación que explota el **CVE-2025-60787** para inyectar un comando en el nombre de fichero de captura y obtener SUID en `/bin/bash`.
+Resolución de **CCTV** en Hack The Box. Máquina de dificultad **Easy** con sistema operativo **Linux**. ZoneMinder expuesto con credenciales por defecto es vulnerable al **CVE-2024-51482**, una SQL Injection ciega que nos permite extraer hashes bcrypt y obtener acceso SSH. Una vez dentro, motionEye corre como root con su clave de firma de API expuesta en un fichero de configuración legible — combinación que explota el **CVE-2025-60787** para inyectar un comando en el nombre de fichero de captura y obtener SUID en `/bin/bash`.
 {{< /lead >}}
 
 {{< badge >}}HackTheBox{{< /badge >}}
 {{< badge >}}Linux{{< /badge >}}
-{{< badge >}}Medium{{< /badge >}}
+{{< badge >}}Easy{{< /badge >}}
 
 ---
 
@@ -24,7 +24,7 @@ Resolución de **CCTV** en Hack The Box. Máquina de dificultad **Medium** con s
 |----------------|-----------------------------------------------------------------------------------------------|
 | **Nombre**     | CCTV                                                                                          |
 | **OS**         | Linux                                                                                         |
-| **Dificultad** | Medium                                                                                        |
+| **Dificultad** | Easy                                                                                        |
 | **IP**         | 10.129.244.156                                                                                |
 | **Técnicas**   | CVE-2024-51482 · Boolean-based Blind SQLi · bcrypt Cracking · CVE-2025-60787 · SUID PrivEsc  |
 
