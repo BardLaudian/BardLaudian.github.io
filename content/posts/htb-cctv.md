@@ -2,19 +2,19 @@
 title: "HTB Walkthrough: CCTV"
 date: 2026-06-22
 draft: false
-description: "Full walkthrough of the CCTV machine from Hack The Box. Medium difficulty, Linux. Boolean-based blind SQL Injection on ZoneMinder (CVE-2024-51482) to extract bcrypt hashes, offline cracking, and root escalation via forged API signature in motionEye (CVE-2025-60787) with command injection in the filename field."
-tags: ["HackTheBox", "Linux", "Medium", "SQLi", "BlindSQLi", "ZoneMinder", "CVE-2024-51482", "bcrypt", "JohnTheRipper", "motionEye", "CVE-2025-60787", "HMAC", "RCE", "SUID", "PrivEsc", "cctv", "writeups"]
+description: "Full walkthrough of the CCTV machine from Hack The Box. Easy difficulty, Linux. Boolean-based blind SQL Injection on ZoneMinder (CVE-2024-51482) to extract bcrypt hashes, offline cracking, and root escalation via forged API signature in motionEye (CVE-2025-60787) with command injection in the filename field."
+tags: ["HackTheBox", "Linux", "Easy", "SQLi", "BlindSQLi", "ZoneMinder", "CVE-2024-51482", "bcrypt", "JohnTheRipper", "motionEye", "CVE-2025-60787", "HMAC", "RCE", "SUID", "PrivEsc", "cctv", "writeups"]
 categories: ["HTB Walkthroughs"]
 series: ["HackTheBox CPTS"]
 ---
 
 {{< lead >}}
-Walkthrough of **CCTV** on Hack The Box. **Medium** difficulty machine running **Linux**. ZoneMinder exposed with default credentials is vulnerable to **CVE-2024-51482**, a blind SQL Injection that lets us extract bcrypt hashes and gain SSH access. Once inside, motionEye runs as root with its API signing key exposed in a readable configuration file — a combination that exploits **CVE-2025-60787** to inject a command into a capture filename and set SUID on `/bin/bash`.
+Walkthrough of **CCTV** on Hack The Box. **Easy** difficulty machine running **Linux**. ZoneMinder exposed with default credentials is vulnerable to **CVE-2024-51482**, a blind SQL Injection that lets us extract bcrypt hashes and gain SSH access. Once inside, motionEye runs as root with its API signing key exposed in a readable configuration file — a combination that exploits **CVE-2025-60787** to inject a command into a capture filename and set SUID on `/bin/bash`.
 {{< /lead >}}
 
 {{< badge >}}HackTheBox{{< /badge >}}
 {{< badge >}}Linux{{< /badge >}}
-{{< badge >}}Medium{{< /badge >}}
+{{< badge >}}Easy{{< /badge >}}
 
 ---
 
@@ -24,7 +24,7 @@ Walkthrough of **CCTV** on Hack The Box. **Medium** difficulty machine running *
 |----------------|-----------------------------------------------------------------------------------------------|
 | **Name**       | CCTV                                                                                          |
 | **OS**         | Linux                                                                                         |
-| **Difficulty** | Medium                                                                                        |
+| **Difficulty** | Easy                                                                                        |
 | **IP**         | 10.129.244.156                                                                                |
 | **Techniques** | CVE-2024-51482 · Boolean-based Blind SQLi · bcrypt Cracking · CVE-2025-60787 · SUID PrivEsc  |
 
