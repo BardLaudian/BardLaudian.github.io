@@ -70,6 +70,11 @@ theme = "blowfish"
     url = "/honeypot/"
     weight = 20
 
+[[languages.en.menu.main]]
+    name = "Projects"
+    url = "/projects/"
+    weight = 30
+
 [languages.es]
     languageName = "Español"
     weight = 2
@@ -92,6 +97,11 @@ theme = "blowfish"
     name = "Honeypot"
     url = "/honeypot/"
     weight = 20
+
+[[languages.es.menu.main]]
+    name = "Proyectos"
+    url = "/projects/"
+    weight = 30
 
 # --- CONFIGURACIÓN DE CONTENIDO ---
 [markup.goldmark.renderer]
