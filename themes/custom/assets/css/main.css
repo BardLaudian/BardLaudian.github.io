@@ -52,6 +52,23 @@
    ============================================================ */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* ============================================================
+   CUSTOM SCROLLBARS
+   ============================================================ */
+/* Webkit (Chrome, Edge, Safari) */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+  transition: background .2s;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+::-webkit-scrollbar-corner { background: var(--bg); }
+
+/* Firefox */
+* { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+
 html {
   font-size: 16px;
   scroll-behavior: smooth;
@@ -684,7 +701,126 @@ table tr:hover { background: var(--surface-2); }
 .article__date { color: var(--text-muted); }
 .article__reading-time { color: var(--text-subtle); }
 
-.article__body { max-width: var(--content-w); }
+/* Two-column grid: body + sticky sidebar */
+.article__layout {
+  display: grid;
+  grid-template-columns: 1fr var(--sidebar-w);
+  gap: 3rem;
+  align-items: start;
+}
+
+.article__body { min-width: 0; }
+
+/* Sidebar — hidden by default, revealed via JS when inline TOC leaves viewport */
+.article__sidebar {
+  position: sticky;
+  top: calc(var(--nav-h) + 1.5rem);
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(0);
+  transition: opacity .25s ease, visibility .25s ease, transform .25s ease;
+  align-self: start;
+}
+
+.article__sidebar--hidden {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(1rem);
+  pointer-events: none;
+}
+
+/* Terminal sidebar window */
+.toc--sticky {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  max-height: calc(100vh - var(--nav-h) - 3rem);
+  display: flex;
+  flex-direction: column;
+}
+
+.toc__bar {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  padding: .5rem .85rem;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.toc__bar-label {
+  font-size: .72rem;
+  color: var(--text-subtle);
+  margin-left: .35rem;
+  letter-spacing: .04em;
+}
+
+.toc__prompt {
+  display: flex;
+  align-items: center;
+  gap: .45rem;
+  padding: .55rem .85rem .4rem;
+  border-bottom: 1px solid var(--border-muted, var(--border));
+  flex-shrink: 0;
+}
+
+.toc__cmd { font-size: .78rem; color: var(--text-subtle); }
+
+/* Nav scroll area — no native scrollbar, custom one via CSS */
+.toc__nav {
+  overflow-y: auto;
+  padding: .6rem 0 .75rem;
+  flex: 1;
+  overscroll-behavior: contain;
+}
+
+/* Hugo generates: nav > ul > li > a (h2) > ul > li > a (h3) */
+.toc__nav ul { list-style: none; padding: 0; margin: 0; }
+
+.toc__nav > nav > ul > li > a {
+  display: block;
+  font-size: .78rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  padding: .22rem .85rem .22rem 1.1rem;
+  border-left: 2px solid transparent;
+  transition: color var(--transition), border-color var(--transition), background var(--transition);
+  line-height: 1.4;
+  word-break: break-word;
+}
+.toc__nav > nav > ul > li > a::before {
+  content: '> ';
+  color: var(--accent);
+  opacity: .45;
+  font-size: .72rem;
+}
+.toc__nav > nav > ul > li > a:hover { color: var(--text); background: var(--surface-2); }
+.toc__nav > nav > ul > li > a.active {
+  color: var(--accent);
+  border-left-color: var(--accent);
+  background: rgba(159,238,0,.06);
+}
+
+.toc__nav > nav > ul > li > ul { margin: 0; padding-left: 0; }
+.toc__nav > nav > ul > li > ul > li > a {
+  display: block;
+  font-size: .75rem;
+  color: var(--text-subtle);
+  text-decoration: none;
+  padding: .18rem .85rem .18rem 1.9rem;
+  border-left: 2px solid transparent;
+  transition: color var(--transition), border-color var(--transition), background var(--transition);
+  line-height: 1.35;
+  word-break: break-word;
+}
+.toc__nav > nav > ul > li > ul > li > a:hover { color: var(--text-muted); background: var(--surface-2); }
+.toc__nav > nav > ul > li > ul > li > a.active {
+  color: var(--accent);
+  border-left-color: var(--accent);
+  opacity: .85;
+}
 
 /* Article body content */
 .article__body h1,
@@ -1259,6 +1395,10 @@ table tr:hover { background: var(--surface-2); }
   .hero__stats { flex-direction: row; }
   .stat { min-width: 110px; }
   .hero__socials { flex-direction: row; flex-wrap: wrap; }
+
+  /* Collapse sidebar to single column on tablet; inline TOC takes over */
+  .article__layout { grid-template-columns: 1fr; }
+  .article__sidebar { display: none !important; }
 
   .posts-grid--home { grid-template-columns: repeat(2, 1fr); }
 }

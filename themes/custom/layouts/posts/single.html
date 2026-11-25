@@ -32,27 +32,47 @@
       </div>
     </header>
 
-    {{ if .TableOfContents }}
-    <div class="toc-inline">
-      <details class="toc-details">
-        <summary class="toc-details__toggle">
-          <span class="toc-details__bar">
+    <div class="article__layout">
+      <div class="article__body">
+        {{ if .TableOfContents }}
+        <div class="toc-inline" id="toc-top">
+          <details class="toc-details">
+            <summary class="toc-details__toggle">
+              <span class="toc-details__bar">
+                <span class="toc__dot toc__dot--red"></span>
+                <span class="toc__dot toc__dot--yellow"></span>
+                <span class="toc__dot toc__dot--green"></span>
+              </span>
+              <span class="toc-details__prompt">
+                <span class="toc__ps">$</span>
+                <span class="toc-details__cmd">cat ./sections</span>
+              </span>
+            </summary>
+            <nav class="toc-details__nav">{{ .TableOfContents }}</nav>
+          </details>
+        </div>
+        {{ end }}
+
+        {{ .Content }}
+      </div>
+
+      {{ if .TableOfContents }}
+      <aside class="article__sidebar article__sidebar--hidden" id="toc-sidebar" aria-hidden="true">
+        <div class="toc toc--sticky">
+          <div class="toc__bar">
             <span class="toc__dot toc__dot--red"></span>
             <span class="toc__dot toc__dot--yellow"></span>
             <span class="toc__dot toc__dot--green"></span>
-          </span>
-          <span class="toc-details__prompt">
+            <span class="toc__bar-label">sections</span>
+          </div>
+          <div class="toc__prompt">
             <span class="toc__ps">$</span>
-            <span class="toc-details__cmd">cat ./sections</span>
-          </span>
-        </summary>
-        <nav class="toc-details__nav">{{ .TableOfContents }}</nav>
-      </details>
-    </div>
-    {{ end }}
-
-    <div class="article__body">
-      {{ .Content }}
+            <span class="toc__cmd">cat ./sections</span>
+          </div>
+          <nav class="toc__nav">{{ .TableOfContents }}</nav>
+        </div>
+      </aside>
+      {{ end }}
     </div>
 
     {{ if .Params.tags }}
@@ -67,4 +87,36 @@
     {{ end }}
   </div>
 </article>
+
+<script>
+(function () {
+  var tocTop = document.getElementById('toc-top');
+  var sidebar = document.getElementById('toc-sidebar');
+  if (!tocTop || !sidebar) return;
+
+  var obs = new IntersectionObserver(function (entries) {
+    var visible = entries[0].isIntersecting;
+    sidebar.classList.toggle('article__sidebar--hidden', visible);
+    sidebar.setAttribute('aria-hidden', visible ? 'true' : 'false');
+  }, { threshold: 0 });
+
+  obs.observe(tocTop);
+
+  /* Active link tracking */
+  var headings = document.querySelectorAll('.article__body h2[id], .article__body h3[id]');
+  var links = sidebar.querySelectorAll('a[href]');
+  if (!headings.length || !links.length) return;
+
+  var hObs = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (!e.isIntersecting) return;
+      links.forEach(function (a) { a.classList.remove('active'); });
+      var active = sidebar.querySelector('a[href="#' + e.target.id + '"]');
+      if (active) active.classList.add('active');
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+
+  headings.forEach(function (h) { hObs.observe(h); });
+})();
+</script>
 {{ end }}
