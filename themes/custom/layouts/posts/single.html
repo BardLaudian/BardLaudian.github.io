@@ -33,35 +33,26 @@
     </header>
 
     {{ if .TableOfContents }}
-    <div class="toc-mobile">
-      <details>
-        <summary class="toc-mobile__toggle">{{ i18n "toc" }}</summary>
-        <nav class="toc">{{ .TableOfContents }}</nav>
+    <div class="toc-inline">
+      <details class="toc-details">
+        <summary class="toc-details__toggle">
+          <span class="toc-details__bar">
+            <span class="toc__dot toc__dot--red"></span>
+            <span class="toc__dot toc__dot--yellow"></span>
+            <span class="toc__dot toc__dot--green"></span>
+          </span>
+          <span class="toc-details__prompt">
+            <span class="toc__ps">$</span>
+            <span class="toc-details__cmd">cat ./sections</span>
+          </span>
+        </summary>
+        <nav class="toc-details__nav">{{ .TableOfContents }}</nav>
       </details>
     </div>
     {{ end }}
 
-    <div class="article__layout">
-      <div class="article__body">
-        {{ .Content }}
-      </div>
-      {{ if .TableOfContents }}
-      <aside class="article__sidebar">
-        <div class="toc toc--sticky">
-          <div class="toc__bar">
-            <span class="toc__dot toc__dot--red"></span>
-            <span class="toc__dot toc__dot--yellow"></span>
-            <span class="toc__dot toc__dot--green"></span>
-            <span class="toc__bar-label">outline</span>
-          </div>
-          <div class="toc__prompt">
-            <span class="toc__ps">$</span>
-            <span class="toc__cmd">cat ./sections</span>
-          </div>
-          <nav class="toc__nav">{{ .TableOfContents }}</nav>
-        </div>
-      </aside>
-      {{ end }}
+    <div class="article__body">
+      {{ .Content }}
     </div>
 
     {{ if .Params.tags }}
