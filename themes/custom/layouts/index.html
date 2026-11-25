@@ -9,7 +9,7 @@
     </header>
     <div class="posts-grid posts-grid--home">
       {{ $posts := where .Site.RegularPages "Section" "posts" }}
-      {{ range first 3 ($posts.ByDate.Reverse) }}
+      {{ range first 4 ($posts.ByDate.Reverse) }}
         {{ partial "post-card.html" . }}
       {{ end }}
     </div>
@@ -48,7 +48,17 @@
 <section class="section" data-reveal>
   <div class="container">
     <div class="honeypot-banner">
-      <div class="honeypot-banner__icon">🍯</div>
+      <div class="honeypot-banner__icon" aria-hidden="true">
+        <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="10" y="22" width="28" height="20" rx="4" fill="none" stroke="currentColor" stroke-width="2"/>
+          <path d="M14 22v-4a10 10 0 0120 0v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="24" cy="32" r="3" fill="currentColor" opacity=".6"/>
+          <path d="M24 35v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <path d="M8 14 C8 14 16 10 24 14 C32 18 40 14 40 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity=".5"/>
+          <circle cx="38" cy="10" r="2" fill="currentColor" opacity=".4"/>
+          <circle cx="10" cy="11" r="1.5" fill="currentColor" opacity=".3"/>
+        </svg>
+      </div>
       <div class="honeypot-banner__body">
         <h2 class="honeypot-banner__title">{{ i18n "honeypotTitle" }}</h2>
         <p class="honeypot-banner__desc">{{ i18n "honeypotDesc" }}</p>

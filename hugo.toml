@@ -27,7 +27,6 @@ theme = "custom"
 # --- AUTOR ---
 [params.author]
     name     = "BardLaudian"
-    image    = "img/perfil.jpg"
     headline = "Junior Pentester · CJCA · On the road to Security+ and CPTS"
     bio      = "Passionate about Ethical Hacking based in A Coruña. CJCA certified, pursuing CompTIA Security+ and Hack The Box CPTS. Documenting the process machine by machine."
     links = [
