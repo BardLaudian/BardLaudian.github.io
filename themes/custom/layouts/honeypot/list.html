@@ -1,0 +1,32 @@
+{{ define "main" }}
+<section class="list-page">
+  <div class="container">
+    <header class="list-page__header">
+      <h1 class="list-page__title">{{ .Title | default "Honeypot Diaries" }}</h1>
+      <p class="list-page__subtitle">{{ .Description }}</p>
+    </header>
+    <div class="honeypot-list">
+      {{ range .Pages.ByDate.Reverse }}
+        <article class="honeypot-entry" data-reveal>
+          <a href="{{ .RelPermalink }}" class="honeypot-entry__link">
+            <time class="honeypot-entry__date" datetime="{{ .Date.Format "2006-01-02" }}">
+              {{ .Date.Format "2006-01-02" }}
+            </time>
+            <div class="honeypot-entry__content">
+              <h2 class="honeypot-entry__title">{{ .Title }}</h2>
+              {{ if .Description }}
+                <p class="honeypot-entry__desc">{{ .Description | truncate 140 }}</p>
+              {{ end }}
+            </div>
+            <div class="honeypot-entry__tags">
+              {{ range first 3 .Params.tags }}
+                <span class="project-tag">{{ . }}</span>
+              {{ end }}
+            </div>
+          </a>
+        </article>
+      {{ end }}
+    </div>
+  </div>
+</section>
+{{ end }}

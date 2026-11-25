@@ -1,0 +1,21 @@
+{{ define "main" }}
+<article class="article">
+  <div class="container container--narrow">
+    <header class="article__header">
+      <h1 class="article__title">{{ .Title }}</h1>
+      <div class="article__meta">
+        <time class="article__date" datetime="{{ .Date.Format "2006-01-02" }}">
+          {{ .Date.Format "Jan 2, 2006" }}
+        </time>
+        {{ if .ReadingTime }}
+          <span class="article__reading-time">· {{ .ReadingTime }} min read</span>
+        {{ end }}
+        <div class="article__lang">{{ partial "lang-switcher.html" . }}</div>
+      </div>
+    </header>
+    <div class="article__body">
+      {{ .Content }}
+    </div>
+  </div>
+</article>
+{{ end }}

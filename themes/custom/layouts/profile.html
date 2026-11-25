@@ -1,0 +1,60 @@
+{{ define "main" }}
+{{ partial "hero.html" . }}
+
+<section class="section" data-reveal>
+  <div class="container">
+    <header class="section__header">
+      <h2 class="section__title">{{ i18n "recentWriteups" }}</h2>
+      <a href="{{ "/posts" | relLangURL }}" class="section__link">{{ i18n "viewAll" }}</a>
+    </header>
+    <div class="posts-grid posts-grid--home">
+      {{ $posts := where .Site.RegularPages "Section" "posts" }}
+      {{ range first 3 ($posts.ByDate.Reverse) }}
+        {{ partial "post-card.html" . }}
+      {{ end }}
+    </div>
+  </div>
+</section>
+
+{{ $projects := where .Site.RegularPages "Section" "projects" }}
+{{ if $projects }}
+<section class="section" data-reveal>
+  <div class="container">
+    <header class="section__header">
+      <h2 class="section__title">{{ i18n "featuredProjects" }}</h2>
+      <a href="{{ "/projects" | relLangURL }}" class="section__link">{{ i18n "viewAll" }}</a>
+    </header>
+    <div class="projects-grid">
+      {{ range $projects.ByDate.Reverse }}
+        <article class="project-card" data-reveal>
+          <a href="{{ .RelPermalink }}" class="project-card__link">
+            <h3 class="project-card__title">{{ .Title }}</h3>
+            {{ if .Description }}
+              <p class="project-card__desc">{{ .Description | truncate 150 }}</p>
+            {{ end }}
+            <div class="project-card__tags">
+              {{ range first 5 .Params.tags }}
+                <span class="project-tag">{{ . }}</span>
+              {{ end }}
+            </div>
+          </a>
+        </article>
+      {{ end }}
+    </div>
+  </div>
+</section>
+{{ end }}
+
+<section class="section" data-reveal>
+  <div class="container">
+    <div class="honeypot-banner">
+      <div class="honeypot-banner__icon">🍯</div>
+      <div class="honeypot-banner__body">
+        <h2 class="honeypot-banner__title">{{ i18n "honeypotTitle" }}</h2>
+        <p class="honeypot-banner__desc">{{ i18n "honeypotDesc" }}</p>
+        <a href="{{ "/honeypot" | relLangURL }}" class="btn btn--outline">{{ i18n "viewAll" }}</a>
+      </div>
+    </div>
+  </div>
+</section>
+{{ end }}

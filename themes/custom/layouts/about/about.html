@@ -1,0 +1,13 @@
+{{ define "main" }}
+<article class="article article--about">
+  <div class="container container--narrow">
+    <header class="article__header">
+      <h1 class="article__title">{{ .Title }}</h1>
+      {{ partial "lang-switcher.html" . }}
+    </header>
+    <div class="article__body">
+      {{ .Content }}
+    </div>
+  </div>
+</article>
+{{ end }}

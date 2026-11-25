@@ -1,0 +1,26 @@
+<nav class="nav" aria-label="Main navigation">
+  <div class="nav__inner">
+    <a href="{{ .Site.Home.RelPermalink }}" class="nav__logo" aria-label="Home">
+      <span class="nav__tilde">~</span><span class="nav__sep">/</span><span class="nav__name">bardlaudian</span>
+    </a>
+
+    <button class="nav__toggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="nav-menu">
+      <span class="nav__bar"></span>
+      <span class="nav__bar"></span>
+      <span class="nav__bar"></span>
+    </button>
+
+    <div class="nav__menu" id="nav-menu" role="menubar">
+      {{ $cur := . }}
+      {{ range $i, $item := .Site.Menus.main }}
+      <a href="{{ $item.URL | relLangURL }}"
+         class="nav__item{{ if $cur.IsMenuCurrent "main" $item }} nav__item--active{{ end }}"
+         role="menuitem">
+        <span class="nav__num">0{{ add $i 1 }}.</span>{{ $item.Name }}
+      </a>
+      {{ end }}
+
+      <div class="nav__lang">{{ partial "lang-switcher.html" . }}</div>
+    </div>
+  </div>
+</nav>

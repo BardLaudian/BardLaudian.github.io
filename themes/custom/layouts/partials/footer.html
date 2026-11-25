@@ -1,0 +1,22 @@
+<footer class="footer">
+  <div class="footer__inner">
+    <div class="footer__prompt">
+      <span class="footer__path">~/bardlaudian</span>
+      <span class="footer__cmd">exit 0</span>
+    </div>
+    <div class="footer__links">
+      {{ range .Site.Params.author.links }}{{ range $k, $v := . }}
+        <a href="{{ $v }}" class="footer__social footer__social--{{ $k }}" aria-label="{{ $k }}"
+           target="_blank" rel="noopener noreferrer">{{ $k }}</a>
+      {{ end }}{{ end }}
+    </div>
+    <p class="footer__copy">© {{ now.Year }} {{ .Site.Params.author.name }}</p>
+  </div>
+</footer>
+{{ $js := resources.Get "js/main.js" }}
+{{ if $js }}
+  {{ if hugo.IsProduction }}
+    {{ $js = $js | minify | fingerprint }}
+  {{ end }}
+  <script src="{{ $js.RelPermalink }}" defer></script>
+{{ end }}

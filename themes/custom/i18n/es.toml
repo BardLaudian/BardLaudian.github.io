@@ -1,0 +1,41 @@
+[statsWriteups]
+other = "HTB Writeups"
+
+[statsProjects]
+other = "Proyectos"
+
+[statsCerts]
+other = "Cert Activa"
+
+[recentWriteups]
+other = "Últimos Writeups"
+
+[viewAll]
+other = "Ver todos →"
+
+[featuredProjects]
+other = "Proyectos"
+
+[readMore]
+other = "Leer más →"
+
+[honeypotTitle]
+other = "Honeypot Diaries"
+
+[honeypotDesc]
+other = "Tráfico real de ataques, semana a semana. Datos en vivo de un honeypot T-Pot expuesto a internet."
+
+[filterAll]
+other = "Todos"
+
+[toc]
+other = "Contenido"
+
+[tags]
+other = "Etiquetas"
+
+[publishedOn]
+other = "Publicado"
+
+[minRead]
+other = "min de lectura"

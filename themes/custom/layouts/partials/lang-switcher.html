@@ -1,0 +1,7 @@
+{{ if .IsTranslated }}
+  {{ range .Translations }}
+    <a href="{{ .RelPermalink }}" class="lang-link" lang="{{ .Language.Lang }}" hreflang="{{ .Language.Lang }}">
+      {{ .Language.Lang | upper }}
+    </a>
+  {{ end }}
+{{ end }}

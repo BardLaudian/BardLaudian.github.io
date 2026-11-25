@@ -1,0 +1,14 @@
+{{ define "main" }}
+<section class="list-page">
+  <div class="container">
+    <header class="list-page__header">
+      <h1 class="list-page__title">{{ .Title }}</h1>
+    </header>
+    <div class="posts-grid">
+      {{ range .Pages.ByDate.Reverse }}
+        {{ partial "post-card.html" . }}
+      {{ end }}
+    </div>
+  </div>
+</section>
+{{ end }}

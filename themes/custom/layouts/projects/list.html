@@ -1,0 +1,29 @@
+{{ define "main" }}
+<section class="list-page">
+  <div class="container">
+    <header class="list-page__header">
+      <h1 class="list-page__title">{{ .Title | default "Projects" }}</h1>
+    </header>
+    <div class="projects-grid projects-grid--full">
+      {{ range .Pages.ByDate.Reverse }}
+        <article class="project-card project-card--large" data-reveal>
+          <a href="{{ .RelPermalink }}" class="project-card__link">
+            <h2 class="project-card__title">{{ .Title }}</h2>
+            {{ if .Description }}
+              <p class="project-card__desc">{{ .Description | truncate 200 }}</p>
+            {{ end }}
+            <div class="project-card__footer">
+              <div class="project-card__tags">
+                {{ range first 6 .Params.tags }}
+                  <span class="project-tag">{{ . }}</span>
+                {{ end }}
+              </div>
+              <span class="project-card__cta">{{ i18n "readMore" }}</span>
+            </div>
+          </a>
+        </article>
+      {{ end }}
+    </div>
+  </div>
+</section>
+{{ end }}

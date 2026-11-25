@@ -1,0 +1,14 @@
+{{ $text := trim .Inner " \n" }}
+{{ $lower := $text | lower }}
+{{ $cls := "badge badge--default" }}
+{{ if eq $lower "easy"       }}{{ $cls = "badge badge--easy" }}
+{{ else if eq $lower "medium"  }}{{ $cls = "badge badge--medium" }}
+{{ else if eq $lower "hard"    }}{{ $cls = "badge badge--hard" }}
+{{ else if eq $lower "insane"  }}{{ $cls = "badge badge--insane" }}
+{{ else if eq $lower "linux"   }}{{ $cls = "badge badge--os badge--os-linux" }}
+{{ else if eq $lower "windows" }}{{ $cls = "badge badge--os badge--os-windows" }}
+{{ else if eq $lower "freebsd" }}{{ $cls = "badge badge--os badge--os-freebsd" }}
+{{ else if eq $lower "android" }}{{ $cls = "badge badge--os badge--os-android" }}
+{{ else if eq $lower "hackthebox" }}{{ $cls = "badge badge--htb" }}
+{{ end -}}
+<span class="{{ $cls }}">{{ $text }}</span>

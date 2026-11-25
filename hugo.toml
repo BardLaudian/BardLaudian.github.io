@@ -3,114 +3,100 @@ baseURL = "https://BardLaudian.github.io/"
 defaultContentLanguage = "en"
 defaultContentLanguageInSubdir = false
 title = "Pablo Seoane · Pentester & Security Researcher"
-theme = "blowfish"
+theme = "custom"
 
-# --- PARÁMETROS DEL TEMA (compartidos entre idiomas) ---
+# --- PARÁMETROS DEL TEMA ---
 [params]
-    colorScheme = "ocean"
-    defaultAppearance = "dark"
-    showSunMoon = true
-    showScrollToTop = true
-    enableSearch = true
-    showReadingTime = true
-    showBreadcrumbs = true
-    showTaxonomies = true
-    smartTOC = true
     description = "Personal blog by Pablo Seoane where I post everything I do in cybersecurity as a portfolio: machine writeups, malware samples captured by my honeypot, and anything else worth documenting."
-    homepage_body = '''This is my personal blog where I post everything I do in cybersecurity as a portfolio. Junior level, <span style="color:#9FEE00;font-weight:600;">CJCA</span> certified, currently pursuing <span style="color:#9FEE00;font-weight:600;">Security+</span> and <span style="color:#9FEE00;font-weight:600;">CPTS</span> by Hack The Box.'''
-
-[params.article]
-    showTableOfContents = true
-    smartTOCHideUnfocusedChildren = true
-    showAuthor = true
-
-[params.homepage]
-    layout = "profile"
-    showRecent = true
-    showRecentItems = 3
-    showContact = true
-    cardView = true
-
-[params.list]
-    groupByYear = true
-    cardView = true
 
 [params.hero]
-    title = "Pablo Seoane Temprano"
     subtitle = "Junior Pentester · CJCA · Pursuing Security+ & CPTS"
-    content = "Robotics Engineering student with junior-level cybersecurity skills. CJCA certified, currently pursuing Security+ and CPTS. This is my blog: I post everything I do in cybersecurity as a portfolio."
-    image = "img/perfil.jpg"
+
+[[params.certs]]
+    name   = "CJCA"
+    status = "active"
+
+[[params.certs]]
+    name   = "Security+"
+    status = "pursuing"
+
+[[params.certs]]
+    name   = "CPTS"
+    status = "pursuing"
 
 # --- AUTOR ---
-[author]
-    name = "BardLaudian"
-    image = "img/perfil.jpg"
+[params.author]
+    name     = "BardLaudian"
+    image    = "img/perfil.jpg"
     headline = "Junior Pentester · CJCA · On the road to Security+ and CPTS"
-    bio = "Passionate about Ethical Hacking based in A Coruña. CJCA certified, pursuing CompTIA Security+ and Hack The Box CPTS. Documenting the process machine by machine."
+    bio      = "Passionate about Ethical Hacking based in A Coruña. CJCA certified, pursuing CompTIA Security+ and Hack The Box CPTS. Documenting the process machine by machine."
     links = [
-        { linkedin = "https://linkedin.com/in/pablo-seoane-temprano" },
-        { github = "https://github.com/BardLaudian" },
+        { linkedin   = "https://linkedin.com/in/pablo-seoane-temprano" },
+        { github     = "https://github.com/BardLaudian" },
         { hackthebox = "https://app.hackthebox.com/users/204160" },
-        { email = "seoane.pablo16@gmail.com" },
+        { email      = "mailto:seoane.pablo16@gmail.com" },
     ]
 
 # --- IDIOMAS ---
 [languages.en]
-    languageName = "English"
-    weight = 1
-    languageCode = "en-us"
+    label        = "English"
+    weight       = 1
+    locale       = "en-us"
 
 [[languages.en.menu.main]]
-    name = "Writeups"
-    url = "/posts/"
+    name   = "Writeups"
+    url    = "/posts/"
     weight = 10
 
 [[languages.en.menu.main]]
-    name = "Honeypot"
-    url = "/honeypot/"
+    name   = "Honeypot"
+    url    = "/honeypot/"
     weight = 20
 
 [[languages.en.menu.main]]
-    name = "Projects"
-    url = "/projects/"
+    name   = "Projects"
+    url    = "/projects/"
     weight = 30
 
 [languages.es]
-    languageName = "Español"
-    weight = 2
-    languageCode = "es-es"
+    label        = "Español"
+    weight       = 2
+    locale       = "es-es"
 
 [languages.es.params]
     description = "Blog personal de Pablo Seoane donde subo todo lo que hago en ciberseguridad a modo de portfolio: writeups de máquinas, análisis de muestras capturadas en mi honeypot y cualquier cosa que considere interesante documentar."
-    homepage_body = '''Este es mi blog personal donde subo todo lo que hago en ciberseguridad a modo de portfolio. Nivel junior, certificado <span style="color:#9FEE00;font-weight:600;">CJCA</span>, preparando el <span style="color:#9FEE00;font-weight:600;">Security+</span> y el <span style="color:#9FEE00;font-weight:600;">CPTS</span> de Hack The Box.'''
 
 [languages.es.params.hero]
     subtitle = "Junior Pentester · CJCA · Preparando Security+ y CPTS"
-    content = "Estudiante de Ingeniería Robótica con nivel junior en ciberseguridad. Certificado CJCA, preparando el Security+ y el CPTS. Este es mi blog: subo todo lo que hago en ciberseguridad a modo de portfolio."
 
 [[languages.es.menu.main]]
-    name = "Writeups"
-    url = "/posts/"
+    name   = "Writeups"
+    url    = "/posts/"
     weight = 10
 
 [[languages.es.menu.main]]
-    name = "Honeypot"
-    url = "/honeypot/"
+    name   = "Honeypot"
+    url    = "/honeypot/"
     weight = 20
 
 [[languages.es.menu.main]]
-    name = "Proyectos"
-    url = "/projects/"
+    name   = "Proyectos"
+    url    = "/projects/"
     weight = 30
 
 # --- CONFIGURACIÓN DE CONTENIDO ---
 [markup.goldmark.renderer]
     unsafe = true
 
+[markup.highlight]
+    style              = "github-dark"
+    lineNos            = false
+    noClasses          = true
+
 [taxonomies]
     category = "categories"
-    tag = "tags"
-    series = "series"
+    tag      = "tags"
+    series   = "series"
 
 [outputs]
-    home = ["HTML", "RSS", "JSON"]
+    home = ["HTML", "RSS"]

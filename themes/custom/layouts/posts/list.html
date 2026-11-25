@@ -1,0 +1,26 @@
+{{ define "main" }}
+<section class="list-page">
+  <div class="container">
+    <header class="list-page__header">
+      <h1 class="list-page__title">{{ .Title | default "Writeups" }}</h1>
+      <p class="list-page__count">
+        <span class="list-page__prompt">$</span> find . -name "*.md" | wc -l
+        <span class="list-page__num">{{ len .Pages }}</span>
+      </p>
+    </header>
+
+    <div class="filter-bar" role="toolbar" aria-label="Filter by difficulty">
+      <button class="filter-btn filter-btn--active" data-filter="all">{{ i18n "filterAll" }}</button>
+      <button class="filter-btn filter-btn--easy"   data-filter="easy">Easy</button>
+      <button class="filter-btn filter-btn--medium" data-filter="medium">Medium</button>
+      <button class="filter-btn filter-btn--hard"   data-filter="hard">Hard</button>
+    </div>
+
+    <div class="posts-grid" id="posts-grid">
+      {{ range .Pages.ByDate.Reverse }}
+        {{ partial "post-card.html" . }}
+      {{ end }}
+    </div>
+  </div>
+</section>
+{{ end }}

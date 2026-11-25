@@ -1,0 +1,71 @@
+<section class="hero">
+  <div class="container">
+    <div class="hero__layout">
+
+      <div class="hero__terminal" data-terminal>
+        <div class="terminal-bar">
+          <span class="terminal-dot terminal-dot--red"></span>
+          <span class="terminal-dot terminal-dot--yellow"></span>
+          <span class="terminal-dot terminal-dot--green"></span>
+          <span class="terminal-title">bardlaudian@kali: ~</span>
+        </div>
+        <div class="terminal-body">
+          <div class="terminal-line">
+            <span class="terminal-ps">$</span>
+            <span class="terminal-cmd" id="hero-cmd"></span>
+            <span class="terminal-cursor" id="hero-cursor" aria-hidden="true"></span>
+          </div>
+          <div class="terminal-output" id="hero-output" hidden>
+            <p class="hero-name">{{ .Site.Params.author.name }}</p>
+            <p class="hero-role">
+              {{- with .Site.Params.hero }}{{ .subtitle }}{{ else }}Junior Pentester · CJCA{{ end -}}
+            </p>
+            <p class="hero-bio">{{ .Site.Params.description }}</p>
+          </div>
+          <div class="terminal-line terminal-line--2" id="hero-line-2" hidden>
+            <span class="terminal-ps">$</span>
+            <span class="terminal-cmd" id="hero-cmd-2"></span>
+            <span class="terminal-cursor" id="hero-cursor-2" aria-hidden="true"></span>
+          </div>
+          <div class="terminal-output terminal-output--certs" id="hero-output-2" hidden>
+            {{ range .Site.Params.certs }}
+              <span class="cert-chip cert-chip--{{ .status }}">{{ .name }}</span>
+            {{ end }}
+          </div>
+          <div class="terminal-line terminal-line--3" id="hero-line-3" hidden>
+            <span class="terminal-ps">$</span>
+            <span class="terminal-cursor" aria-hidden="true"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero__aside">
+        <div class="hero__stats">
+          {{ $posts := where .Site.RegularPages "Section" "posts" }}
+          {{ $htb := where $posts ".Params.tags" "intersect" (slice "HackTheBox") }}
+          <div class="stat">
+            <span class="stat__num">{{ len $htb }}</span>
+            <span class="stat__label">{{ i18n "statsWriteups" }}</span>
+          </div>
+          {{ $projects := where .Site.RegularPages "Section" "projects" }}
+          <div class="stat">
+            <span class="stat__num">{{ len $projects }}</span>
+            <span class="stat__label">{{ i18n "statsProjects" }}</span>
+          </div>
+          <div class="stat">
+            <span class="stat__num">1</span>
+            <span class="stat__label">{{ i18n "statsCerts" }}</span>
+          </div>
+        </div>
+        <div class="hero__socials">
+          {{ range .Site.Params.author.links }}{{ range $k, $v := . }}
+            <a href="{{ $v }}" class="social-btn" aria-label="{{ $k }}" target="_blank" rel="noopener noreferrer">
+              <span class="social-btn__key">{{ $k }}</span>
+            </a>
+          {{ end }}{{ end }}
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>

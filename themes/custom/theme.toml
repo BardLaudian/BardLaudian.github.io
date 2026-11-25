@@ -1,0 +1,8 @@
+name        = "custom"
+license     = "MIT"
+description = "Custom terminal/hacker theme for BardLaudian's cybersecurity blog"
+homepage    = "https://BardLaudian.github.io"
+min_version = "0.112.0"
+
+[author]
+  name = "Pablo Seoane"

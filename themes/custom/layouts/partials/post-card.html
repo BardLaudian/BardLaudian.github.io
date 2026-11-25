@@ -1,0 +1,25 @@
+{{ $difficulty := "" }}
+{{ $os := "" }}
+{{ range .Params.tags }}
+  {{ if or (eq . "Easy") (eq . "Medium") (eq . "Hard") (eq . "Insane") }}{{ $difficulty = . }}{{ end }}
+  {{ if or (eq . "Linux") (eq . "Windows") (eq . "FreeBSD") (eq . "Android") (eq . "macOS") }}{{ $os = . }}{{ end }}
+{{ end }}
+
+<article class="post-card" data-difficulty="{{ $difficulty | lower }}" data-reveal>
+  <a href="{{ .RelPermalink }}" class="post-card__link">
+    <div class="post-card__meta">
+      {{ if $difficulty }}
+        <span class="badge badge--{{ $difficulty | lower }}">{{ $difficulty }}</span>
+      {{ end }}
+      {{ if $os }}
+        <span class="badge badge--os badge--os-{{ $os | lower }}">{{ $os }}</span>
+      {{ end }}
+      <time class="post-card__date" datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "Jan 2006" }}</time>
+    </div>
+    <h2 class="post-card__title">{{ .Title }}</h2>
+    {{ if .Description }}
+      <p class="post-card__desc">{{ .Description | truncate 120 }}</p>
+    {{ end }}
+    <span class="post-card__cta">{{ i18n "readMore" }}</span>
+  </a>
+</article>

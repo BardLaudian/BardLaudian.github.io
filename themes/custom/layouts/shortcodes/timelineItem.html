@@ -1,0 +1,15 @@
+<div class="timeline-item">
+  <div class="timeline-item__dot">
+    {{ with .Get "icon" }}<span class="timeline-item__icon" aria-hidden="true">{{ . }}</span>{{ end }}
+  </div>
+  <div class="timeline-item__body">
+    <div class="timeline-item__head">
+      <strong class="timeline-item__title">{{ .Get "header" }}</strong>
+      {{ with .Get "subheader" }}<span class="timeline-item__sub">{{ . }}</span>{{ end }}
+      {{ with .Get "badge" }}<span class="badge timeline-item__badge">{{ . }}</span>{{ end }}
+    </div>
+    <div class="timeline-item__content">
+      {{ .Inner | markdownify }}
+    </div>
+  </div>
+</div>

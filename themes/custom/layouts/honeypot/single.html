@@ -1,0 +1,45 @@
+{{ define "main" }}
+<article class="article">
+  <div class="container container--narrow">
+    <header class="article__header">
+      {{ range .Params.categories }}
+        <span class="badge badge--cat">{{ . }}</span>
+      {{ end }}
+      <h1 class="article__title">{{ .Title }}</h1>
+      <div class="article__meta">
+        <time class="article__date" datetime="{{ .Date.Format "2006-01-02" }}">
+          {{ .Date.Format "Jan 2, 2006" }}
+        </time>
+        {{ if .ReadingTime }}
+          <span class="article__reading-time">· {{ .ReadingTime }} {{ i18n "minRead" }}</span>
+        {{ end }}
+        {{ partial "lang-switcher.html" . }}
+      </div>
+    </header>
+
+    {{ if .TableOfContents }}
+    <div class="toc-mobile">
+      <details>
+        <summary class="toc-mobile__toggle">{{ i18n "toc" }}</summary>
+        <nav class="toc">{{ .TableOfContents }}</nav>
+      </details>
+    </div>
+    {{ end }}
+
+    <div class="article__body">
+      {{ .Content }}
+    </div>
+
+    {{ if .Params.tags }}
+    <footer class="article__footer">
+      <span class="article__tags-label">{{ i18n "tags" }}</span>
+      <div class="article__tags">
+        {{ range .Params.tags }}
+          <a href="{{ "/tags/" | relLangURL }}{{ . | urlize }}" class="article__tag">#{{ . }}</a>
+        {{ end }}
+      </div>
+    </footer>
+    {{ end }}
+  </div>
+</article>
+{{ end }}
