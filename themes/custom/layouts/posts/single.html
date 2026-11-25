@@ -48,8 +48,17 @@
       {{ if .TableOfContents }}
       <aside class="article__sidebar">
         <div class="toc toc--sticky">
-          <div class="toc__header">{{ i18n "toc" }}</div>
-          <nav>{{ .TableOfContents }}</nav>
+          <div class="toc__bar">
+            <span class="toc__dot toc__dot--red"></span>
+            <span class="toc__dot toc__dot--yellow"></span>
+            <span class="toc__dot toc__dot--green"></span>
+            <span class="toc__bar-label">outline</span>
+          </div>
+          <div class="toc__prompt">
+            <span class="toc__ps">$</span>
+            <span class="toc__cmd">cat ./sections</span>
+          </div>
+          <nav class="toc__nav">{{ .TableOfContents }}</nav>
         </div>
       </aside>
       {{ end }}
