@@ -689,7 +689,7 @@ table tr:hover { background: var(--surface-2); }
   display: grid;
   grid-template-columns: 1fr var(--sidebar-w);
   gap: 3rem;
-  align-items: start;
+  align-items: stretch; /* sidebar must match article height for sticky to work throughout */
 }
 
 .article__body { min-width: 0; }
