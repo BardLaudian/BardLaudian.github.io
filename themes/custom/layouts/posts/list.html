@@ -9,11 +9,25 @@
       </p>
     </header>
 
-    <div class="filter-bar" role="toolbar" aria-label="Filter by difficulty">
-      <button class="filter-btn filter-btn--active" data-filter="all">{{ i18n "filterAll" }}</button>
-      <button class="filter-btn filter-btn--easy"   data-filter="easy">Easy</button>
-      <button class="filter-btn filter-btn--medium" data-filter="medium">Medium</button>
-      <button class="filter-btn filter-btn--hard"   data-filter="hard">Hard</button>
+    <div class="list-controls">
+      <div class="search-bar">
+        <span class="search-bar__prompt" aria-hidden="true">$</span>
+        <input
+          class="search-bar__input"
+          id="post-search"
+          type="search"
+          placeholder="grep -i '...' writeups/"
+          aria-label="{{ i18n "searchPlaceholder" | default "Search writeups" }}"
+          autocomplete="off"
+          spellcheck="false"
+        >
+      </div>
+      <div class="filter-bar" role="toolbar" aria-label="Filter by difficulty">
+        <button class="filter-btn filter-btn--active" data-filter="all">{{ i18n "filterAll" }}</button>
+        <button class="filter-btn filter-btn--easy"   data-filter="easy">Easy</button>
+        <button class="filter-btn filter-btn--medium" data-filter="medium">Medium</button>
+        <button class="filter-btn filter-btn--hard"   data-filter="hard">Hard</button>
+      </div>
     </div>
 
     <div class="posts-grid" id="posts-grid">
