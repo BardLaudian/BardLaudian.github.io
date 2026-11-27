@@ -5,7 +5,7 @@
   {{ if or (eq . "Linux") (eq . "Windows") (eq . "FreeBSD") (eq . "Android") (eq . "macOS") }}{{ $os = . }}{{ end }}
 {{ end }}
 
-<article class="post-card" data-difficulty="{{ $difficulty | lower }}" data-title="{{ .Title | lower }}" data-tags="{{ delimit .Params.tags " " | lower }}" data-reveal>
+<article class="post-card" data-difficulty="{{ $difficulty | lower }}" data-reveal>
   <a href="{{ .RelPermalink }}" class="post-card__link">
     <div class="post-card__meta">
       {{ if $difficulty }}

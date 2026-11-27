@@ -672,48 +672,6 @@ table tr:hover { background: var(--surface-2); }
 .filter-btn--medium:hover { border-color: var(--medium); color: var(--medium); }
 .filter-btn--hard:hover   { border-color: var(--hard); color: var(--hard); }
 
-.list-controls {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  margin-bottom: 2rem;
-}
-
-.filter-bar { margin-bottom: 0; }
-
-.search-bar {
-  display: flex;
-  align-items: center;
-  gap: .6rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: .4rem .8rem;
-  transition: border-color var(--transition);
-}
-.search-bar:focus-within { border-color: var(--accent); }
-
-.search-bar__prompt {
-  font-family: var(--font-mono);
-  font-size: .85rem;
-  color: var(--accent);
-  user-select: none;
-  flex-shrink: 0;
-}
-
-.search-bar__input {
-  flex: 1;
-  background: transparent;
-  border: none;
-  outline: none;
-  font-family: var(--font-mono);
-  font-size: .85rem;
-  color: var(--text);
-  min-width: 0;
-}
-.search-bar__input::placeholder { color: var(--text-muted); }
-.search-bar__input::-webkit-search-cancel-button { display: none; }
-
 /* ============================================================
    ARTICLE SINGLE
    ============================================================ */
