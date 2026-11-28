@@ -2,13 +2,13 @@
 title: "ghostrules — Escáner de Seguridad para Ficheros de Instrucciones de Agentes IA"
 date: 2026-11-12
 draft: false
-description: "ghostrules es una herramienta de análisis estático que escanea los ficheros de instrucciones y configuración consumidos por agentes de codificación IA (CLAUDE.md, .cursorrules, servidores MCP) en busca de esteganografía Unicode oculta, inyección de prompt en lenguaje natural y patrones de configuración peligrosos. Modela la semántica de carga de contexto de cada agente, hashea el contexto resultante en un lockfile, y se distribuye como CLI, GitHub Action y hook de pre-commit."
+description: "ghostrules es una herramienta de análisis estático que escanea los ficheros de instrucciones y configuración consumidos por agentes de codificación IA (CLAUDE.md, .cursorrules, servidores MCP) en busca de esteganografía Unicode oculta, inyección de prompt en lenguaje natural, secretos hardcodeados, control de comportamiento del agente, mecanismos de persistencia y patrones de configuración peligrosos. Modela la semántica de carga de contexto de cada agente, hashea el contexto resultante en un lockfile, y se distribuye como CLI, GitHub Action y hook de pre-commit."
 tags: ["security", "AI", "prompt-injection", "unicode", "MCP", "static-analysis", "python", "github-actions", "open-source"]
 categories: ["Personal Projects"]
 ---
 
 {{< lead >}}
-**ghostrules** es una herramienta de análisis estático que escanea los ficheros de instrucciones y configuración que consumen los agentes de codificación IA — `CLAUDE.md`, `.cursorrules`, `AGENTS.md`, configuraciones de servidores MCP, instrucciones de Copilot — en busca de esteganografía Unicode oculta, inyección de prompt en lenguaje natural y patrones de configuración peligrosos. Modela la semántica de carga de contexto de cada agente, hashea el contexto resultante en un lockfile, y se distribuye como CLI, una GitHub Action con salida SARIF y un hook de pre-commit.
+**ghostrules** es una herramienta de análisis estático que escanea los ficheros de instrucciones y configuración que consumen los agentes de codificación IA — `CLAUDE.md`, `.cursorrules`, `AGENTS.md`, configuraciones de servidores MCP, instrucciones de Copilot — en busca de esteganografía Unicode oculta, inyección de prompt en lenguaje natural, secretos hardcodeados, control de comportamiento del agente, mecanismos de persistencia y patrones de configuración peligrosos. Modela la semántica de carga de contexto de cada agente, hashea el contexto resultante en un lockfile, y se distribuye como CLI, una GitHub Action con salida SARIF y un hook de pre-commit.
 {{< /lead >}}
 
 **Repositorio:** [BardLaudian/ghostrules](https://github.com/BardLaudian/ghostrules) · Licencia MIT · Python 3.10+
@@ -109,18 +109,19 @@ Las reglas se dividen en dos familias: GR0xx para contenido de ficheros de instr
 
 ### GR0xx — Reglas de Contenido
 
-**GR001–GR006: Contenido oculto e invisible**
+**GR001–GR007: Contenido oculto e invisible**
 
 | Regla | Disparador |
 |-------|------------|
 | GR001 | Caracteres Tag Unicode (U+E0000–U+E007F) — el rango ASCII imprimible completo reproducido como puntos de código invisibles |
-| GR002 | Caracteres de control bidireccional (RLO, LRO, RLE, LRE, PDF, FSI, PDI) que invierten o incrustan texto visualmente |
-| GR003 | Caracteres de ancho cero (ZWSP U+200B, ZWNJ U+200C, ZWJ U+200D, word joiner U+2060, BOM U+FEFF) usados para codificar datos entre caracteres visibles |
-| GR004 | Esteganografía de Variation Selectors: VS1–VS16 (U+FE00–U+FE0F) o VS17–VS256 (U+E0100–U+E01EF) añadidos a caracteres base para codificar un bitstream oculto |
+| GR002 | Caracteres de control bidireccional (RLO, LRO, RLE, LRE, PDF, FSI, PDI) que invierten o incrustan texto visualmente. Un solo LRM/RLM/ALM en texto legítimo hebreo, árabe o persa no se marca |
+| GR003 | Caracteres de ancho cero (ZWSP U+200B, ZWNJ U+200C, ZWJ U+200D, word joiner U+2060, BOM U+FEFF) usados para codificar datos entre caracteres visibles. Un operador matemático invisible aislado en una fórmula no se marca |
+| GR004 | Esteganografía de Variation Selectors: VS1–VS16 (U+FE00–U+FE0F) o VS17–VS256 (U+E0100–U+E01EF). Requiere al menos **dos variation selectors consecutivos** — un único VS para presentación de emoji no se marca |
 | GR005 | Comentarios de bloque HTML (`<!-- ... -->`). La severidad depende del agente: Claude Code los elimina antes de que el modelo los vea (severidad: low), otros agentes los pasan tal cual (severidad: medium a high) |
 | GR006 | Homoglifos: puntos de código cirílicos, griegos u otros look-alike sustituidos por ASCII en identificadores o palabras clave |
+| GR007 | Secuencias de caracteres ocultos: runs de caracteres invisibles lo suficientemente largas para codificar contenido significativo, no explicadas por ninguna de las reglas anteriores individualmente |
 
-GR001–GR004 elevan la severidad en un nivel si el contenido oculto decodificado a su vez dispara otra regla. Un payload Unicode oculto que contiene un patrón de inyección en lenguaje natural escala a **critical**.
+GR001–GR004 y GR007 elevan la severidad en un nivel si el contenido oculto decodificado a su vez dispara otra regla. Un payload Unicode oculto que contiene un patrón de inyección en lenguaje natural escala a **critical**.
 
 El comando `ghostrules reveal <fichero>` renderiza cada carácter invisible como un token visible para que un revisor humano pueda inspeccionar la codificación sin procesar. `ghostrules clean <fichero>` elimina todos los caracteres marcados por GR001–GR004 de un fichero.
 
@@ -137,6 +138,7 @@ Estas reglas coinciden con patrones en inglés y español que indican un intento
 | GR014 | Acceso a ficheros sensibles — instrucciones para leer `~/.ssh/`, almacenes de credenciales, ficheros `.env` u otras rutas sensibles |
 | GR015 | Payloads codificados — cadenas en base64, hex u otras codificaciones incrustadas en texto en lenguaje natural |
 | GR016 | Bypass de seguridad — instrucciones para deshabilitar comprobaciones de seguridad, operar fuera de los límites normales o actuar como un agente "jailbroken" |
+| GR017 | Formato de secreto — patrones que coinciden con formatos conocidos de claves API (claves de acceso AWS, tokens de GitHub, etc.) hardcodeados directamente en un fichero de instrucciones. Los valores de ejemplo de la documentación (p.ej. `AKIAIOSFODNN7EXAMPLE`) están excluidos |
 
 GR012 tiene una tabla de severidad dependiente del contexto. Los instaladores de paquetes conocidos (`pip install`, `npm install`, `cargo add`) con versiones específicas y fijas no se marcan. Un pipe de datos hacia `python -c` o un eval shell de la respuesta de una petición HTTP se marca como critical independientemente de la intención aparente.
 
@@ -156,6 +158,20 @@ GR012 tiene una tabla de severidad dependiente del contexto. Los instaladores de
 
 GR030 se dispara cuando un fichero `.ghostrules.toml` o una directiva `ghostrules-ignore` modifica el comportamiento del propio escáner — específicamente cuando suprime una regla GR0xx sin una justificación legible por máquina. Esto evita que un atacante que puede modificar la configuración deshabilite silenciosamente la detección.
 
+**GR031–GR035: Control de comportamiento y persistencia del agente**
+
+Esta familia se añadió en v0.6.0 para cubrir una clase de manipulación más sutil: instrucciones que no inyectan una acción específica sino que reconfiguran cómo el agente revisa o persiste sus propias instrucciones.
+
+| Regla | Clase semántica | Severidad |
+|-------|----------------|-----------|
+| GR031 | Revisión desactivada — instrucciones que indican al agente que omita revisar, auditar o cuestionar sus propios ficheros de instrucciones | high |
+| GR032 | Instrucciones remotas o código no leído — referencias a fuentes externas como proveedoras autoritativas de instrucciones, o instrucciones para ejecutar código sin leerlo primero | high |
+| GR033 | Instrucción de persistir — se indica al agente que recuerde, almacene o replique las instrucciones actuales en sesiones futuras u otros ficheros | high |
+| GR034 | Mecanismo de persistencia — se describe o configura un mecanismo concreto de persistencia (escritura en ficheros de configuración, modificación de perfiles de shell, etc.) | high |
+| GR035 | Señales débiles combinadas — múltiples patrones individualmente por debajo del umbral que juntos indican intención probablemente maliciosa | medium |
+
+La prosa en ficheros de documentación, ejemplos y tests se clasifica como `info` para GR031–GR035, ya que la documentación de seguridad describe legítimamente estas técnicas.
+
 ### GR1xx — Reglas de Configuración MCP y de Agente
 
 | Regla | Disparador |
@@ -168,7 +184,11 @@ GR030 se dispara cuando un fichero `.ghostrules.toml` o una directiva `ghostrule
 | GR106 | Opciones de Docker con privilegios (`--privileged`, `--cap-add SYS_ADMIN`, `--network host`, bind mounts de host) |
 | GR107 | Configuraciones de agente excesivamente permisivas (p.ej. `allow_all_tools: true`, `bypass_permissions: true`) |
 | GR108 | Servidor de proyecto habilitado automáticamente sin confirmación del usuario |
+| GR109 | Riesgo de cadena de suministro MCP: paquete o imagen referenciada sin digest criptográfico ni commit fijo |
 | GR110–GR113 | Scripts ejecutados por hooks o skills — patrones de inyección shell, descargas, escalada de privilegios |
+| GR114 | El servidor MCP obtiene su propia configuración o lista de herramientas desde una URL remota en tiempo de ejecución |
+| GR115 | El registro del servidor MCP modifica la configuración global del agente del usuario (fuera del directorio del proyecto) |
+| GR116 | El nombre o descripción del servidor MCP contiene lenguaje de anulación de instrucciones |
 
 ---
 
@@ -190,7 +210,7 @@ El encuadre del propio README es preciso: ghostrules es "un conjunto de heuríst
 
 ```yaml
 # .github/workflows/ghostrules.yml
-- uses: BardLaudian/ghostrules@v0.4.1
+- uses: BardLaudian/ghostrules@v0.6.0
   with:
     fail-on: high          # critical, high, medium, low, info, none
     lock-check: "true"     # comparar lockfile contra rama base
@@ -218,20 +238,28 @@ uvx ghostrules scan .         # efímero, sin instalación
 # hook de pre-commit (.pre-commit-config.yaml)
 repos:
   - repo: https://github.com/BardLaudian/ghostrules
-    rev: v0.4.1
+    rev: v0.6.0
     hooks:
       - id: ghostrules
 ```
 
 ```bash
 # comandos principales
-ghostrules scan .                                    # sale con 1 en hallazgos >= high
+ghostrules scan .                                    # sale con 1 en hallazgos >= high; código 3 en error interno
+ghostrules scan . --max-file-size 512               # omitir ficheros mayores de 512 KiB
+ghostrules scan . --visibility root-medium          # solo marcar problemas visibles en contextos root o medium-access
 ghostrules context CLAUDE.md --agent claude-code    # muestra lo que lee el agente
 ghostrules lock                                      # escribe .ghostrules.lock
 ghostrules lock --check --base origin/main          # comprobación CI
 ghostrules reveal CLAUDE.md                         # muestra caracteres invisibles
 ghostrules clean CLAUDE.md                          # elimina caracteres marcados invisibles
 ```
+
+---
+
+## Rendimiento
+
+v0.6.0 introdujo un prefiltro por palabras clave que omite el motor completo de reglas en ficheros que no contienen ningún carácter ni token relevante para ninguna regla activa. En un repositorio de 610 ficheros, el tiempo de escaneo pasó de ~144 s a ~66 s — aproximadamente un 2× de aceleración. Los ficheros omitidos por el prefiltro se incluyen igualmente en el hash del lockfile.
 
 ---
 
@@ -243,6 +271,6 @@ El README lista varias herramientas en el mismo espacio: **cfgaudit**, **cairnlo
 
 ## Estado
 
-v0.4.1 · MIT · [github.com/BardLaudian/ghostrules](https://github.com/BardLaudian/ghostrules)
+v0.6.0 · MIT · [github.com/BardLaudian/ghostrules](https://github.com/BardLaudian/ghostrules)
 
 En desarrollo activo. Las contribuciones e informes de issues son bienvenidos. `CONTRIBUTING.md` tiene las directrices de contribución y el directorio `bench/` contiene el suite de benchmarks para validar cambios en las reglas.

@@ -2,13 +2,13 @@
 title: "ghostrules — Security Scanner for AI Agent Instruction Files"
 date: 2026-11-12
 draft: false
-description: "ghostrules is a static analysis tool that scans the instruction and configuration files consumed by AI coding agents (CLAUDE.md, .cursorrules, MCP servers) for hidden Unicode steganography, natural-language prompt injection, and risky configuration patterns. It models each agent's context loading semantics, hashes the resulting context into a lockfile, and ships as a CLI, GitHub Action, and pre-commit hook."
+description: "ghostrules is a static analysis tool that scans the instruction and configuration files consumed by AI coding agents (CLAUDE.md, .cursorrules, MCP servers) for hidden Unicode steganography, natural-language prompt injection, secret patterns, agent-behavior control, persistence mechanisms, and risky configuration patterns. It models each agent's context loading semantics, hashes the resulting context into a lockfile, and ships as a CLI, GitHub Action, and pre-commit hook."
 tags: ["security", "AI", "prompt-injection", "unicode", "MCP", "static-analysis", "python", "github-actions", "open-source"]
 categories: ["Personal Projects"]
 ---
 
 {{< lead >}}
-**ghostrules** is a static analysis tool that scans the instruction and configuration files consumed by AI coding agents — `CLAUDE.md`, `.cursorrules`, `AGENTS.md`, MCP server configs, Copilot instructions — for hidden Unicode steganography, natural-language prompt injection, and risky configuration patterns. It models per-agent context loading semantics, hashes the resulting context into a lockfile, and ships as a CLI, a GitHub Action with SARIF output, and a pre-commit hook.
+**ghostrules** is a static analysis tool that scans the instruction and configuration files consumed by AI coding agents — `CLAUDE.md`, `.cursorrules`, `AGENTS.md`, MCP server configs, Copilot instructions — for hidden Unicode steganography, natural-language prompt injection, hardcoded secrets, agent-behavior control, persistence mechanisms, and risky configuration patterns. It models per-agent context loading semantics, hashes the resulting context into a lockfile, and ships as a CLI, a GitHub Action with SARIF output, and a pre-commit hook.
 {{< /lead >}}
 
 **Repository:** [BardLaudian/ghostrules](https://github.com/BardLaudian/ghostrules) · MIT License · Python 3.10+
@@ -109,18 +109,19 @@ Rules are divided into two families: GR0xx for instruction-file content and GR1x
 
 ### GR0xx — Content Rules
 
-**GR001–GR006: Hidden and invisible content**
+**GR001–GR007: Hidden and invisible content**
 
 | Rule | Trigger |
 |------|---------|
 | GR001 | Unicode Tag characters (U+E0000–U+E007F) — the full printable ASCII range reproduced as invisible codepoints |
-| GR002 | Bidirectional control characters (RLO, LRO, RLE, LRE, PDF, FSI, PDI) that reverse or embed text visually |
-| GR003 | Zero-width characters (ZWSP U+200B, ZWNJ U+200C, ZWJ U+200D, word joiner U+2060, BOM U+FEFF) used to encode data between visible characters |
-| GR004 | Variation Selector steganography: VS1–VS16 (U+FE00–U+FE0F) or VS17–VS256 (U+E0100–U+E01EF) appended to base characters to encode a hidden bitstream |
+| GR002 | Bidirectional control characters (RLO, LRO, RLE, LRE, PDF, FSI, PDI) that reverse or embed text visually. A single LRM/RLM/ALM in legitimate Hebrew, Arabic, or Persian text is not flagged |
+| GR003 | Zero-width characters (ZWSP U+200B, ZWNJ U+200C, ZWJ U+200D, word joiner U+2060, BOM U+FEFF) used to encode data between visible characters. A lone invisible math operator in a formula is not flagged |
+| GR004 | Variation Selector steganography: VS1–VS16 (U+FE00–U+FE0F) or VS17–VS256 (U+E0100–U+E01EF). Requires at least **two consecutive** variation selectors — a single VS for emoji presentation is not flagged |
 | GR005 | HTML block comments (`<!-- ... -->`). Severity is agent-dependent: Claude Code strips these before the model sees them (severity: low), other agents pass them through (severity: medium to high) |
 | GR006 | Homoglyphs: Cyrillic, Greek, or other look-alike codepoints substituted for ASCII in identifiers or keywords |
+| GR007 | Hidden-data character runs: sequences of invisible characters long enough to encode meaningful content, not explained by any single-character rule above |
 
-GR001–GR004 raise severity by one level if the decoded hidden content itself triggers another rule. A hidden-Unicode payload containing a natural-language injection pattern therefore escalates to **critical**.
+GR001–GR004 and GR007 raise severity by one level if the decoded hidden content itself triggers another rule. A hidden-Unicode payload containing a natural-language injection pattern therefore escalates to **critical**.
 
 The `ghostrules reveal <file>` command renders each invisible character as a visible token so a human reviewer can inspect the raw encoding. `ghostrules clean <file>` strips all characters flagged by GR001–GR004 from a file.
 
@@ -137,6 +138,7 @@ These rules match patterns in English and Spanish that indicate an attempt to ov
 | GR014 | Sensitive file access — instructions to read `~/.ssh/`, credential stores, `.env` files, or other sensitive paths |
 | GR015 | Encoded payloads — base64, hex, or other encoded strings embedded in natural-language text |
 | GR016 | Safety bypass — instructions to disable safety checks, operate outside normal boundaries, or act as a "jailbroken" agent |
+| GR017 | Secret format — patterns matching known API key formats (AWS access keys, GitHub tokens, etc.) hardcoded directly in an instruction file. Known documentation example values (e.g. `AKIAIOSFODNN7EXAMPLE`) are excluded |
 
 GR012 has a context-aware severity table. Known package installers (`pip install`, `npm install`, `cargo add`) with specific, pinned versions are not flagged. A data pipe into `python -c` or a shell eval of an HTTP response body is flagged as critical regardless of the apparent intent.
 
@@ -156,6 +158,20 @@ GR012 has a context-aware severity table. Known package installers (`pip install
 
 GR030 fires when a `.ghostrules.toml` or `ghostrules-ignore` directive modifies the scanner's own behaviour — specifically, when it suppresses a GR0xx rule without a machine-readable justification. This prevents an attacker who can modify the config from silently disabling detection.
 
+**GR031–GR035: Agent behavior control and persistence**
+
+This family was added in v0.6.0 to cover a more subtle manipulation class: instructions that do not inject a specific action but instead reconfigure how the agent reviews or persists its own instructions.
+
+| Rule | Semantic class | Severity |
+|------|---------------|----------|
+| GR031 | Review switched off — instructions that tell the agent to skip reviewing, auditing, or questioning its own instruction files | high |
+| GR032 | Remote instructions or unread code — references to external sources as authoritative instruction providers, or instructions to execute code without reading it first | high |
+| GR033 | Instruction to persist — the agent is told to remember, store, or replicate the current instructions into future sessions or other files | high |
+| GR034 | Persistence mechanism — a concrete persistence mechanism is described or set up (writing to config files, modifying shell profiles, etc.) | high |
+| GR035 | Combined weak signals — multiple individually-below-threshold patterns that together indicate likely malicious intent | medium |
+
+Prose in documentation files, examples, and test fixtures is classified as `info` for GR031–GR035, since security documentation legitimately describes these techniques.
+
 ### GR1xx — MCP and Agent Configuration Rules
 
 | Rule | Trigger |
@@ -168,7 +184,11 @@ GR030 fires when a `.ghostrules.toml` or `ghostrules-ignore` directive modifies 
 | GR106 | Privileged Docker options (`--privileged`, `--cap-add SYS_ADMIN`, `--network host`, host bind mounts) |
 | GR107 | Overly permissive agent settings (e.g. `allow_all_tools: true`, `bypass_permissions: true`) |
 | GR108 | Auto-enabled project server without user confirmation |
+| GR109 | MCP server supply-chain risk: package or image referenced without a cryptographic digest or pinned commit |
 | GR110–GR113 | Scripts run by hooks or skills — shell injection patterns, downloads, privilege escalation |
+| GR114 | MCP server fetches its own configuration or tool list from a remote URL at runtime |
+| GR115 | MCP server registration modifies the user's global agent config (outside the project directory) |
+| GR116 | MCP server name or description contains instruction-override language |
 
 ---
 
@@ -190,7 +210,7 @@ The README's own framing is accurate: ghostrules is "a set of heuristics, not a 
 
 ```yaml
 # .github/workflows/ghostrules.yml
-- uses: BardLaudian/ghostrules@v0.4.1
+- uses: BardLaudian/ghostrules@v0.6.0
   with:
     fail-on: high          # critical, high, medium, low, info, none
     lock-check: "true"     # compare lockfile against base branch
@@ -218,19 +238,21 @@ uvx ghostrules scan .         # ephemeral, no install
 # pre-commit hook (.pre-commit-config.yaml)
 repos:
   - repo: https://github.com/BardLaudian/ghostrules
-    rev: v0.4.1
+    rev: v0.6.0
     hooks:
       - id: ghostrules
 ```
 
 ```bash
 # key commands
-ghostrules scan .                              # exit 1 on findings >= high
-ghostrules context CLAUDE.md --agent claude-code   # show what the agent reads
-ghostrules lock                                # write .ghostrules.lock
-ghostrules lock --check --base origin/main    # CI check
-ghostrules reveal CLAUDE.md                   # show invisible characters
-ghostrules clean CLAUDE.md                    # strip flagged invisible chars
+ghostrules scan .                                   # exit 1 on findings >= high; exit 3 on internal error
+ghostrules scan . --max-file-size 512               # skip files larger than 512 KiB
+ghostrules scan . --visibility root-medium          # only flag issues visible to root or medium-access contexts
+ghostrules context CLAUDE.md --agent claude-code    # show what the agent reads
+ghostrules lock                                     # write .ghostrules.lock
+ghostrules lock --check --base origin/main          # CI check
+ghostrules reveal CLAUDE.md                         # show invisible characters
+ghostrules clean CLAUDE.md                          # strip flagged invisible chars
 ```
 
 ---
@@ -241,8 +263,14 @@ The README lists several tools in the same space: **cfgaudit**, **cairnlock**, *
 
 ---
 
+## Performance
+
+v0.6.0 introduced a keyword prefilter that skips the full rule engine on files that contain no characters or tokens relevant to any active rule. On a 610-file repository, scan time dropped from ~144 s to ~66 s — roughly a 2× speedup. Files that are skipped by the prefilter are still included in the lockfile hash.
+
+---
+
 ## Status
 
-v0.4.1 · MIT · [github.com/BardLaudian/ghostrules](https://github.com/BardLaudian/ghostrules)
+v0.6.0 · MIT · [github.com/BardLaudian/ghostrules](https://github.com/BardLaudian/ghostrules)
 
 Under active development. Contributions and issue reports are welcome. The `CONTRIBUTING.md` has contribution guidelines and the `bench/` directory has the benchmark suite for validating rule changes.
